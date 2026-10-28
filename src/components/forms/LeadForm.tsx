@@ -38,6 +38,8 @@ export function LeadForm({ direction, calculationId, services, defaultServiceId,
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [success, setSuccess] = useState<{ reference: string; delivered: string[]; failed: string[] } | null>(null);
+  // Ловушка для автозаполнения ботами: поле скрыто от людей.
+  const [trap, setTrap] = useState("");
 
   const update = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) => {
     setForm((current) => ({ ...current, [key]: value }));
@@ -72,6 +74,7 @@ export function LeadForm({ direction, calculationId, services, defaultServiceId,
           question: form.question || null,
           consent: form.consent,
           calculationId: calculationId ?? null,
+          trap: trap,
         }),
       });
       const data = (await response.json()) as {
@@ -271,6 +274,13 @@ export function LeadForm({ direction, calculationId, services, defaultServiceId,
             <p>{serverError}</p>
           </div>
         ) : null}
+
+        <div aria-hidden="true" className="hidden">
+          <label>
+            Не заполняйте это поле
+            <input type="text" tabIndex={-1} autoComplete="off" value={trap} onChange={(event) => setTrap(event.target.value)} />
+          </label>
+        </div>
 
         <button type="submit" className="btn btn--primary btn--lg btn--block" disabled={submitting} data-state={submitting ? "loading" : undefined}>
           {submitting ? "Отправляем" : "Отправить заявку"}

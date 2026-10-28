@@ -1,4 +1,4 @@
-import { getDb, all, parseJson } from "../db";
+import { getDb, all, run, parseJson } from "../db";
 import type { EntryDetails, KnowledgeEntryInput } from "./astrology";
 import { ALL_ENTRIES } from "./seed";
 import { KNOWLEDGE_SOURCES, type KnowledgeSource } from "./sources";
@@ -185,4 +185,94 @@ export function knowledgeStats(): { entries: number; sources: number; byDomain: 
     return acc;
   }, {});
   return { entries: entries.length, sources: loadSources().length, byDomain };
+}
+
+/** Сброс кэша после правки записей в кабинете. */
+export function clearKnowledgeCache(): void {
+  cache.clear();
+}
+
+/** Гарантирует, что внешний ключ источника существует (важно при пустой базе). */
+function ensureSourceRow(sourceId: string | null): string | null {
+  if (!sourceId) return null;
+  const db = getDb();
+  const existing = db.prepare("SELECT id FROM knowledge_sources WHERE id = ?").get(sourceId) as { id: string } | undefined;
+  if (existing) return sourceId;
+  const source = KNOWLEDGE_SOURCES.find((item) => item.id === sourceId);
+  if (!source) return null;
+  run(
+    db,
+    "INSERT INTO knowledge_sources (id, title, url, publisher, accessed_at, note) VALUES (?, ?, ?, ?, ?, ?)",
+    [source.id, source.title, source.url, source.publisher, source.accessedAt, source.note]
+  );
+  return source.id;
+}
+
+export interface KnowledgePatch {
+  summary?: string;
+  positive?: string[];
+  shadow?: string[];
+  recommendations?: string[];
+  methodology?: string;
+  sourceId?: string | null;
+  version?: string;
+}
+
+/**
+ * Правка записи базы знаний из кабинета. Если запись существует только в коде
+ * (без сидирования), она создаётся в базе — так изменения сохраняются.
+ */
+export function updateKnowledgeEntry(id: string, patch: KnowledgePatch): KnowledgeEntry | null {
+  const db = getDb();
+  const existing = db.prepare("SELECT * FROM knowledge_entries WHERE id = ?").get(id) as Row | undefined;
+
+  if (existing) {
+    run(
+      db,
+      `UPDATE knowledge_entries SET summary = ?, positive = ?, shadow = ?, recommendations = ?,
+        methodology = ?, source_id = ?, version = ?, verified_at = ? WHERE id = ?`,
+      [
+        patch.summary ?? existing.summary,
+        JSON.stringify(patch.positive ?? parseJson<string[]>(existing.positive, [])),
+        JSON.stringify(patch.shadow ?? parseJson<string[]>(existing.shadow, [])),
+        JSON.stringify(patch.recommendations ?? parseJson<string[]>(existing.recommendations, [])),
+        patch.methodology ?? existing.methodology,
+        patch.sourceId === undefined ? existing.source_id : ensureSourceRow(patch.sourceId),
+        patch.version ?? existing.version,
+        new Date().toISOString().slice(0, 10),
+        id,
+      ]
+    );
+    clearKnowledgeCache();
+    return loadEntries().find((entry) => entry.id === id) ?? null;
+  }
+
+  const fallback = ALL_ENTRIES.map((entry) => ({ entry, id: `${entry.domain}:${entry.key}:${entry.methodology}` })).find(
+    (item) => item.id === id
+  );
+  if (!fallback) return null;
+
+  const entry = fallback.entry;
+  run(
+    db,
+    `INSERT INTO knowledge_entries (id, domain, key, title, summary, positive, shadow, recommendations, details,
+      methodology, source_id, verified_at, version) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      id,
+      entry.domain,
+      entry.key,
+      entry.title,
+      patch.summary ?? entry.summary,
+      JSON.stringify(patch.positive ?? entry.positive),
+      JSON.stringify(patch.shadow ?? entry.shadow),
+      JSON.stringify(patch.recommendations ?? entry.recommendations),
+      JSON.stringify(entry.details),
+      patch.methodology ?? entry.methodology,
+      patch.sourceId === undefined ? ensureSourceRow(entry.sourceId) : ensureSourceRow(patch.sourceId),
+      new Date().toISOString().slice(0, 10),
+      patch.version ?? entry.version,
+    ]
+  );
+  clearKnowledgeCache();
+  return loadEntries().find((item) => item.id === id) ?? null;
 }

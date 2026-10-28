@@ -125,6 +125,13 @@ describe("POST /api/leads", () => {
     expect(data.fields?.consent).toBeTruthy();
   });
 
+  it("отклоняет заявку, если заполнено скрытое поле-ловушка", async () => {
+    const response = await leadsRoute.POST(
+      json({ name: "Бот", direction: "matrix", channel: "telegram", contact: "@bot_account", consent: true, trap: "spam" })
+    );
+    expect(response.status).toBe(422);
+  });
+
   it("проверяет формат контакта по каналу", async () => {
     const response = await leadsRoute.POST(
       json({ name: "Кривой контакт", direction: "matrix", channel: "email", contact: "не-почта", consent: true })

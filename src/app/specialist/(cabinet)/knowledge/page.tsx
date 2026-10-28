@@ -1,5 +1,6 @@
 import { loadEntries, loadSources, knowledgeStats } from "@/lib/knowledge/queries";
 import { DocumentIcon, StarIcon } from "@/components/icons";
+import { KnowledgeEditor } from "@/components/cabinet/KnowledgeEditor";
 
 export const dynamic = "force-dynamic";
 
@@ -90,6 +91,7 @@ export default function KnowledgePage() {
                     {entry.source?.title ? (
                       <p className="mt-1 text-[0.7rem] text-[var(--ink-faint)]">Источник: {entry.source.title}</p>
                     ) : null}
+                    <KnowledgeEditor entry={entry} sources={sources} />
                   </li>
                 ))}
               </ul>

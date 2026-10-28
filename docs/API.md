@@ -174,6 +174,7 @@ HTTP API для сайта и мобильного приложения. Биз�
 | `POST /api/specialist/leads/[id]/notify` | повторная отправка уведомлений |
 | `POST /api/specialist/leads/[id]/anonymize` | обезличивание персональных данных |
 | `POST /api/specialist/settings` | частичное обновление настроек |
+| `POST /api/specialist/knowledge` | правка записи базы знаний (`id`, `summary`, `positive`, `shadow`, `recommendations`, `methodology`, `sourceId`, `version`) |
 | `POST /api/specialist/password` | `{ currentPassword, newPassword, repeatPassword }` |
 
 Статусы заявок: `new`, `in_progress`, `need_data`, `awaiting_client`, `ready`, `done`, `cancelled`.

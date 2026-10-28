@@ -81,6 +81,8 @@ export const leadSchema = z
     consent: z.boolean().refine((value) => value, "Без согласия на обработку данных заявку принять нельзя"),
     calculationId: z.string().trim().max(64).nullable().optional(),
     locale: z.string().max(10).optional(),
+    // Скрытое поле-ловушка для ботов: люди его не видят и не заполняют.
+    trap: z.string().max(0, "Заявка отклонена").optional(),
   })
   .superRefine((data, ctx) => {
     const error = validateContact(data.channel, data.contact);
