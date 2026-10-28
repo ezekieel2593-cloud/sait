@@ -78,6 +78,7 @@ npm test                            # vitest: расчёты, валидация
 npm run build && npm start          # production-сборка
 npm run package:release             # серверный архив для хостинга в release/
 npm run build:static                # статический архив для FTP в release/
+npm run build:php                   # архив для PHP-хостинга (SpaceWeb) в release/ и download/
 npx tsc --noEmit                    # проверка типов
 ```
 
@@ -95,19 +96,31 @@ npx tsc --noEmit                    # проверка типов
 
 ## Две версии продукта
 
-| | Статическая (FTP) | Серверная (Node.js) |
-| --- | --- | --- |
-| Заливка | FTP в любой хостинг, даже PHP | Node.js 22.5+, VPS/PaaS |
-| Расчёты | в браузере | на сервере |
-| Бесплатная расшифровка | да | да |
-| Заявки | формируются как сообщение в Telegram/почту | сохраняются в базе, уведомления, статусы |
-| Кабинет специалиста | нет | да |
-| Настройки | файл `config.js` | кабинет `/specialist/settings` |
+| | Статическая (FTP) | PHP-хостинг (SpaceWeb) | Серверная (Node.js) |
+| --- | --- | --- | --- |
+| Заливка | FTP в любой хостинг | PHP 8.x + Apache, `public_html` | Node.js 22.5+, VPS/PaaS |
+| База данных | не нужна | не нужна (файлы в `data/`) | SQLite |
+| Расчёты | в браузере | в браузере | на сервере |
+| Заявки | формируются как сообщение | сохраняются на сервере + Telegram/письмо | сохраняются в базе, уведомления |
+| Кабинет специалиста | нет | да (`/cabinet/`) | да |
+| Настройки | `config.js` | `config.js` + `config.php` | кабинет `/specialist/settings` |
 
 ```bash
 npm run build:static        # release/astra-pearl-static.zip (≈0,4 МБ) — залить по FTP
+npm run build:php           # release/astra-pearl-php.zip (≈0,5 МБ) — PHP-хостинг, SpaceWeb
 npm run package:release     # release/astra-pearl-<версия>.zip (≈14 МБ) — нужен Node.js
 ```
+
+### Версия для PHP-хостинга (SpaceWeb, Beget, Timeweb)
+
+Содержимое `release/php` (архив `download/astra-pearl-php.zip`) заливается в `public_html`.
+Нужен только PHP 8.x и Apache: Node.js, Composer и MySQL не требуются.
+Заявки сохраняются в файле на сервере, уведомления уходят в Telegram и на почту,
+кабинет специалиста работает по паролю. Пошаговая установка —
+[docs/HOSTING-PHP.md](docs/HOSTING-PHP.md), краткая инструкция лежит в архиве (`README.txt`).
+
+Проверки без хостинга: `node tools/php-checks/api-cabinet.cjs` (56 проверок в php-wasm),
+`node tools/php-checks/form-api.cjs` и `node tools/php-checks/static-noserver.cjs` (jsdom).
 
 ### Статическая версия (просто залить по FTP)
 

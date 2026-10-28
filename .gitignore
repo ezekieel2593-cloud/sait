@@ -31,5 +31,9 @@ public/uploads/
 # Tests
 coverage/
 
+# PHP-версия: секреты и заявки живут только на сервере
+php/config.php
+php/data/
+
 # Готовые архивы для хостинга (собираются npm run package:release)
 release/

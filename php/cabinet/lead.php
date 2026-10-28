@@ -1,0 +1,150 @@
+<?php
+/**
+ * Карточка заявки: данные клиента, расчёт, статус, заметки, история.
+ */
+
+declare(strict_types=1);
+
+require_once __DIR__ . '/../inc/bootstrap.php';
+require_once __DIR__ . '/../inc/store.php';
+require_once __DIR__ . '/../inc/auth.php';
+require_once __DIR__ . '/../inc/view.php';
+
+session_start_once();
+if (!is_logged_in()) {
+    header('Location: index.php', true, 303);
+    app_exit();
+}
+
+cabinet_headers();
+
+$id = (string) ($_GET['id'] ?? '');
+$lead = find_lead($id);
+if ($lead === null) {
+    http_response_code(404);
+    cabinet_head('Заявка не найдена');
+    echo '<h1>Заявка не найдена</h1><p class="muted"><a href="index.php">← Ко всем заявкам</a></p>';
+    cabinet_foot();
+    app_exit();
+}
+
+$flash = (string) ($_GET['saved'] ?? '');
+
+cabinet_head('Заявка ' . ($lead['ref'] ?? ''));
+?>
+<p class="muted"><a href="index.php">← Ко всем заявкам</a></p>
+<h1><?= e((string) ($lead['name'] ?? '')) ?> <span class="muted" style="font-size:14px"><?= e((string) ($lead['ref'] ?? '')) ?></span></h1>
+
+<?php if ($flash === 'status'): ?>
+  <div class="msg ok">Статус обновлён.</div>
+<?php elseif ($flash === 'notes'): ?>
+  <div class="msg ok">Заметка сохранена.</div>
+<?php elseif ($flash === 'anonymized'): ?>
+  <div class="msg ok">Персональные данные удалены.</div>
+<?php elseif ($flash === 'notified'): ?>
+  <div class="msg ok">Запрошена повторная отправка уведомлений.</div>
+<?php endif; ?>
+
+<div class="grid2">
+  <section class="panel">
+    <h2 style="margin-top:0">Данные клиента</h2>
+    <dl class="meta">
+      <dt>Статус</dt><dd><?= status_badge((string) ($lead['status'] ?? 'new')) ?></dd>
+      <dt>Направление</dt><dd><?= e(DIRECTION_LABELS[$lead['direction'] ?? ''] ?? '—') ?></dd>
+      <dt>Способ связи</dt><dd><?= e(CHANNEL_LABELS[$lead['channel'] ?? ''] ?? '—') ?></dd>
+      <dt>Контакт</dt><dd><?= $lead['contact'] !== '' ? e((string) $lead['contact']) : '<span class="muted">удалён</span>' ?></dd>
+      <dt>Вопрос</dt><dd><?= $lead['question'] !== '' ? nl2br(e((string) $lead['question'])) : '<span class="muted">—</span>' ?></dd>
+      <dt>Данные рождения</dt><dd><?= $lead['birth'] !== '' ? e((string) $lead['birth']) : '<span class="muted">—</span>' ?></dd>
+      <dt>Получена</dt><dd><?= e(format_dt($lead['createdAt'] ?? null)) ?></dd>
+      <dt>Согласие</dt><dd><?= !empty($lead['consent']) ? 'есть' : 'нет' ?></dd>
+    </dl>
+
+    <h2>Расчёт из результата</h2>
+    <?php if (!empty($lead['calc'])): ?>
+      <pre class="calc" id="calc-text"><?= e((string) $lead['calc']) ?></pre>
+      <div class="actions">
+        <button type="button" class="secondary" onclick="navigator.clipboard.writeText(document.getElementById('calc-text').innerText).then(()=>{this.textContent='Скопировано';setTimeout(()=>this.textContent='Скопировать текст',1800)})">Скопировать текст</button>
+      </div>
+    <?php else: ?>
+      <p class="muted">Клиент не приложил расчёт — уточните данные рождения в переписке.</p>
+    <?php endif; ?>
+
+    <h2>История</h2>
+    <ul class="history">
+      <?php foreach (array_reverse(is_array($lead['history'] ?? null) ? $lead['history'] : []) as $event): ?>
+        <li>
+          <strong><?= e((string) ($event['message'] ?? $event['type'] ?? '')) ?></strong><br>
+          <span class="muted"><?= e(format_dt($event['at'] ?? null)) ?> · <?= e((string) ($event['actor'] ?? '')) ?></span>
+        </li>
+      <?php endforeach; ?>
+    </ul>
+  </section>
+
+  <aside>
+    <section class="panel">
+      <h2 style="margin-top:0">Статус</h2>
+      <form method="post" action="action.php">
+        <input type="hidden" name="id" value="<?= e((string) $lead['id']) ?>">
+        <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
+        <input type="hidden" name="action" value="status">
+        <label for="status">Текущий статус</label>
+        <select id="status" name="status">
+          <?php foreach (LEAD_STATUSES as $key => $label): ?>
+            <option value="<?= e($key) ?>" <?= ($lead['status'] ?? 'new') === $key ? 'selected' : '' ?>><?= e($label) ?></option>
+          <?php endforeach; ?>
+        </select>
+        <label for="comment">Комментарий к смене статуса (необязательно)</label>
+        <input id="comment" name="comment" maxlength="500" placeholder="Например: отправила уточняющие вопросы">
+        <div class="actions"><button type="submit">Сохранить статус</button></div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h2 style="margin-top:0">Внутренняя заметка</h2>
+      <p class="muted">Клиент её не видит.</p>
+      <form method="post" action="action.php">
+        <input type="hidden" name="id" value="<?= e((string) $lead['id']) ?>">
+        <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
+        <input type="hidden" name="action" value="notes">
+        <label for="notes">Заметка</label>
+        <textarea id="notes" name="notes" maxlength="5000"><?= e((string) ($lead['notes'] ?? '')) ?></textarea>
+        <div class="actions"><button type="submit">Сохранить заметку</button></div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h2 style="margin-top:0">Уведомления</h2>
+      <?php $notifications = is_array($lead['notifications'] ?? null) ? $lead['notifications'] : []; ?>
+      <?php if ($notifications === []): ?>
+        <p class="muted">Каналы не настроены: заявка сохранена, но сообщений не отправлялось.</p>
+      <?php else: ?>
+        <ul class="history">
+          <?php foreach ($notifications as $item): ?>
+            <li><strong><?= e(CHANNEL_LABELS[$item['channel'] ?? ''] ?? (string) ($item['channel'] ?? '')) ?></strong> —
+              <?= e((string) ($item['status'] ?? '')) ?>
+              <?php if (!empty($item['error'])): ?><br><span class="muted"><?= e((string) $item['error']) ?></span><?php endif; ?>
+            </li>
+          <?php endforeach; ?>
+        </ul>
+      <?php endif; ?>
+      <form method="post" action="action.php" class="actions">
+        <input type="hidden" name="id" value="<?= e((string) $lead['id']) ?>">
+        <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
+        <input type="hidden" name="action" value="notify">
+        <button type="submit" class="secondary">Отправить уведомления повторно</button>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h2 style="margin-top:0">Персональные данные</h2>
+      <p class="muted">Обезличивание необратимо: имя, контакт, вопрос и расчёт удаляются, история остаётся.</p>
+      <form method="post" action="action.php" onsubmit="return confirm('Удалить персональные данные клиента?')">
+        <input type="hidden" name="id" value="<?= e((string) $lead['id']) ?>">
+        <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
+        <input type="hidden" name="action" value="anonymize">
+        <div class="actions"><button type="submit" class="danger">Удалить персональные данные</button></div>
+      </form>
+    </section>
+  </aside>
+</div>
+<?php cabinet_foot(); ?>

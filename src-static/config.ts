@@ -17,6 +17,8 @@ export interface StaticConfig {
   freeResult: { astrologyCardCount: number; matrixPointCount: number };
   methodology: { astrologyHouseSystem: "placidus" | "equal" | "whole"; astrologyHouseSystemLabel: string };
   legal: { privacyUpdatedAt: string; dataRetentionDays: number; responsiblePerson: string };
+  /** Серверный приём заявок (PHP на хостинге). Если выключено — заявка формируется как сообщение. */
+  api: { enabled: boolean; base: string };
   faq: { question: string; answer: string }[];
   reviews: { author: string; text: string; context?: string }[];
 }
@@ -55,6 +57,7 @@ export const DEFAULT_CONFIG: StaticConfig = {
   freeResult: { astrologyCardCount: 4, matrixPointCount: 5 },
   methodology: { astrologyHouseSystem: "placidus", astrologyHouseSystemLabel: "Плацидус (Placidus)" },
   legal: { privacyUpdatedAt: "2026-01-01", dataRetentionDays: 365, responsiblePerson: "Владелец проекта" },
+  api: { enabled: false, base: "api" },
   faq: [
     {
       question: "Как рассчитывается натальная карта?",

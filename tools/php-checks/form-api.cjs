@@ -1,0 +1,133 @@
+/**
+ * Проверка формы заявки в собранном PHP-пакете (jsdom, без браузера).
+ *
+ *   npm run build:php
+ *   node tools/php-checks/form-api.cjs
+ *
+ * Сценарий: расчёт матрицы на 23.06.1992 → заполнение формы → отправка.
+ * fetch подменяется, поэтому запрос не уходит в сеть: проверяем, что форма
+ * собирает правильное тело POST на api/lead.php и показывает принятый номер.
+ */
+const fs = require("fs");
+const path = require("path");
+
+const repoRoot = path.resolve(__dirname, "../..");
+const { JSDOM, VirtualConsole } = require(path.join(repoRoot, "node_modules/jsdom"));
+
+const dir = path.join(repoRoot, "release/php");
+const page = path.join(dir, "matrix.html");
+
+let pass = 0;
+let fail = 0;
+function check(name, ok, extra = "") {
+  if (ok) {
+    pass += 1;
+    console.log(`  ok   ${name}`);
+  } else {
+    fail += 1;
+    console.log(`  FAIL ${name}${extra ? " :: " + extra : ""}`);
+  }
+}
+
+if (!fs.existsSync(page)) {
+  console.error("нет release/php/matrix.html — сначала выполните npm run build:php");
+  process.exit(2);
+}
+
+let posted = null;
+const vc = new VirtualConsole();
+vc.on("jsdomError", (e) => console.log("jsdomError:", e.message));
+
+const dom = new JSDOM(fs.readFileSync(page, "utf8"), {
+  url: "https://astra-test.ru/matrix.html",
+  runScripts: "dangerously",
+  pretendToBeVisual: true,
+  virtualConsole: vc,
+  beforeParse(window) {
+    window.fetch = (url, options) => {
+      posted = { url, body: JSON.parse(options.body) };
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ ok: true, apiVersion: "1", reference: "AP-2026-007", id: "lead_x", delivered: ["telegram"] }),
+      });
+    };
+    window.HTMLElement.prototype.scrollIntoView = () => {};
+  },
+});
+
+const { window } = dom;
+for (const script of window.document.querySelectorAll("script[src]")) {
+  const src = script.getAttribute("src").replace(/^\//, "");
+  window.eval(fs.readFileSync(path.join(dir, src), "utf8"));
+}
+
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/** React отслеживает значение через прототипный сеттер — иначе состояние не обновится. */
+function setValue(el, value) {
+  const proto = el instanceof window.HTMLTextAreaElement ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;
+  Object.getOwnPropertyDescriptor(proto, "value").set.call(el, value);
+  el.dispatchEvent(new window.Event("input", { bubbles: true }));
+  el.dispatchEvent(new window.Event("change", { bubbles: true }));
+}
+
+async function run() {
+  const doc = window.document;
+  await wait(400);
+
+  check("config.js включает серверный приём заявок", window.ASTRA_CONFIG?.api?.enabled === true, String(window.ASTRA_CONFIG?.api?.enabled));
+
+  const date = doc.querySelector("#matrix-date");
+  check("форма расчёта отрисована", Boolean(date));
+  if (!date) return;
+
+  setValue(date, "1992-06-23");
+  doc.querySelector("form button").click();
+  await wait(400);
+  check("расчёт матрицы появился", doc.body.textContent.includes("Центр"));
+
+  const takeForm = [...doc.querySelectorAll("form")].find((f) => f.querySelector("#lead-name"));
+  check("форма заявки отрисована", Boolean(takeForm));
+  if (!takeForm) return;
+
+  check("кнопка подписана как отправка на сервер", /Отправить заявку/.test(takeForm.textContent), takeForm.querySelector("button")?.textContent);
+  check("пометка о том, что заявка сохраняется на сервере", /кабинете специалиста/.test(takeForm.textContent));
+
+  setValue(takeForm.querySelector("#lead-name"), "Мария");
+  setValue(takeForm.querySelector("#lead-contact"), "@maria_test");
+  const consent = takeForm.querySelector('input[type="checkbox"]');
+  if (consent && !consent.checked) consent.click();
+  const question = takeForm.querySelector("textarea");
+  if (question) setValue(question, "Хочу разбор по деньгам");
+
+  takeForm.querySelector('button[type="submit"]').click();
+  await wait(500);
+
+  check("запрос ушёл на api/lead.php", posted?.url === "api/lead.php", String(posted?.url));
+  if (posted) {
+    const body = posted.body;
+    check("в теле есть имя и контакт", body.name === "Мария" && body.contact === "@maria_test", JSON.stringify({ name: body.name, contact: body.contact }));
+    check("направление matrix", body.direction === "matrix", String(body.direction));
+    check("расчёт приложен к заявке", (body.calc || "").length > 50, String((body.calc || "").length));
+    check("дата рождения приложена", body.birth === "1992-06-23", String(body.birth));
+    check("согласие передано", body.consent === true, String(body.consent));
+    check("honeypot пустой", body.trap === "", JSON.stringify(body.trap));
+    check("в теле нет лишних полей", Object.keys(body).length === 10, Object.keys(body).join(","));
+  }
+
+  const text = doc.body.textContent;
+  check("показан экран «Заявка принята»", /Заявка принята/.test(text));
+  check("на экране номер заявки", /AP-2026-007/.test(text));
+  check("нет ложного текста о сообщении в Telegram", !/Открыть Telegram/.test(text));
+}
+
+run()
+  .then(() => {
+    console.log(`\nИтого: ${pass} ok, ${fail} fail`);
+    process.exit(fail === 0 ? 0 : 1);
+  })
+  .catch((e) => {
+    console.error("ERR", e);
+    process.exit(1);
+  });

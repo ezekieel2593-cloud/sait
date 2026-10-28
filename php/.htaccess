@@ -1,0 +1,4 @@
+# Каталог PHP-файлов не должен отдаваться как статика.
+<FilesMatch "\.(md|json|log|lock|tmp)$">
+  Require all denied
+</FilesMatch>

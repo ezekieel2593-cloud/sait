@@ -16,9 +16,17 @@ import { DEFAULT_CONFIG } from "../src-static/config.ts";
 
 const root = process.cwd();
 const releaseDir = path.join(root, "release");
-const out = path.join(releaseDir, "static");
+const outName = (process.env.STATIC_OUT || "static").replace(/[^a-z0-9-]/gi, "");
+const out = path.join(releaseDir, outName);
 const version = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8")).version as string;
 const log = (message: string) => console.log(`· ${message}`);
+
+/**
+ * STATIC_API_ENABLED=1 — пакет для PHP-хостинга (SpaceWeb и аналоги): форма шлёт POST
+ * на api/lead.php, заявки попадают в кабинет. По умолчанию версия без сервера.
+ */
+const apiEnabled = process.env.STATIC_API_ENABLED === "1";
+const apiBase = (process.env.STATIC_API_BASE || "api").replace(/\/$/, "");
 
 fs.rmSync(out, { recursive: true, force: true });
 fs.mkdirSync(out, { recursive: true });
@@ -307,8 +315,15 @@ window.ASTRA_CONFIG = {
 
   legal: {
     privacyUpdatedAt: ${JSON.stringify(DEFAULT_CONFIG.legal.privacyUpdatedAt)},
-    dataRetentionDays: ${DEFAULT_CONFIG.legal.dataRetentionDays},
+    dataRetentionDays: ${JSON.stringify(DEFAULT_CONFIG.legal.dataRetentionDays)},
     responsiblePerson: ${JSON.stringify(DEFAULT_CONFIG.legal.responsiblePerson)},
+  },
+
+  // Приём заявок на сервере (PHP). true — форма отправляет запрос на api/lead.php,
+  // заявка сохраняется в кабинете. false — форма формирует сообщение, которое вы отправляете сами.
+  api: {
+    enabled: ${apiEnabled},
+    base: ${JSON.stringify(apiBase)},
   },
 
   // Отзывы: добавляйте только настоящие. Пустой список — блок не показывается.
@@ -409,9 +424,13 @@ fs.writeFileSync(
 
 /* -------------------------------- Архив -------------------------------- */
 
-const zipPath = path.join(releaseDir, `astra-pearl-static.zip`);
-fs.rmSync(zipPath, { force: true });
-execFileSync("zip", ["-qr", zipPath, "."], { cwd: out });
+if (process.env.STATIC_NO_ZIP === "1") {
+  log(`готово: release/${outName} (архив не создаётся)`);
+} else {
+  const zipPath = path.join(releaseDir, `astra-pearl-${outName}.zip`);
+  fs.rmSync(zipPath, { force: true });
+  execFileSync("zip", ["-qr", zipPath, "."], { cwd: out });
 
-const sizeMb = (fs.statSync(zipPath).size / 1024 / 1024).toFixed(1);
-log(`готово: release/astra-pearl-static.zip (${sizeMb} МБ, разворачивать содержимое в корень сайта)`);
+  const sizeMb = (fs.statSync(zipPath).size / 1024 / 1024).toFixed(1);
+  log(`готово: release/astra-pearl-${outName}.zip (${sizeMb} МБ, разворачивать содержимое в корень сайта)`);
+}

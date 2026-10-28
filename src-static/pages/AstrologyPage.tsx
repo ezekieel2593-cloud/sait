@@ -369,7 +369,12 @@ function AstroResult({ result }: { result: { chart: NatalChart; label: string } 
         </section>
       ) : null}
 
-      <LeadForm direction="astrology" summary={summary} />
+      <LeadForm
+        direction="astrology"
+        summary={summary}
+        birth={`${chart.birth.date}${chart.birth.time ? `, ${chart.birth.time}` : ""}${chart.birth.timeAccuracy === "unknown" ? " (время неизвестно)" : chart.birth.timeAccuracy === "approx" ? " (примерно)" : ""}`}
+        place={chart.birth.placeName || label}
+      />
     </div>
   );
 }

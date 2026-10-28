@@ -15,10 +15,15 @@ import { DocumentIcon, ShieldIcon } from "./icons-extra";
 export function LeadForm({
   direction,
   summary,
+  birth = "",
+  place = "",
   compact = false,
 }: {
   direction: Direction;
   summary: string;
+  /** Строка с данными рождения: «1992-06-23, 14:30 · Москва». */
+  birth?: string;
+  place?: string;
   compact?: boolean;
 }) {
   const config = getConfig();
@@ -32,13 +37,18 @@ export function LeadForm({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [message, setMessage] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [saved, setSaved] = useState<{ reference: string; delivered: string[] } | null>(null);
+
+  const apiEnabled = Boolean(config.api?.enabled);
+  const apiUrl = `${config.api?.base || "api"}/lead.php`;
 
   const update = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) => {
     setForm((current) => ({ ...current, [key]: value }));
     setErrors((current) => ({ ...current, [key]: "" }));
   };
 
-  const submit = (event: React.FormEvent) => {
+  const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     const next: Record<string, string> = {};
     if (form.name.trim().length < 2) next.name = "Укажите имя или обращение";
@@ -47,6 +57,47 @@ export function LeadForm({
     if (!form.consent) next.consent = "Нужно согласие на обработку данных";
     if (Object.keys(next).length > 0) {
       setErrors(next);
+      return;
+    }
+
+    if (apiEnabled) {
+      setSending(true);
+      try {
+        const response = await fetch(apiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: form.name.trim(),
+            direction,
+            channel: form.channel,
+            contact: form.contact.trim(),
+            question: form.question.trim(),
+            consent: true,
+            calc: summary,
+            birth,
+            place,
+            trap: "",
+          }),
+        });
+        const data = (await response.json().catch(() => ({}))) as {
+          ok?: boolean;
+          reference?: string;
+          delivered?: string[];
+          error?: string;
+          fields?: Record<string, string>;
+        };
+        if (!response.ok || !data.ok || !data.reference) {
+          setErrors(data.fields ?? {});
+          setErrors((current) => ({ ...current, form: data.error ?? "Не удалось отправить заявку" }));
+          setSending(false);
+          return;
+        }
+        setSaved({ reference: data.reference, delivered: data.delivered ?? [] });
+      } catch {
+        setErrors({ form: "Сеть недоступна. Попробуйте отправить заявку ещё раз." });
+      } finally {
+        setSending(false);
+      }
       return;
     }
 
@@ -84,6 +135,30 @@ export function LeadForm({
 
   const tg = message ? telegramLink(config, message) : null;
   const mail = message ? mailtoLink(config, message, "Заявка на полный разбор") : null;
+
+  if (saved) {
+    return (
+      <div className="card animate-in" role="status" aria-live="polite">
+        <span className="grid h-12 w-12 place-items-center rounded-full border border-[rgba(184,221,224,0.9)] bg-[rgba(244,251,251,0.95)] text-[var(--turquoise-deep)]">
+          <CheckIcon className="h-6 w-6" />
+        </span>
+        <h2 className="mt-4 font-[family-name:var(--font-display)] text-[1.55rem] text-[var(--ocean)]">Заявка принята</h2>
+        <p className="mt-2 text-[0.92rem] leading-relaxed text-[var(--ink)]">
+          Номер вашей заявки — <strong className="text-[var(--ocean)]">{saved.reference}</strong>. Она уже в кабинете
+          специалиста, ответ придёт в выбранный вами канал связи.
+        </p>
+        {saved.delivered.length === 0 ? (
+          <p className="note note--info mt-3 text-[0.84rem]">
+            Специалист увидит заявку в кабинете; уведомления на почту и в мессенджер настраиваются владельцем сайта.
+          </p>
+        ) : null}
+        <p className="mt-3 text-[0.82rem] text-[var(--ink-soft)]">
+          Сохраните номер: по нему проще найти переписку. Данные хранятся не дольше{" "}
+          {config.legal.dataRetentionDays} дней и удаляются по запросу.
+        </p>
+      </div>
+    );
+  }
 
   if (message) {
     return (
@@ -205,6 +280,13 @@ export function LeadForm({
         {errors.contact ? <p className="field__error">{errors.contact}</p> : null}
       </div>
 
+      {errors.form ? (
+        <div className="note note--warn" role="alert">
+          <ShieldIcon className="mt-0.5 h-4 w-4 shrink-0" />
+          <p>{errors.form}</p>
+        </div>
+      ) : null}
+
       <div className="field">
         <label htmlFor="lead-question">Вопрос или тема разбора</label>
         <textarea
@@ -236,16 +318,26 @@ export function LeadForm({
       </label>
       {errors.consent ? <p className="field__error">{errors.consent}</p> : null}
 
-      <div className="note note--info">
-        <ShieldIcon className="mt-0.5 h-4 w-4 shrink-0" />
-        <p>
-          Эта версия сайта работает без сервера: заявка не сохраняется в базе, а формируется как сообщение, которое вы
-          отправляете сами. Данные не покидают устройство, пока вы не нажмёте «Открыть Telegram» или «Написать на почту».
-        </p>
-      </div>
+      {apiEnabled ? (
+        <div className="note note--info">
+          <ShieldIcon className="mt-0.5 h-4 w-4 shrink-0" />
+          <p>
+            Заявка сохраняется на сервере сайта и сразу появляется в кабинете специалиста. Данные используются только
+            для подготовки ответа. Нажимая кнопку, вы подтверждаете согласие на обработку персональных данных.
+          </p>
+        </div>
+      ) : (
+        <div className="note note--info">
+          <ShieldIcon className="mt-0.5 h-4 w-4 shrink-0" />
+          <p>
+            Эта версия сайта работает без сервера: заявка не сохраняется в базе, а формируется как сообщение, которое вы
+            отправляете сами. Данные не покидают устройство, пока вы не нажмёте «Открыть Telegram» или «Написать на почту».
+          </p>
+        </div>
+      )}
 
-      <button type="submit" className="btn btn--primary btn--lg btn--block">
-        Сформировать заявку
+      <button type="submit" className="btn btn--primary btn--lg btn--block" disabled={sending} data-state={sending ? "loading" : undefined}>
+        {sending ? "Отправляем" : apiEnabled ? "Отправить заявку" : "Сформировать заявку"}
       </button>
     </form>
   );

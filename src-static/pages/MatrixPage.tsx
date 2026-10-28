@@ -185,7 +185,7 @@ function MatrixResult({ result }: { result: { chart: MatrixChart; date: string }
         </section>
       ) : null}
 
-      <LeadForm direction="matrix" summary={summary} />
+      <LeadForm direction="matrix" summary={summary} birth={date} />
     </div>
   );
 }
