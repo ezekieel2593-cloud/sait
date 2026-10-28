@@ -23,7 +23,10 @@ PHP_VERSION=8.0 node tools/php-checks/api-cabinet.cjs
 # 2. Форма в собранном PHP-пакете (17 проверок, jsdom)
 npm run build:php && node tools/php-checks/form-api.cjs
 
-# 3. Статическая версия без сервера (9 проверок, jsdom)
+# 3. Диагностическая страница check.php (15 проверок)
+node tools/php-checks/check-page.cjs
+
+# 4. Статическая версия без сервера (9 проверок, jsdom)
 npm run build:static && node tools/php-checks/static-noserver.cjs
 ```
 

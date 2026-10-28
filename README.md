@@ -122,6 +122,8 @@ npm run package:release     # release/astra-pearl-<версия>.zip (≈14 МБ
 
 Проверки без хостинга: `node tools/php-checks/api-cabinet.cjs` (68 проверок в php-wasm на PHP 8.0–8.5),
 `node tools/php-checks/form-api.cjs` и `node tools/php-checks/static-noserver.cjs` (jsdom).
+Диагностика установки на хостинге — страница `check.php` в архиве
+(проверка: `node tools/php-checks/check-page.cjs`, 15 проверок).
 
 ### Статическая версия (просто залить по FTP)
 
