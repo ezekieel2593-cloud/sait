@@ -113,6 +113,10 @@ npm run package:release     # release/astra-pearl-<версия>.zip (≈14 МБ
 
 ### Версия для PHP-хостинга (SpaceWeb, Beget, Timeweb)
 
+> **Не заливайте на хостинг ZIP репозитория** (кнопка «Code → Download ZIP» на GitHub):
+> там исходный код. Для сайта нужен один файл — [`download/astra-pearl-php.zip`](download/astra-pearl-php.zip)
+> (≈0,5 МБ). Памятка: [download/START-HERE.txt](download/START-HERE.txt).
+
 Содержимое `release/php` (архив `download/astra-pearl-php.zip`) заливается в `public_html`.
 Нужен только PHP 8.x и Apache: Node.js, Composer и MySQL не требуются.
 Заявки сохраняются в файле на сервере, уведомления уходят в Telegram и на почту,

@@ -1,5 +1,11 @@
 # Готовые архивы
 
+> **Если вы пришли с GitHub.** Нажимать «Download ZIP» на странице репозитория и заливать
+> этот архив на хостинг — не нужно: там исходный код (`src`, `tests`, `scripts`, `package.json`).
+> Для сайта на SpaceWeb нужен **один файл из этой папки — `astra-pearl-php.zip`**.
+> Краткая памятка: [START-HERE.txt](START-HERE.txt).
+> Подробная инструкция по заливке: [../docs/UPLOAD-SPACEWEB.md](../docs/UPLOAD-SPACEWEB.md).
+
 Собираются командами `npm run build:static`, `npm run build:php` и `npm run package:release`.
 
 | Файл | Для чего |
