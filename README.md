@@ -116,10 +116,11 @@ npm run package:release     # release/astra-pearl-<версия>.zip (≈14 МБ
 Содержимое `release/php` (архив `download/astra-pearl-php.zip`) заливается в `public_html`.
 Нужен только PHP 8.x и Apache: Node.js, Composer и MySQL не требуются.
 Заявки сохраняются в файле на сервере, уведомления уходят в Telegram и на почту,
-кабинет специалиста работает по паролю. Пошаговая установка —
-[docs/HOSTING-PHP.md](docs/HOSTING-PHP.md), краткая инструкция лежит в архиве (`README.txt`).
+кабинет специалиста работает по паролю. Пошаговая установка «как залить» —
+[docs/UPLOAD-SPACEWEB.md](docs/UPLOAD-SPACEWEB.md), техническое описание —
+[docs/HOSTING-PHP.md](docs/HOSTING-PHP.md), краткая памятка лежит в архиве (`README.txt`).
 
-Проверки без хостинга: `node tools/php-checks/api-cabinet.cjs` (66 проверок в php-wasm на PHP 8.0–8.5),
+Проверки без хостинга: `node tools/php-checks/api-cabinet.cjs` (68 проверок в php-wasm на PHP 8.0–8.5),
 `node tools/php-checks/form-api.cjs` и `node tools/php-checks/static-noserver.cjs` (jsdom).
 
 ### Статическая версия (просто залить по FTP)

@@ -71,6 +71,11 @@ $queryBase = function (array $patch) use ($search, $status, $direction, $sort, $
 
 cabinet_head('Заявки');
 ?>
+<?php if (!is_https()): ?>
+  <div class="msg warn">Сайт открыт по <strong>http</strong>: пароль и заявки передаются без шифрования.
+    Выпустите бесплатный SSL-сертификат в панели хостинга, а затем включите редирект на https
+    в файле <code>.htaccess</code> (подробности — в инструкции).</div>
+<?php endif; ?>
 <?php if (!data_writable()): ?>
   <div class="msg warn">Заявки сейчас не сохраняются: у PHP нет прав на запись в папку <code>data/</code>.
     Поставьте права 775 в файловом менеджере хостинга.</div>

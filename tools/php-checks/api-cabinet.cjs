@@ -480,6 +480,11 @@ echo "loaded:$n";
   check("при ошибке записи API отдаёт 500 и не выдаёт номер", readOnly.status === 500 && !readOnly.json?.reference, `${readOnly.status} ${JSON.stringify(readOnly.json).slice(0, 200)}`);
   check("в ошибке нет путей сервера", !/\/app\/|Warning|Fatal/.test(readOnly.payload), readOnly.payload.slice(0, 160));
 
+  const cabinetHttp = await request(php, { script: "/cabinet/index.php", owner, server: { HTTPS: "off" } });
+  check("по http кабинет предупреждает о незашифрованном соединении", /http/.test(cabinetHttp.payload) && /SSL/i.test(cabinetHttp.payload), cabinetHttp.payload.slice(0, 200));
+  const cabinetHttps = await request(php, { script: "/cabinet/index.php", owner });
+  check("по https предупреждения нет", !/без шифрования/.test(cabinetHttps.payload));
+
   const cabinetRo = await request(php, { script: "/cabinet/index.php", owner });
   check("кабинет предупреждает, что заявки не сохраняются", /не сохраняются/.test(cabinetRo.payload), cabinetRo.payload.slice(0, 200));
   try {
