@@ -1,4 +1,4 @@
-import { ELEMENT_LABELS, MODALITY_LABELS, PLANETS, SIGNS } from "../astronomy/constants";
+import { ELEMENT_LABELS, MODALITY_LABELS, PLANETS, SIGNS, signInSign } from "../astronomy/constants";
 import type { NatalChart, PlanetPosition } from "../astronomy/engine";
 import { getEntry, getSignEntry } from "../knowledge/queries";
 import type { Interpretation, InterpretationSection } from "./types";
@@ -201,7 +201,9 @@ export function buildAstrologyInterpretation(
 
   return {
     direction: "astrology",
-    headline: `Солнце в ${sun.sign}, Луна в ${moon.sign}${chart.ascendant ? `, асцендент в ${chart.ascendant.sign}` : ""}`,
+    headline: `Солнце в ${signInSign(sun.sign)}, Луна в ${signInSign(moon.sign)}${
+      chart.ascendant ? `, асцендент в ${signInSign(chart.ascendant.sign)}` : ""
+    }`,
     lead: [
       sunEntry ? `Ваша базовая энергия — ${sunEntry.details.love ?? sunEntry.summary}` : "",
       moonEntry ? `Эмоционально важно: ${moonEntry.details.growth ?? moonEntry.summary}` : "",

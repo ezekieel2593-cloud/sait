@@ -128,3 +128,23 @@ export function formatDegree(longitude: number): string {
   const safeMinutes = minutes === 60 ? 0 : minutes;
   return `${safeDegrees}° ${String(safeMinutes).padStart(2, "0")}′ ${sign.name}`;
 }
+
+/** Названия знаков в предложном падеже: «Солнце в Козероге». */
+export const SIGN_PREPOSITIONAL: Record<string, string> = {
+  "Овен": "Овне",
+  "Телец": "Тельце",
+  "Близнецы": "Близнецах",
+  "Рак": "Раке",
+  "Лев": "Льве",
+  "Дева": "Деве",
+  "Весы": "Весах",
+  "Скорпион": "Скорпионе",
+  "Стрелец": "Стрельце",
+  "Козерог": "Козероге",
+  "Водолей": "Водолее",
+  "Рыбы": "Рыбах",
+};
+
+export function signInSign(name: string): string {
+  return SIGN_PREPOSITIONAL[name] ?? name;
+}

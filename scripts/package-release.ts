@@ -46,6 +46,28 @@ if (!fs.existsSync(path.join(standalone, "server.js"))) {
 }
 
 fs.cpSync(standalone, stage, { recursive: true });
+
+/**
+ * Облегчаем архив: оставляем только тот бинарный образ sharp, который нужен
+ * на Linux x64 (glibc). Приложение не использует next/image, поэтому
+ * дополнительных сборок (musl, wasm, macOS, Windows) в поставке не требуется.
+ */
+const prune = [
+  "node_modules/@img/sharp-wasm32",
+  "node_modules/@img/sharp-linuxmusl-x64",
+  "node_modules/@img/sharp-libvips-linuxmusl-x64",
+  "node_modules/@img/sharp-darwin-arm64",
+  "node_modules/@img/sharp-darwin-x64",
+  "node_modules/@img/sharp-win32-x64",
+  "node_modules/@img/sharp-win32-ia32",
+  "node_modules/@img/sharp-libvips-darwin-arm64",
+  "node_modules/@img/sharp-libvips-darwin-x64",
+  "node_modules/@img/sharp-libvips-win32-x64",
+];
+for (const target of prune) {
+  fs.rmSync(path.join(stage, target), { recursive: true, force: true });
+}
+log("лишние бинарные зависимости удалены");
 const staticSource = path.join(root, ".next", "static");
 if (fs.existsSync(staticSource)) fs.cpSync(staticSource, path.join(stage, ".next", "static"), { recursive: true });
 if (fs.existsSync(path.join(root, "public"))) fs.cpSync(path.join(root, "public"), path.join(stage, "public"), { recursive: true });
