@@ -9,3 +9,24 @@ Thumbs.db
 *.log
 node_modules/
 .cache/
+
+# Next.js
+.next/
+out/
+next-env.d.ts
+tsconfig.tsbuildinfo
+
+# App data
+data/*.db
+data/*.db-journal
+data/*.db-wal
+data/*.db-shm
+public/uploads/
+
+# Env
+.env
+.env.local
+.env*.local
+
+# Tests
+coverage/

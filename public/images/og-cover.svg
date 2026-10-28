@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F6F0EC"/>
+      <stop offset="0.55" stop-color="#FBF7F4"/>
+      <stop offset="1" stop-color="#EDE4E1"/>
+    </linearGradient>
+    <radialGradient id="turq" cx="0.18" cy="0.12" r="0.7">
+      <stop offset="0" stop-color="#B8DDE0" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#B8DDE0" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="lilac" cx="0.86" cy="0.1" r="0.6">
+      <stop offset="0" stop-color="#DCC5D9" stop-opacity="0.8"/>
+      <stop offset="1" stop-color="#DCC5D9" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="pearl" cx="0.35" cy="0.3" r="0.75">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.55" stop-color="#FAF6F4"/>
+      <stop offset="1" stop-color="#DCD5D5"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#E0C9A6"/>
+      <stop offset="0.5" stop-color="#C9A777"/>
+      <stop offset="1" stop-color="#B8935F"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#turq)"/>
+  <rect width="1200" height="630" fill="url(#lilac)"/>
+  <g opacity="0.55" fill="none" stroke="url(#gold)">
+    <circle cx="960" cy="330" r="230"/>
+    <circle cx="960" cy="330" r="170" stroke-dasharray="2 8"/>
+    <circle cx="960" cy="330" r="110"/>
+  </g>
+  <circle cx="960" cy="330" r="86" fill="url(#pearl)" stroke="url(#gold)" stroke-width="1.5"/>
+  <circle cx="742" cy="150" r="26" fill="url(#pearl)" stroke="#C9A777" stroke-opacity="0.5"/>
+  <circle cx="1104" cy="500" r="18" fill="url(#pearl)" stroke="#C9A777" stroke-opacity="0.5"/>
+  <text x="80" y="238" font-family="Georgia, 'Times New Roman', serif" font-size="30" fill="#6FA8AE" letter-spacing="6">ASTRA PEARL</text>
+  <text x="80" y="330" font-family="Georgia, 'Times New Roman', serif" font-size="66" fill="#253D4B">Натальная карта</text>
+  <text x="80" y="404" font-family="Georgia, 'Times New Roman', serif" font-size="66" fill="#253D4B" font-style="italic">и Матрица судьбы</text>
+  <path d="M80 448h120" stroke="url(#gold)" stroke-width="1.5"/>
+  <text x="80" y="500" font-family="Segoe UI, Arial, sans-serif" font-size="24" fill="#665C60">Реальные расчёты · персональные расшифровки · консультация</text>
+</svg>
