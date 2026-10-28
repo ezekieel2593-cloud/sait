@@ -76,6 +76,7 @@ npm run create-specialist -- --email a@b.c --reset-password
 npm run maintenance                 # обезличить старые заявки, почистить лимиты и сессии
 npm test                            # vitest: расчёты, валидация, заявки, API
 npm run build && npm start          # production-сборка
+npm run package:release             # архив для хостинга в release/
 npx tsc --noEmit                    # проверка типов
 ```
 
@@ -90,6 +91,28 @@ npx tsc --noEmit                    # проверка типов
 Методики, параметры и ограничения описаны в [docs/METHODOLOGY.md](docs/METHODOLOGY.md).
 Разбор не является медицинской, юридической или финансовой рекомендацией и не заменяет
 консультацию специалиста.
+
+## Архив для хостинга
+
+```bash
+npm run package:release
+```
+
+Скрипт собирает `release/astra-pearl-<версия>.zip` (и `.tar.gz`) с готовой
+standalone-сборкой, заполненной базой, `.env.example` и утилитами на чистом Node:
+
+| В архиве | Назначение |
+| --- | --- |
+| `server.js`, `.next/`, `node_modules/` | готовое приложение (сборка на сервере не нужна) |
+| `data/app.db` | база: услуги, база знаний, настройки по умолчанию |
+| `tools/init-db.mjs` | создание/обновление схемы и справочников |
+| `tools/create-specialist.mjs` | создание аккаунта, смена пароля, список аккаунтов |
+| `tools/maintenance.mjs` | плановая чистка: обезличивание старых заявок, сессии, лимиты |
+| `start.sh` | запуск с чтением `.env` |
+| `HOSTING.md`, `docs/` | инструкция по заливке и документация |
+
+Требования хостинга: Node.js 22.5+, постоянный диск, HTTPS. Инструкция внутри архива —
+`HOSTING.md`.
 
 ## Структура проекта
 

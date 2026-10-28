@@ -30,3 +30,6 @@ public/uploads/
 
 # Tests
 coverage/
+
+# Готовые архивы для хостинга (собираются npm run package:release)
+release/

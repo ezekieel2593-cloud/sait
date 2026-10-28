@@ -7,6 +7,29 @@
 - HTTPS в production (обязательно: cookie сессии ставится с `Secure`).
 - Обратный прокси (nginx, Caddy, Cloudflare) или платформа с автоматическим TLS.
 
+## Вариант А. Готовый архив (без сборки на сервере)
+
+```bash
+npm run package:release      # на машине разработчика
+# получаем release/astra-pearl-<версия>.zip
+```
+
+На сервере (Node.js 22.5+):
+
+```bash
+unzip astra-pearl-<версия>.zip -d /srv/astra-pearl
+cd /srv/astra-pearl
+cp .env.example .env         # AUTH_SECRET, NEXT_PUBLIC_SITE_URL, DATABASE_PATH
+node tools/create-specialist.mjs --email owner@example.com --name "Имя" --password 'длинный-пароль'
+./start.sh                   # PORT по умолчанию 3000
+```
+
+В архиве уже есть собранное приложение, заполненная база (услуги и база знаний),
+утилиты `init-db.mjs`, `create-specialist.mjs`, `maintenance.mjs` и `start.sh`.
+Дальше — разделы 4–9 (обслуживание, бэкапы, прокси, проверка, безопасность).
+
+## Вариант Б. Сборка из исходников
+
 ## 1. Подготовка окружения
 
 ```bash

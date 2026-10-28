@@ -12,7 +12,7 @@ import path from "node:path";
  * репозитории и не знает, какая СУБД используется.
  */
 
-const SCHEMA = `
+export const SCHEMA = `
 PRAGMA journal_mode = WAL;
 PRAGMA foreign_keys = ON;
 

@@ -1,9 +1,27 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // standalone-сборка: готовый к загрузке на хостинг каталог (node server.js)
+  output: "standalone",
   poweredByHeader: false,
   reactStrictMode: true,
   images: { formats: ["image/avif", "image/webp"] },
+  // В standalone-сборку не нужны исходники, тесты и скрипты: они нужны только при разработке.
+  outputFileTracingExcludes: {
+    "*": [
+      "./src/**",
+      "./scripts/**",
+      "./tests/**",
+      "./docs/**",
+      "./release/**",
+      "./data/**",
+      "./tsconfig.json",
+      "./tsconfig.tsbuildinfo",
+      "./vitest.config.ts",
+      "./README.md",
+      "./.env*",
+    ],
+  },
   async headers() {
     const securityHeaders = [
       { key: "X-Content-Type-Options", value: "nosniff" },
