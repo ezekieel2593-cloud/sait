@@ -93,6 +93,20 @@ async function run() {
   const text = doc.body.textContent;
   check("показан экран «Заявка готова к отправке»", /Заявка готова к отправке/.test(text), text.slice(-300));
   check("текст заявки сформирован из расчёта", text.includes("Матрица судьбы") || text.includes("Центр"));
+
+  // В версии без сервера политика должна честно говорить, что данные не хранятся в базе.
+  const privacyDom = new JSDOM(fs.readFileSync(path.join(dir, "privacy.html"), "utf8"), {
+    url: "https://example.com/privacy.html",
+    runScripts: "dangerously",
+    pretendToBeVisual: true,
+  });
+  for (const script of privacyDom.window.document.querySelectorAll("script[src]")) {
+    const src = script.getAttribute("src").replace(/^\//, "");
+    privacyDom.window.eval(fs.readFileSync(path.join(dir, src), "utf8"));
+  }
+  await wait(400);
+  const privacyText = privacyDom.window.document.body.textContent;
+  check("политика описывает версию без сервера", /формируется как текст сообщения/.test(privacyText));
 }
 
 run()

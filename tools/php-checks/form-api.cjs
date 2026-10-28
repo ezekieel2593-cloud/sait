@@ -120,6 +120,22 @@ async function run() {
   check("показан экран «Заявка принята»", /Заявка принята/.test(text));
   check("на экране номер заявки", /AP-2026-007/.test(text));
   check("нет ложного текста о сообщении в Telegram", !/Открыть Telegram/.test(text));
+
+  // Политика конфиденциальности должна описывать реальное поведение: хранение на сервере.
+  const privacyDom = new JSDOM(fs.readFileSync(path.join(dir, "privacy.html"), "utf8"), {
+    url: "https://astra-test.ru/privacy.html",
+    runScripts: "dangerously",
+    pretendToBeVisual: true,
+  });
+  for (const script of privacyDom.window.document.querySelectorAll("script[src]")) {
+    const src = script.getAttribute("src").replace(/^\//, "");
+    privacyDom.window.eval(fs.readFileSync(path.join(dir, src), "utf8"));
+  }
+  await wait(400);
+  const privacyText = privacyDom.window.document.body.textContent;
+  check("политика говорит о хранении заявок на сервере", /сохраняется на сервере сайта/.test(privacyText));
+  check("политика упоминает хеш IP вместо адреса", /хеш/.test(privacyText));
+  check("политика не обещает «данные не хранятся»", !/данные не отправляются и не хранятся/.test(privacyText));
 }
 
 run()

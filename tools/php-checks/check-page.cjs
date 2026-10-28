@@ -56,7 +56,7 @@ const source = fs.readFileSync(path.join(repoRoot, "php/check.php"), "utf8");
 @mkdir('/app', 0777, true);
 file_put_contents('/app/check.php', base64_decode('${b64}'));
 @mkdir('/app/data', 0777, true);
-foreach (['index.html','app.js','styles.css','api/lead.php','cabinet/index.php','inc/bootstrap.php'] as $file) {
+foreach (['index.html','app.js','styles.css','api/lead.php','cabinet/index.php','cabinet/.htaccess','inc/bootstrap.php','check.php'] as $file) {
     @mkdir('/app/' . dirname($file), 0777, true);
     @touch('/app/' . $file);
 }
@@ -72,7 +72,7 @@ foreach (['index.html','app.js','styles.css','api/lead.php','cabinet/index.php',
   check("показана версия PHP", /Версия PHP/.test(body) && /8\./.test(body));
   check("версия PHP признана подходящей", !/НУЖНА 8\.0/.test(body));
   check("проверяются обязательные расширения", /Обязательные расширения/.test(body));
-  check("проверяется наличие файлов сайта", /Файлы сайта/.test(body));
+  check("проверяется наличие файлов сайта", /Файлы сайта/.test(body) && /все на месте/.test(body));
   check("проверяются права на data/", /Папка data/.test(body));
   check("без config.php предлагается скачать архив заново", /config\.php/.test(body) && /не найден/.test(body));
   check("показывается количество заявок", /Заявок в базе/.test(body));

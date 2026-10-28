@@ -63,6 +63,20 @@ fs.writeFileSync(
 `
 );
 
+// Кабинет: адрес /cabinet/ должен открывать вход, а не отдавать 403.
+fs.writeFileSync(
+  path.join(out, "cabinet", ".htaccess"),
+  `# Кабинет: /cabinet/ открывает вход, а не список файлов.
+DirectoryIndex index.php
+
+# Страницы кабинета не индексируются и не кэшируются браузером.
+<IfModule mod_headers.c>
+  Header always set X-Robots-Tag "noindex, nofollow, noarchive"
+  Header always set Cache-Control "no-store, max-age=0"
+</IfModule>
+`
+);
+
 /* ------------------------- 3. config.php (готовый) ------------------------ */
 
 log("config.php с новым salt");
@@ -96,7 +110,8 @@ fs.writeFileSync(
 # </IfModule>
 
 Options -Indexes
-DirectoryIndex index.html
+# index.html — публичные страницы, index.php — кабинет (папка cabinet/)
+DirectoryIndex index.html index.php
 
 ErrorDocument 404 /404.html
 # При фатальной ошибке PHP (например, на хостинге включён PHP 7.x) покажем

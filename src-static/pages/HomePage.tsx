@@ -152,7 +152,9 @@ export function HomePage() {
         <div className="container container--measure">
           <h2 className="h-section">Остались вопросы — напишите</h2>
           <p className="mt-2 text-[0.92rem] text-[var(--ink-soft)]">
-            Заявка формируется как сообщение: вы сами отправляете его в Telegram или письмом.
+            {config.api?.enabled
+              ? "Заявка сохраняется на сервере и сразу появляется в кабинете специалиста — ответ придёт в выбранный канал связи."
+              : "Заявка формируется как сообщение: вы сами отправляете его в Telegram или письмом."}
           </p>
           <div className="mt-4">
             <LeadForm direction="astrology" summary="Заявка с главной страницы (без расчёта)" compact />

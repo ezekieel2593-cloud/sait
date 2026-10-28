@@ -54,7 +54,7 @@ if (is_file($leadsFile)) {
         }
     }
 }
-$installFiles = array('index.html', 'app.js', 'styles.css', 'api/lead.php', 'cabinet/index.php', 'inc/bootstrap.php', '.htaccess');
+$installFiles = array('index.html', 'app.js', 'styles.css', 'api/lead.php', 'cabinet/index.php', 'cabinet/.htaccess', 'inc/bootstrap.php', '.htaccess', 'check.php');
 $missingFiles = array();
 foreach ($installFiles as $file) {
     if (!file_exists($root . '/' . $file)) {
