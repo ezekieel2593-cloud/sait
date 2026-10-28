@@ -17,7 +17,7 @@ npm run package:release      # на машине разработчика
 На сервере (Node.js 22.5+):
 
 ```bash
-unzip astra-pearl-<версия>.zip -d /srv/astra-pearl
+unzip astra-pearl-<версия>.zip -d /srv      # распакуется в /srv/astra-pearl
 cd /srv/astra-pearl
 cp .env.example .env         # AUTH_SECRET, NEXT_PUBLIC_SITE_URL, DATABASE_PATH
 node tools/create-specialist.mjs --email owner@example.com --name "Имя" --password 'длинный-пароль'

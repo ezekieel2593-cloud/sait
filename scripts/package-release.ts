@@ -164,7 +164,7 @@ fs.writeFileSync(
 ## Быстрый старт (VPS, Node.js)
 
 \`\`\`bash
-unzip astra-pearl-${version}.zip -d /srv/astra-pearl
+unzip astra-pearl-${version}.zip -d /srv     # содержимое появится в /srv/astra-pearl
 cd /srv/astra-pearl
 
 cp .env.example .env
