@@ -43,6 +43,14 @@ cabinet_head('Заявка ' . ($lead['ref'] ?? ''));
   <div class="msg ok">Персональные данные удалены.</div>
 <?php elseif ($flash === 'notified'): ?>
   <div class="msg ok">Запрошена повторная отправка уведомлений.</div>
+<?php elseif ($flash === 'save_failed'): ?>
+  <div class="msg warn">Не удалось сохранить изменения: папка <code>data/</code> недоступна для записи.
+    Поставьте на неё права 775 в файловом менеджере хостинга и повторите.</div>
+<?php endif; ?>
+
+<?php if (!data_writable()): ?>
+  <div class="msg warn">Заявки сейчас не сохраняются: у PHP нет прав на запись в папку <code>data/</code>.
+    Проверьте права (775) — до этого новые заявки с сайта будут теряться.</div>
 <?php endif; ?>
 
 <div class="grid2">

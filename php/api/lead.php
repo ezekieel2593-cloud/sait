@@ -28,7 +28,14 @@ if (!empty($body['trap'])) {
     json_out(['error' => 'Заявка отклонена'], 422);
 }
 
-$limit = rate_limit('lead:' . ip_hash(), (int) cfg('limits.leadsPerWindow', 5), (int) cfg('limits.windowMinutes', 15));
+try {
+    $limit = rate_limit('lead:' . ip_hash(), (int) cfg('limits.leadsPerWindow', 5), (int) cfg('limits.windowMinutes', 15));
+} catch (Throwable $error) {
+    // Нет прав на data/ или диск недоступен: честно сообщаем, что заявка не сохранена.
+    error_log('astra: лимиты недоступны — ' . $error->getMessage());
+    json_out(['error' => 'Приём заявок временно недоступен. Напишите, пожалуйста, напрямую в мессенджер или на почту.'], 500);
+}
+
 if (!$limit['allowed']) {
     json_out(['error' => 'Заявка уже отправлена. Если нужно связаться снова — напишите на указанную почту.'], 429);
 }

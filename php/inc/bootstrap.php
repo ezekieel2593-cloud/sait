@@ -14,6 +14,52 @@ declare(strict_types=1);
 
 const APP_VERSION = '1.0.0';
 
+/*
+ * Служебные сообщения PHP (warning, notice, deprecated) не должны попадать
+ * в браузер: они ломают JSON-ответ API и раскрывают пути на сервере.
+ * Пишем их в журнал ошибок хостинга. APP_DEBUG=true включает вывод локально.
+ */
+error_reporting(E_ALL);
+ini_set('display_errors', defined('APP_DEBUG') && APP_DEBUG ? '1' : '0');
+ini_set('log_errors', '1');
+
+/**
+ * Непойманная ошибка не должна превращаться в белый экран или в «успешный» ответ.
+ * Для /api/ отдаём JSON, для остальных страниц — короткую понятную страницу.
+ */
+set_exception_handler(static function (Throwable $error): void {
+    error_log('astra: ' . $error->getMessage() . ' в ' . $error->getFile() . ':' . $error->getLine());
+    if (!headers_sent()) {
+        http_response_code(500);
+        header('X-Robots-Tag: noindex, nofollow');
+    }
+    $uri = (string) ($_SERVER['REQUEST_URI'] ?? '');
+    if (strpos($uri, '/api/') !== false) {
+        if (!headers_sent()) {
+            header('Content-Type: application/json; charset=utf-8');
+            header('Cache-Control: no-store');
+        }
+        echo json_encode(
+            ['error' => 'Внутренняя ошибка сервера. Попробуйте отправить ещё раз позже.'],
+            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+        );
+        return;
+    }
+    header('Content-Type: text/html; charset=utf-8');
+    echo '<!doctype html><html lang="ru"><head><meta charset="utf-8">'
+        . '<meta name="viewport" content="width=device-width, initial-scale=1">'
+        . '<meta name="robots" content="noindex"><title>Ошибка сервера</title>'
+        . '<style>body{font:15px/1.55 -apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:#1f2a30;'
+        . 'background:#f5f6f7;margin:0;padding:48px 18px}main{max-width:560px;margin:0 auto;background:#fff;'
+        . 'border:1px solid #dcdfe3;border-radius:12px;padding:22px}h1{font-size:20px;margin:0 0 8px}'
+        . 'p{color:#4a545b;margin:8px 0}a{color:#1f5f6b}</style></head><body><main>'
+        . '<h1>Ошибка сервера</h1>'
+        . '<p>Запрос не выполнен. Данные не сохранены — повторите попытку через минуту.</p>'
+        . '<p>Если ошибка повторяется, проверьте права на папку <code>data/</code> '
+        . 'и версию PHP (нужна 8.0 или новее).</p>'
+        . '<p><a href="/">На главную</a></p></main></body></html>';
+});
+
 define('APP_ROOT', dirname(__DIR__));
 
 /** Загруженная конфигурация сайта и серверных секретов. */
@@ -65,14 +111,26 @@ function cfg(string $path, $default = null)
     return $value;
 }
 
-/** Путь к файлу данных. Файлы с расширением .php закрыты от чтения снаружи. */
-function data_path(string $name): string
+/** Каталог данных. Создаётся при первой записи, права 0775. */
+function data_dir(): string
 {
     $dir = APP_ROOT . '/data';
     if (!is_dir($dir)) {
-        mkdir($dir, 0775, true);
+        @mkdir($dir, 0775, true);
     }
-    return $dir . '/' . $name . '.php';
+    return $dir;
+}
+
+function data_path(string $name): string
+{
+    return data_dir() . '/' . $name . '.php';
+}
+
+/** Можно ли писать в каталог данных: кабинет показывает предупреждение, если нет. */
+function data_writable(): bool
+{
+    $dir = data_dir();
+    return is_dir($dir) && is_writable($dir);
 }
 
 /**
@@ -86,7 +144,7 @@ function data_read(string $name): array
     if (!is_file($path)) {
         return [];
     }
-    $raw = file_get_contents($path);
+    $raw = @file_get_contents($path);
     if ($raw === false) {
         return [];
     }
@@ -95,7 +153,11 @@ function data_read(string $name): array
     return is_array($decoded) ? $decoded : [];
 }
 
-/** Атомарная запись: сначала во временный файл, затем rename. */
+/**
+ * Атомарная запись: сначала во временный файл, затем rename.
+ * Возвращает false, если записать не удалось — вызывающий код обязан
+ * сообщить об ошибке, а не показывать «успешно сохранено».
+ */
 function data_write(string $name, array $payload): bool
 {
     $path = data_path($name);
@@ -104,24 +166,29 @@ function data_write(string $name, array $payload): bool
         return false;
     }
     $tmp = $path . '.' . bin2hex(random_bytes(4)) . '.tmp';
-    if (file_put_contents($tmp, "<?php exit; ?>\n" . $json) === false) {
+    if (@file_put_contents($tmp, "<?php exit; ?>\n" . $json) === false) {
         return false;
     }
     @chmod($tmp, 0664);
-    return rename($tmp, $path);
+    if (!@rename($tmp, $path)) {
+        @unlink($tmp);
+        return false;
+    }
+    return true;
 }
 
 /**
- * Монопольная модификация данных: открываем lock-файл, читаем, меняем, пишем.
- * Возвращает то, что вернул callback.
+ * Монопольная модификация данных: блокировка, чтение, изменение, запись.
+ * Если запись не удалась — исключение: молча «терять» заявку нельзя.
  */
 function data_mutate(string $name, callable $mutator)
 {
-    $lockPath = APP_ROOT . '/data/' . $name . '.lock';
-    if (!is_dir(dirname($lockPath))) {
-        mkdir(dirname($lockPath), 0775, true);
+    $dir = data_dir();
+    if (!is_dir($dir) || !is_writable($dir)) {
+        throw new RuntimeException('Каталог data/ недоступен для записи');
     }
-    $handle = fopen($lockPath, 'c');
+    $lockPath = $dir . '/' . $name . '.lock';
+    $handle = @fopen($lockPath, 'c');
     if ($handle === false) {
         throw new RuntimeException('Не удалось открыть файл блокировки');
     }
@@ -131,7 +198,9 @@ function data_mutate(string $name, callable $mutator)
         }
         $current = data_read($name);
         [$next, $result] = $mutator($current);
-        data_write($name, $next);
+        if (!data_write($name, $next)) {
+            throw new RuntimeException('Не удалось записать данные');
+        }
         return $result;
     } finally {
         flock($handle, LOCK_UN);

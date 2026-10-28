@@ -55,8 +55,17 @@ function http_post_json(string $url, array $payload, array $headers = [], int $t
     ]);
     $response = @file_get_contents($url, false, $context);
     $status = 0;
-    if (isset($http_response_header) && is_array($http_response_header)) {
-        foreach ($http_response_header as $line) {
+    // В PHP 8.5 переменная $http_response_header объявлена устаревшей:
+    // используем новый API, а на старых версиях читаем локальную переменную.
+    if (function_exists('http_get_last_response_headers')) {
+        $lines = http_get_last_response_headers();
+    } else {
+        /** @var array<int, string>|null $responseHeaders */
+        $responseHeaders = $http_response_header ?? null;
+        $lines = is_array($responseHeaders) ? $responseHeaders : null;
+    }
+    if (is_array($lines)) {
+        foreach ($lines as $line) {
             if (preg_match('#^HTTP/\S+\s+(\d{3})#', $line, $m)) {
                 $status = (int) $m[1];
             }

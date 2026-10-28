@@ -71,6 +71,12 @@ $queryBase = function (array $patch) use ($search, $status, $direction, $sort, $
 
 cabinet_head('Заявки');
 ?>
+<?php if (!data_writable()): ?>
+  <div class="msg warn">Заявки сейчас не сохраняются: у PHP нет прав на запись в папку <code>data/</code>.
+    Поставьте права 775 в файловом менеджере хостинга.</div>
+<?php endif; ?>
+<?php
+?>
 <h1>Заявки</h1>
 <p class="muted">Всего: <?= (int) $counters['total'] ?>. Данные видны только вам; страница закрыта от индексации.</p>
 

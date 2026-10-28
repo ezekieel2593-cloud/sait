@@ -33,31 +33,37 @@ if ($lead === null) {
 
 $flash = '';
 
-switch ($action) {
-    case 'status':
-        if (set_lead_status($id, (string) ($_POST['status'] ?? ''), (string) ($_POST['comment'] ?? '')) !== null) {
-            $flash = 'status';
-        }
-        break;
+try {
+    switch ($action) {
+        case 'status':
+            if (set_lead_status($id, (string) ($_POST['status'] ?? ''), (string) ($_POST['comment'] ?? '')) !== null) {
+                $flash = 'status';
+            }
+            break;
 
-    case 'notes':
-        set_lead_notes($id, (string) ($_POST['notes'] ?? ''));
-        $flash = 'notes';
-        break;
+        case 'notes':
+            set_lead_notes($id, (string) ($_POST['notes'] ?? ''));
+            $flash = 'notes';
+            break;
 
-    case 'anonymize':
-        anonymize_lead($id);
-        $flash = 'anonymized';
-        break;
+        case 'anonymize':
+            anonymize_lead($id);
+            $flash = 'anonymized';
+            break;
 
-    case 'notify':
-        $limit = rate_limit('notify:' . $id, 6, 10);
-        if ($limit['allowed']) {
-            $notifications = notify_lead($lead);
-            save_notifications($id, $notifications);
-        }
-        $flash = 'notified';
-        break;
+        case 'notify':
+            $limit = rate_limit('notify:' . $id, 6, 10);
+            if ($limit['allowed']) {
+                $notifications = notify_lead($lead);
+                save_notifications($id, $notifications);
+            }
+            $flash = 'notified';
+            break;
+    }
+} catch (Throwable $error) {
+    // Запись не удалась (права на data/): не показываем «сохранено».
+    error_log('astra: не удалось сохранить изменения — ' . $error->getMessage());
+    $flash = 'save_failed';
 }
 
 header('Location: lead.php?id=' . urlencode($id) . ($flash !== '' ? '&saved=' . $flash : ''), true, 303);

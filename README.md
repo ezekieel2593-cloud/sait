@@ -119,7 +119,7 @@ npm run package:release     # release/astra-pearl-<версия>.zip (≈14 МБ
 кабинет специалиста работает по паролю. Пошаговая установка —
 [docs/HOSTING-PHP.md](docs/HOSTING-PHP.md), краткая инструкция лежит в архиве (`README.txt`).
 
-Проверки без хостинга: `node tools/php-checks/api-cabinet.cjs` (56 проверок в php-wasm),
+Проверки без хостинга: `node tools/php-checks/api-cabinet.cjs` (66 проверок в php-wasm на PHP 8.0–8.5),
 `node tools/php-checks/form-api.cjs` и `node tools/php-checks/static-noserver.cjs` (jsdom).
 
 ### Статическая версия (просто залить по FTP)

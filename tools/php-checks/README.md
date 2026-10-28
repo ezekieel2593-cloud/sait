@@ -14,8 +14,11 @@ npm init -y >/dev/null && npm i php-wasm     # ≈90 МБ, в репозитор
 ## Запуск проверок
 
 ```bash
-# 1. Серверная часть: API заявок, лимиты, кабинет,setup.php (56 проверок)
+# 1. Серверная часть: API заявок, лимиты, кабинет, setup.php (66 проверок)
 node tools/php-checks/api-cabinet.cjs
+
+# на конкретной версии PHP (php-wasm ставит 8.0, 8.1, 8.2, 8.3, 8.4, 8.5):
+PHP_VERSION=8.0 node tools/php-checks/api-cabinet.cjs
 
 # 2. Форма в собранном PHP-пакете (17 проверок, jsdom)
 npm run build:php && node tools/php-checks/form-api.cjs
@@ -31,6 +34,11 @@ PHP_WASM_DIR=/путь/к/папке node tools/php-checks/api-cabinet.cjs
 ```
 
 Код возврата `0` — все проверки прошли, `1` — есть падения.
+Полный прогон по версиям:
+
+```bash
+for v in 8.0 8.1 8.2 8.3 8.4 8.5; do PHP_VERSION=$v node tools/php-checks/api-cabinet.cjs | tail -1; done
+```
 
 ## Что именно проверяется
 
@@ -46,6 +54,8 @@ PHP_WASM_DIR=/путь/к/папке node tools/php-checks/api-cabinet.cjs
 | Обезличивание | удаление имени и контакта, сохранение истории |
 | setup.php | закрыт при заданном пароле, открыт с токеном, отказ на короткий пароль |
 | Защита | `<?php exit; ?>` в файлах данных, хеши IP в лимитах |
+| Без `.htaccess` | `config.php` не отдаёт секретов, `inc/*.php` молчат, GET на API — 405 |
+| Ошибки записи | при недоступной `data/` API отдаёт 500 без номера, кабинет предупреждает, после починки прав заявки снова сохраняются |
 
 Ограничения WASM-прогона (поэтому часть статусов проверяется иначе):
 

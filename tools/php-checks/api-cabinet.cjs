@@ -438,9 +438,68 @@ echo "loaded:$n";
   check("файл лимитов существует", limitsFile.includes("lead:"), limitsFile.slice(0, 120));
   check("в лимитах нет IP в открытом виде", !/\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/.test(limitsFile), "найден IP");
 
-  /* ------------------------------- 9. logout ------------------------------- */
+  /* ------------------- 9. устойчивость без .htaccess ---------------------- */
 
-  console.log("\n9. Выход");
+  console.log("\n9. Если .htaccess не работает (nginx, отключённые модули)");
+  const cfgFile = await request(php, { script: "/config.php" });
+  check("config.php при прямом запросе отдаёт пустой ответ", cfgFile.status === 200 && cfgFile.payload.trim() === "", JSON.stringify(cfgFile.payload.slice(0, 80)));
+  check("в ответе config.php нет секретов", !/salt|passwordHash|botToken/.test(cfgFile.payload), cfgFile.payload.slice(0, 80));
+
+  const incFile = await request(php, { script: "/inc/store.php" });
+  check("inc/store.php не выводит ничего", incFile.payload.trim() === "", JSON.stringify(incFile.payload.slice(0, 80)));
+
+  const apiGet = await request(php, { script: "/api/lead.php", method: "GET" });
+  check("api/lead.php на GET отвечает 405 JSON", apiGet.status === 405 && apiGet.json?.error === "Метод не поддерживается", JSON.stringify(apiGet.json));
+
+  /* --------------------- 10. ответ API всегда чистый ---------------------- */
+
+  console.log("\n10. Формат ответа API");
+  const cleanJson = await request(php, {
+    script: "/api/lead.php",
+    method: "POST",
+    server: { HTTP_ORIGIN: "https://astra-test.ru", REMOTE_ADDR: "203.0.113.55" },
+    body: { name: "", direction: "matrix", channel: "telegram", contact: "@x_user", consent: true, trap: "" },
+  });
+  check("ответ — валидный JSON без warning/notice", cleanJson.json !== null && !/(Warning|Notice|Deprecated|Fatal)/.test(cleanJson.payload), cleanJson.payload.slice(0, 160));
+
+  /* ------------------- 11. нет записи в data/ → ошибка -------------------- */
+
+  console.log("\n11. Каталог data/ недоступен для записи");
+  const mod = await php.binary;
+  try {
+    mod.FS.chmod("/app/data", 0o555);
+  } catch (e) {
+    console.log("  (chmod недоступен в этой сборке:", String(e).slice(0, 60), ")");
+  }
+  const readOnly = await request(php, {
+    script: "/api/lead.php",
+    method: "POST",
+    server: { HTTP_ORIGIN: "https://astra-test.ru", REMOTE_ADDR: "203.0.113.56" },
+    body: { name: "Тест", direction: "matrix", channel: "telegram", contact: "@ro_user", consent: true, trap: "" },
+  });
+  check("при ошибке записи API отдаёт 500 и не выдаёт номер", readOnly.status === 500 && !readOnly.json?.reference, `${readOnly.status} ${JSON.stringify(readOnly.json).slice(0, 200)}`);
+  check("в ошибке нет путей сервера", !/\/app\/|Warning|Fatal/.test(readOnly.payload), readOnly.payload.slice(0, 160));
+
+  const cabinetRo = await request(php, { script: "/cabinet/index.php", owner });
+  check("кабинет предупреждает, что заявки не сохраняются", /не сохраняются/.test(cabinetRo.payload), cabinetRo.payload.slice(0, 200));
+  try {
+    mod.FS.chmod("/app/data", 0o777);
+  } catch (e) {
+    /* права возвращаем для дальнейших проверок */
+  }
+  const afterFix = await request(php, {
+    script: "/api/lead.php",
+    method: "POST",
+    server: { HTTP_ORIGIN: "https://astra-test.ru", REMOTE_ADDR: "203.0.113.57" },
+    body: { name: "Тест", direction: "matrix", channel: "telegram", contact: "@ro_user", consent: true, trap: "" },
+  });
+  check("после восстановления прав заявка сохраняется", afterFix.status === 200 && Boolean(afterFix.json?.reference), `${afterFix.status} ${JSON.stringify(afterFix.json).slice(0, 120)}`);
+  const cabinetOk = await request(php, { script: "/cabinet/index.php", owner });
+  check("предупреждение о правах исчезло", !/не сохраняются/.test(cabinetOk.payload));
+
+  /* ------------------------------- 12. logout ------------------------------- */
+
+  console.log("\n12. Выход");
   const out = await request(php, { script: "/cabinet/logout.php", session });
   check("logout отдаёт редирект", out.status === 303, String(out.status));
 
