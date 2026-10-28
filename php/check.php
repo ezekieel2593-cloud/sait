@@ -102,14 +102,14 @@ $rows[] = array(
 $rows[] = array(
     'config.php',
     $configExists ? 'найден' : 'не найден',
-    $configExists ? 'ok' : 'bad',
-    $configExists ? 'настройки на месте' : 'скачайте архив заново: config.php создаётся при сборке',
+    $configExists ? 'ok' : 'warn',
+    $configExists ? 'настройки на месте' : 'откройте setup.php — файл настроек создастся сам, копировать ничего не нужно',
 );
 $rows[] = array(
     'Пароль кабинета',
     $configHashSet ? 'задан' : 'не задан',
     $configHashSet ? 'ok' : 'warn',
-    $configHashSet ? 'вход возможен' : 'откройте setup.php и вставьте хеш в config.php',
+    $configHashSet ? 'вход возможен' : 'откройте setup.php и задайте пароль — он запишется сам',
 );
 $rows[] = array(
     'Заявок в базе',
@@ -184,9 +184,9 @@ $rows[] = array(
     </div>
   <?php elseif (!$configHashSet): ?>
     <div class="box">
-      <strong>Остался один шаг: пароль кабинета.</strong> Откройте <a href="setup.php">setup.php</a>,
-      задайте пароль, вставьте хеш в <code>config.php</code> в поле <code>'passwordHash'</code>,
-      сохраните и удалите <code>setup.php</code>.
+      <strong>Остался один шаг: установка.</strong> Откройте <a href="setup.php">setup.php</a>:
+      там кнопка «Создать config.php» и поле для пароля — оба действия в браузере,
+      копировать хеш вручную не нужно. После настройки удалите <code>setup.php</code>.
     </div>
   <?php else: ?>
     <div class="box">

@@ -63,9 +63,12 @@ set_exception_handler(static function (Throwable $error): void {
 define('APP_ROOT', dirname(__DIR__));
 
 /** Загруженная конфигурация сайта и серверных секретов. */
-function app_config(): array
+function app_config(bool $reload = false): array
 {
     static $config = null;
+    if ($reload) {
+        $config = null;
+    }
     if ($config !== null) {
         return $config;
     }

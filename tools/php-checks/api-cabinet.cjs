@@ -424,10 +424,18 @@ echo "loaded:$n";
   check("setup закрыт при заданном пароле", res.status === 403, String(res.status));
   res = await request(php, { script: "/setup.php", get: { token: "setup-token-1" } });
   check("с токеном открывается", res.status === 200 && /Пароль/.test(res.payload), res.payload.slice(0, 120));
-  res = await request(php, { script: "/setup.php", method: "POST", get: { token: "setup-token-1" }, post: { password: "short" } });
+  res = await request(php, { script: "/setup.php", method: "POST", get: { token: "setup-token-1" }, post: { action: "password", password: "short", passwordRepeat: "short" } });
   check("короткий пароль отклонён", /не короче/i.test(res.payload), res.payload.slice(0, 200));
-  res = await request(php, { script: "/setup.php", method: "POST", get: { token: "setup-token-1" }, post: { password: "long-enough-password" } });
-  check("хеш пароля генерируется", /\$2y\$|\$argon/i.test(res.payload), res.payload.slice(0, 200));
+
+  const before = await readAppFile(php, "/config.php");
+  res = await request(php, { script: "/setup.php", method: "POST", get: { token: "setup-token-1" }, post: { action: "password", password: "long-enough-password", passwordRepeat: "long-enough-password" } });
+  const afterSetup = await readAppFile(php, "/config.php");
+  check("пароль записан в config.php с корректным хешем", /'passwordHash' => '\$2y\$/ .test(afterSetup) && afterSetup !== before, afterSetup.match(/'passwordHash' => '[^']{0,12}/)?.[0]);
+  check("после смены пароля setup показывает результат", /Пароль сохранён|хеш/i.test(res.payload), res.payload.slice(0, 160));
+
+  // Возвращаем рабочий хеш, чтобы не ломать последующие проверки.
+  const fixed = before.replace(/'passwordHash' => '[^']*'/, `'passwordHash' => '${(before.match(/'passwordHash' => '([^']*)'/) || [])[1]}'`);
+  await run(php, `<?php file_put_contents('/app/config.php', base64_decode('${Buffer.from(fixed).toString("base64")}'));`);
 
   /* ----------------------- 8. защита файлов данных ------------------------ */
 

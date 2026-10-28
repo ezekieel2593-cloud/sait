@@ -23,10 +23,13 @@ PHP_VERSION=8.0 node tools/php-checks/api-cabinet.cjs
 # 2. Форма в собранном PHP-пакете (17 проверок, jsdom)
 npm run build:php && node tools/php-checks/form-api.cjs
 
-# 3. Диагностическая страница check.php (15 проверок)
+# 3. Установка: создание config.php и запись пароля (19 проверок)
+node tools/php-checks/setup-flow.cjs
+
+# 4. Диагностическая страница check.php (15 проверок)
 node tools/php-checks/check-page.cjs
 
-# 4. Статическая версия без сервера (9 проверок, jsdom)
+# 5. Статическая версия без сервера (10 проверок, jsdom)
 npm run build:static && node tools/php-checks/static-noserver.cjs
 ```
 
@@ -60,6 +63,7 @@ for v in 8.0 8.1 8.2 8.3 8.4 8.5; do PHP_VERSION=$v node tools/php-checks/api-ca
 | Без `.htaccess` | `config.php` не отдаёт секретов, `inc/*.php` молчат, GET на API — 405 |
 | Ошибки записи | при недоступной `data/` API отдаёт 500 без номера, кабинет предупреждает, после починки прав заявки снова сохраняются |
 | HTTPS | по http кабинет показывает предупреждение о незашифрованном соединении |
+| Установка | setup.php создаёт config.php со случайными солью и токеном, записывает хеш пароля (не через preg_replace с «$2»), закрывается после настройки, проверяет совпадение паролей |
 
 Ограничения WASM-прогона (поэтому часть статусов проверяется иначе):
 
