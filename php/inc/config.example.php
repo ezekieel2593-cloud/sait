@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 return [
     // Название сайта (используется в заголовке кабинета и теме писем)
-    'siteName' => 'Astra Pearl',
+    'siteName' => 'Жемчужина',
 
     // Адрес сайта с https и без слэша в конце
     'siteUrl' => 'https://example.ru',

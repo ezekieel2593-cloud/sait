@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
+import { SoftInvite } from "./components/SoftInvite";
 import { HomePage } from "./pages/HomePage";
 import { AstrologyPage } from "./pages/AstrologyPage";
 import { MatrixPage } from "./pages/MatrixPage";
@@ -41,5 +42,6 @@ createRoot(root).render(
       <Page />
     </main>
     <Footer />
+    <SoftInvite page={page} />
   </StrictMode>
 );

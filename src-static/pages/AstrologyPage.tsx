@@ -294,9 +294,13 @@ function AstroResult({ result }: { result: { chart: NatalChart; label: string } 
         <p className="mt-1.5 text-[0.84rem] text-[var(--ink-soft)]">{label}</p>
 
         <div className="mt-4 grid gap-4 sm:grid-cols-[0.95fr_1.05fr] sm:items-start">
-          <div className="rounded-[var(--radius-md)] border border-[var(--line)] bg-white p-2">
+          <figure className="m-0 rounded-[var(--radius-md)] border border-[var(--line)] bg-[linear-gradient(180deg,#fffdfa,#fbf3ec)] p-2">
             <NatalWheel chart={chart} />
-          </div>
+            <figcaption className="px-2 pb-1 pt-1 text-[0.78rem] leading-relaxed text-[var(--ink-soft)]">
+              Карта развёрнута так, что асцендент слева. Внутри — Солнце, на кольце — планеты с домами,
+              снаружи — знаки зодиака.
+            </figcaption>
+          </figure>
           <div className="grid gap-3">
             <div className="grid grid-cols-2 gap-2">
               <Metric label="Солнце" value={sun ? degreeOnly(sun.formatted) : "—"} note={sun ? `${sun.sign}${sun.house ? ` · ${sun.house} дом` : ""}` : ""} />
@@ -350,7 +354,7 @@ function AstroResult({ result }: { result: { chart: NatalChart; label: string } 
       </section>
 
       <section className="grid gap-3">
-        <h2 className="h-section">Бесплатная расшифровка</h2>
+        <h2 className="h-section">Ваша расшифровка</h2>
         {free.map((section, index) => (
           <InterpretationCard key={section.id} section={section} index={index} />
         ))}
@@ -358,9 +362,12 @@ function AstroResult({ result }: { result: { chart: NatalChart; label: string } 
 
       {locked.length > 0 ? (
         <section className="grid gap-3">
-          <h2 className="h-section">В полном разборе</h2>
-          <p className="text-[0.9rem] text-[var(--ink-soft)]">
-            Ещё {locked.length} разделов: остальные планеты, дома, аспекты и итоговый синтез карты.
+          <h2 className="h-section">Что ещё видно в вашей карте</h2>
+          <p className="max-w-[62ch] text-[0.94rem] leading-relaxed text-[var(--ink)]">
+            Мы уже посчитали {locked.length} {locked.length === 1 ? "раздел" : locked.length < 5 ? "раздела" : "разделов"} —
+            остальные планеты, их дома и точные аспекты. Именно они объясняют то, что не видно в общих словах: почему
+            в одном и том же деле вы выкладываетесь, а отклика нет, и где ваша сила работает на вас без сопротивления.
+            Разбираем это вместе — спокойно и под вашу ситуацию.
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             {locked.slice(0, 4).map((section, index) => (

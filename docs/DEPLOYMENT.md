@@ -86,7 +86,7 @@ npm start            # next start -p 3000
 
 ```ini
 [Unit]
-Description=Astra Pearl
+Description=Жемчужина
 After=network.target
 
 [Service]

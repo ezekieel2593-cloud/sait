@@ -84,7 +84,7 @@ function cabinet_head(string $title, bool $withNav = true): void
 <?php if ($withNav): ?>
 <header class="top">
   <div class="wrap">
-    <div class="brand">Кабинет · <?= e((string) cfg('siteName', 'Astra Pearl')) ?></div>
+    <div class="brand">Кабинет · <?= e((string) cfg('siteName', 'Жемчужина')) ?></div>
     <nav class="tabs">
       <a href="index.php" class="<?= basename($_SERVER['SCRIPT_NAME'] ?? '') === 'index.php' ? 'active' : '' ?>">Заявки</a>
       <a href="../index.html" target="_blank" rel="noopener">Сайт</a>

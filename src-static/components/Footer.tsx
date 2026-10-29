@@ -9,7 +9,8 @@ export function Footer() {
     <footer className="mt-16 border-t border-[var(--line)] bg-[rgba(255,255,255,0.55)]">
       <div className="container grid gap-10 py-12 md:grid-cols-[1.3fr_1fr_1fr] md:py-16">
         <div className="max-w-sm">
-          <p className="font-[family-name:var(--font-display)] text-[1.4rem] text-[var(--ocean)]">{config.logoText}</p>
+          <p className="brand-name">{config.logoText}</p>
+          <p className="brand-sub brand-sub--lg mt-2">{config.brandTagline}</p>
           <p className="mt-3 text-[0.92rem] leading-relaxed text-[var(--ink-soft)]">{config.tagline}. Расчёты выполняются по фиксированным алгоритмам с указанием версии методики.</p>
           <p className="mt-4 text-[0.8rem] leading-relaxed text-[var(--ink-faint)]">
             Астрология и Матрица судьбы — традиционные практики без научного подтверждения. Материалы не заменяют

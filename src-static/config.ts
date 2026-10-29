@@ -8,6 +8,8 @@
 export interface StaticConfig {
   siteName: string;
   logoText: string;
+  /** Строка под названием на сайте: короткое обещание бренда. */
+  brandTagline: string;
   tagline: string;
   description: string;
   siteUrl: string;
@@ -19,13 +21,16 @@ export interface StaticConfig {
   legal: { privacyUpdatedAt: string; dataRetentionDays: number; responsiblePerson: string };
   /** Серверный приём заявок (PHP на хостинге). Если выключено — заявка формируется как сообщение. */
   api: { enabled: boolean; base: string };
+  /** Всплывающее приглашение с вопросом и формой: через сколько секунд показывать. */
+  invite: { enabled: boolean; delayMs: number };
   faq: { question: string; answer: string }[];
   reviews: { author: string; text: string; context?: string }[];
 }
 
 export const DEFAULT_CONFIG: StaticConfig = {
-  siteName: "Astra Pearl",
-  logoText: "Astra Pearl",
+  siteName: "Жемчужина",
+  logoText: "Жемчужина",
+  brandTagline: "Драгоценная жемчужина души — это ценность для каждой девушки, которую нужно открыть",
   tagline: "Натальная карта и Матрица судьбы",
   description:
     "Астрологический разбор и Матрица судьбы по дате рождения: реальные расчёты, понятные расшифровки и персональная консультация специалиста.",
@@ -58,6 +63,7 @@ export const DEFAULT_CONFIG: StaticConfig = {
   methodology: { astrologyHouseSystem: "placidus", astrologyHouseSystemLabel: "Плацидус (Placidus)" },
   legal: { privacyUpdatedAt: "2026-01-01", dataRetentionDays: 365, responsiblePerson: "Владелец проекта" },
   api: { enabled: false, base: "api" },
+  invite: { enabled: true, delayMs: 40000 },
   faq: [
     {
       question: "Как рассчитывается натальная карта?",
@@ -67,7 +73,7 @@ export const DEFAULT_CONFIG: StaticConfig = {
     {
       question: "Как считается Матрица судьбы?",
       answer:
-        "Арифметически, по методике 22 старших арканов: день, месяц, год и их суммы приводятся к диапазону 1–22. Никаких случайных чисел — одна дата всегда даёт один результат.",
+        "Арифметически, по методике 22 энергий: день, месяц, год и их суммы приводятся к диапазону 1–22. Никаких случайных чисел — одна дата всегда даёт один результат.",
     },
     {
       question: "Что если я не знаю время рождения?",
@@ -75,7 +81,7 @@ export const DEFAULT_CONFIG: StaticConfig = {
         "Укажите «время неизвестно»: планеты и матрица считаются, а асцендент и дома не выдаются как достоверные — без точного времени они недостоверны.",
     },
     {
-      question: "Что входит в бесплатный результат?",
+      question: "Что открыто сразу после расчёта?",
       answer:
         "Ключевые разделы расшифровки: у натальной карты — Солнце, Луна, асцендент, стихия и аспекты, у Матрицы — центр, личный квадрат и входы в каналы. Полный разбор с остальными разделами готовит специалист.",
     },

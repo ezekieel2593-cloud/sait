@@ -96,8 +96,17 @@ const ARCANA_NAMES: Record<number, string> = {
   22: "Шут",
 };
 
+/**
+ * Название аркана из таро-традиции — служебное: в интерфейсе Матрицы
+ * используются не названия карт, а «7-я энергия» (см. energyLabel).
+ */
 export function arcanumName(value: number): string {
-  return ARCANA_NAMES[value] ?? `Аркан ${value}`;
+  return ARCANA_NAMES[value] ?? `Энергия ${value}`;
+}
+
+/** Как энергия называется на сайте: «7-я энергия», «21-я энергия». */
+export function energyLabel(value: number): string {
+  return `${value}-я энергия`;
 }
 
 function digitSum(value: number): number {
@@ -209,7 +218,7 @@ export function computeMatrix(input: MatrixInput): MatrixChart {
       key,
       title: meta.title,
       arcanum: value,
-      arcanumTitle: arcanumName(value),
+      arcanumTitle: energyLabel(value),
       formula: meta.formula,
       raw: value,
       sphere: meta.sphere,
@@ -228,7 +237,7 @@ export function computeMatrix(input: MatrixInput): MatrixChart {
     key: "year",
     title: `Энергия ${currentYear} года`,
     arcanum: yearValue,
-    arcanumTitle: arcanumName(yearValue),
+    arcanumTitle: energyLabel(yearValue),
     formula: "день + месяц + сумма цифр текущего года, редукция до 22",
     raw: yearValue,
     sphere: "актуальный период",
@@ -260,12 +269,12 @@ export function computeMatrix(input: MatrixInput): MatrixChart {
     })),
     yearEnergy,
     summary: {
-      center: `${center} · ${arcanumName(center)}`,
-      personality: `${A} · ${arcanumName(A)}`,
-      talent: `${B} · ${arcanumName(B)}`,
-      karma: `${D} · ${arcanumName(D)}`,
-      moneyArcanum: `${values["money-entry"]} · ${arcanumName(values["money-entry"]!)}`,
-      loveArcanum: `${values["love-entry"]} · ${arcanumName(values["love-entry"]!)}`,
+      center: `${center} · ${energyLabel(center)}`,
+      personality: `${A} · ${energyLabel(A)}`,
+      talent: `${B} · ${energyLabel(B)}`,
+      karma: `${D} · ${energyLabel(D)}`,
+      moneyArcanum: `${values["money-entry"]} · ${energyLabel(values["money-entry"]!)}`,
+      loveArcanum: `${values["love-entry"]} · ${energyLabel(values["love-entry"]!)}`,
     },
     warnings,
     limitations,

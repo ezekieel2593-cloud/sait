@@ -1,4 +1,4 @@
-# Astra Pearl — астрология и Матрица судьбы
+# Жемчужина — астрология и Матрица судьбы
 
 Рабочий веб-сервис: бесплатный расчёт натальной карты и Матрицы судьбы, содержательная
 бесплатная расшифровка, заявка на полный разбор и закрытый кабинет специалиста, где
@@ -129,8 +129,8 @@ npm run build:php           # release/astra-pearl-php.zip (≈0,5 МБ) → down
 все аспекты с орбисами, все точки Матрицы с формулами — то же, что видел клиент.
 
 Проверки без хостинга: `node tools/php-checks/api-cabinet.cjs` (76 проверок в php-wasm на PHP 8.0–8.5),
-`setup-flow.cjs` (24 проверки установки), `node tools/php-checks/form-api.cjs` (26)
-и `node tools/php-checks/static-noserver.cjs` (11, jsdom).
+`setup-flow.cjs` (24 проверки установки), `node tools/php-checks/form-api.cjs` (31)
+и `node tools/php-checks/static-noserver.cjs` (29, jsdom).
 Диагностика установки на хостинге — страница `check.php` в архиве
 (проверка: `node tools/php-checks/check-page.cjs`, 15 проверок).
 Установка (`setup.php`) сама создаёт `config.php` и записывает хеш пароля,

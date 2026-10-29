@@ -13,9 +13,10 @@ export function HomePage() {
           <div>
             <p className="eyebrow">Астрология · Матрица судьбы</p>
             <h1 className="h-display mt-3 max-w-[16ch]">Натальная карта и Матрица судьбы по вашей дате</h1>
+            <p className="brand-sub brand-sub--lg mt-3">{config.brandTagline}</p>
             <p className="lead mt-4 max-w-[52ch]">
               Реальные расчёты по проверенным алгоритмам и понятная расшифровка: что даёт опору, где зоны роста и какие
-              вопросы стоит разобрать со специалистом. Бесплатный результат — сразу, без регистрации.
+              вопросы стоит разобрать со специалистом. Результат — сразу, без регистрации.
             </p>
             <div className="mt-6 flex flex-wrap gap-2">
               <a href="astrology.html" className="btn btn--primary btn--lg">
@@ -43,7 +44,7 @@ export function HomePage() {
               href="matrix.html"
               icon={<MoonIcon className="h-5 w-5" />}
               title="Матрица судьбы"
-              text="22 старших аркана: личный квадрат, родовые программы, каналы денег и отношений, энергия года."
+              text="22 энергии: личный квадрат, родовые программы, каналы денег и отношений, энергия года."
               bullets={["Центр и личный квадрат", "Родовой квадрат и сила рода", "Каналы денег и отношений"]}
             />
           </div>
@@ -61,11 +62,11 @@ export function HomePage() {
               },
               {
                 title: "Расчёт",
-                text: "Эфемериды для натальной карты и арифметика 22 арканов для Матрицы. Результат воспроизводим.",
+                text: "Эфемериды для натальной карты и арифметика 22 энергий для Матрицы. Результат воспроизводим.",
               },
               {
-                title: "Бесплатная расшифровка",
-                text: "Ключевые разделы открыты сразу. Остальное — в полном разборе у специалиста.",
+                title: "Расшифровка сразу",
+                text: "Ключевые разделы вы читаете сразу после расчёта. Остальное — на полном разборе.",
               },
             ].map((item, index) => (
               <article key={item.title} className="card">
@@ -79,20 +80,7 @@ export function HomePage() {
       </section>
 
       <section className="section section--tight">
-        <div className="container grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
-          <div className="card gold-frame p-6">
-            <img
-              src={config.specialist.photoUrl}
-              alt={`Фотография специалиста: ${config.specialist.name}`}
-              className="mx-auto h-40 w-40 rounded-full border border-[var(--line-gold)] object-cover"
-              loading="lazy"
-            />
-            <h2 className="mt-4 h-card text-center">{config.specialist.name}</h2>
-            <p className="mt-1 text-center text-[0.86rem] text-[var(--turquoise-deep)]">{config.specialist.title}</p>
-            <p className="mt-3 text-[0.9rem] leading-relaxed text-[var(--ink)]">{config.specialist.bio}</p>
-            <p className="mt-3 text-[0.76rem] text-[var(--ink-faint)]">{config.specialist.note}</p>
-          </div>
-
+        <div className="container container--measure grid gap-6">
           <div className="grid gap-3">
             <h2 className="h-section">Что входит в полный разбор</h2>
             <ul className="grid gap-2">

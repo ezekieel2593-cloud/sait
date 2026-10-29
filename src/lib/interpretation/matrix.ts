@@ -1,4 +1,4 @@
-import type { MatrixChart, MatrixPoint } from "../matrix/engine";
+import { energyLabel, type MatrixChart, type MatrixPoint } from "../matrix/engine";
 import { getArcanumEntry, getPositionEntry } from "../knowledge/queries";
 import type { Interpretation, InterpretationSection } from "./types";
 
@@ -19,7 +19,7 @@ function pointSection(point: MatrixPoint): InterpretationSection {
     paragraphs.push(`Формула расчёта: ${point.formula}.`);
   }
   if (arcana) {
-    paragraphs.push(`Энергия аркана ${point.arcanum} — «${arcana.title.replace(/^\d+\.\s*/, "")}»: ${arcana.summary}`);
+    paragraphs.push(`${energyLabel(point.arcanum)}. ${arcana.summary}`);
   }
   if (arcana?.details.money && ["money-entry", "money-middle", "shared"].includes(point.key)) {
     paragraphs.push(`В контексте денег: ${arcana.details.money}`);
@@ -34,7 +34,7 @@ function pointSection(point: MatrixPoint): InterpretationSection {
   return {
     id: `point-${point.key}`,
     title: point.title,
-    subtitle: `${point.arcanum} · ${point.arcanumTitle}`,
+    subtitle: point.arcanumTitle,
     paragraphs,
     positive: arcana?.positive,
     shadow: arcana?.shadow,
@@ -87,9 +87,9 @@ export function buildMatrixInterpretation(
 
   return {
     direction: "matrix",
-    headline: `Центр матрицы — ${center.arcanum} · ${center.arcanumTitle}`,
+    headline: `Центр матрицы — ${center.arcanumTitle}`,
     lead: centerEntry
-      ? `Ваша опорная энергия — «${center.arcanumTitle}». ${centerEntry.summary}`
+      ? `Ваша опорная энергия — ${center.arcanumTitle}. ${centerEntry.summary}`
       : `Опорная энергия вашей схемы — ${center.arcanumTitle}.`,
     sections: prepared,
     freeCount: prepared.filter((section) => !section.premium).length,
@@ -109,9 +109,9 @@ export function fullInterpretationText(chart: MatrixChart, interpretation: Inter
   lines.push("");
   lines.push("РАСЧЁТНЫЕ ПОЗИЦИИ");
   for (const point of chart.points) {
-    lines.push(`  ${point.title}: ${point.arcanum} (${point.arcanumTitle}) — ${point.formula}`);
+    lines.push(`  ${point.title}: ${point.arcanumTitle} — ${point.formula}`);
   }
-  lines.push(`  ${chart.yearEnergy.title}: ${chart.yearEnergy.arcanum} (${chart.yearEnergy.arcanumTitle})`);
+  lines.push(`  ${chart.yearEnergy.title}: ${chart.yearEnergy.arcanumTitle}`);
   lines.push("");
   lines.push("ИНТЕРПРЕТАЦИЯ");
   lines.push(interpretation.headline);

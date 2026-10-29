@@ -149,8 +149,8 @@ PHP в песочнице нет, поэтому серверная часть �
 ```bash
 node tools/php-checks/api-cabinet.cjs                       # 76 проверок серверной части
 PHP_VERSION=8.0 node tools/php-checks/api-cabinet.cjs        # то же на конкретной версии PHP (8.0–8.5)
-npm run build:php && node tools/php-checks/form-api.cjs      # 26 проверок формы в режиме API
-npm run build:static && node tools/php-checks/static-noserver.cjs   # 11 проверок без сервера
+npm run build:php && node tools/php-checks/form-api.cjs      # 31 проверка формы в режиме API
+npm run build:static && node tools/php-checks/static-noserver.cjs   # 29 проверок без сервера
 ```
 
 Подробности, установка php-wasm и список ограничений WASM-прогона —

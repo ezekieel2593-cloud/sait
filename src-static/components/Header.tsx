@@ -38,12 +38,15 @@ export function Header({ active }: { active?: string }) {
               </defs>
             </svg>
           </span>
-          <span className="font-[family-name:var(--font-display)] text-[1.22rem] tracking-[0.02em] text-[var(--ocean)]">
-            {config.logoText}
+          <span className="flex flex-col">
+            <span className="brand-name">{config.logoText}</span>
+            <span className="mt-1 hidden lg:block">
+              <span className="brand-sub">{config.brandTagline}</span>
+            </span>
           </span>
         </a>
 
-        <nav className="hidden items-center gap-1 md:flex" aria-label="Основная навигация">
+        <nav className="hidden items-center gap-1 lg:flex" aria-label="Основная навигация">
           {links.map((link) => (
             <a
               key={link.href}
@@ -60,16 +63,16 @@ export function Header({ active }: { active?: string }) {
         <div className="flex items-center gap-2">
           {/* Кабинет есть только там, где включён серверный приём заявок (PHP). */}
           {config.api?.enabled ? (
-            <a href="cabinet/" className="btn btn--secondary btn--sm hidden sm:inline-flex" title="Кабинет специалиста">
+            <a href="cabinet/" className="btn btn--secondary btn--sm hidden md:inline-flex" title="Кабинет специалиста">
               Войти
             </a>
           ) : null}
-          <a href="astrology.html" className="btn btn--primary btn--sm hidden sm:inline-flex">
+          <a href="astrology.html" className="btn btn--primary btn--sm hidden md:inline-flex">
             Рассчитать карту
           </a>
           <button
             type="button"
-            className="grid h-11 w-11 place-items-center rounded-full border border-[var(--line-strong)] bg-white/80 text-[var(--ocean)] md:hidden"
+            className="grid h-11 w-11 place-items-center rounded-full border border-[var(--line-strong)] bg-white/80 text-[var(--ocean)] lg:hidden"
             aria-expanded={open}
             aria-controls="static-mobile-nav"
             aria-label={open ? "Закрыть меню" : "Открыть меню"}
@@ -81,7 +84,7 @@ export function Header({ active }: { active?: string }) {
       </div>
 
       {open ? (
-        <div id="static-mobile-nav" className="border-t border-[var(--line)] bg-[rgba(250,246,243,0.98)] md:hidden">
+        <div id="static-mobile-nav" className="border-t border-[var(--line)] bg-[rgba(250,246,243,0.98)] lg:hidden">
           <nav className="container flex flex-col gap-1 py-3" aria-label="Мобильная навигация">
             {links.map((link) => (
               <a

@@ -78,6 +78,10 @@ async function run() {
 
   check("config.js включает серверный приём заявок", window.ASTRA_CONFIG?.api?.enabled === true, String(window.ASTRA_CONFIG?.api?.enabled));
 
+  const header = doc.querySelector("header");
+  check("название бренда — «Жемчужина»", /Жемчужина/.test(header?.textContent || ""));
+  check("на главной нет блока о специалисте", !/Фотография специалиста/.test(doc.body.textContent || ""));
+
   const loginLink = doc.querySelector('header a[href="cabinet/"]');
   check("в шапке есть кнопка «Войти»", Boolean(loginLink), doc.querySelector("header")?.innerHTML.slice(0, 200));
   check("кнопка «Войти» подписана", /Войти/.test(loginLink?.textContent || ""), loginLink?.textContent);
@@ -95,6 +99,10 @@ async function run() {
   doc.querySelector("form button").click();
   await wait(400);
   check("расчёт матрицы появился", doc.body.textContent.includes("Центр"));
+  const matrixText = doc.body.textContent || "";
+  check("энергии подписаны как «N-я энергия»", /\d+-я энергия/.test(matrixText));
+  check("названий карт таро на странице нет", !/Колесо Фортуны|Иерофант|Императрица/.test(matrixText));
+  check("«Бесплатная расшифровка» убрана", !/Бесплатная расшифровка/i.test(matrixText));
 
   const takeForm = [...doc.querySelectorAll("form")].find((f) => f.querySelector("#lead-name"));
   check("форма заявки отрисована", Boolean(takeForm));

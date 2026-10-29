@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* =========================================================================
-   ASTRA PEARL — дизайн-система «перламутр и жемчуг»
+   ЖЕМЧУЖИНА — дизайн-система «перламутр и жемчуг»
    Палитра, типографика, поверхности, кнопки, карточки, формы.
    Всё остальное наследует эти токены.
    ========================================================================= */
@@ -19,9 +19,9 @@
   --color-gold-soft: #e6d3b6;
   --color-ocean: #253d4b;
   --color-ocean-deep: #1a2c37;
-  --color-ink: #665c60;
-  --color-ink-soft: #8b8085;
-  --color-ink-faint: #a89ea2;
+  --color-ink: #473f44;
+  --color-ink-soft: #655b61;
+  --color-ink-faint: #857a80;
 
   --font-display: "Cormorant Garamond", Georgia, "Times New Roman", serif;
   --font-sans: "Manrope Variable", "Manrope", ui-sans-serif, system-ui, sans-serif;
@@ -49,8 +49,9 @@
   --gold: #c9a777;
   --gold-soft: #e6d3b6;
   --ocean: #253d4b;
-  --ink: #665c60;
-  --ink-soft: #8b8085;
+  --ink: #473f44;
+  --ink-soft: #655b61;
+  --ink-faint: #857a80;
 
   --line: rgba(37, 61, 75, 0.12);
   --line-strong: rgba(37, 61, 75, 0.2);
@@ -352,6 +353,124 @@ textarea {
   outline-offset: 3px;
 }
 
+/* ---------------------------------------------------------------
+   Название бренда: «Жемчужина» в антикве + строка-обещание мелким кеглем.
+   --------------------------------------------------------------- */
+/* ---------------------------------------------------------------
+   Всплывающее приглашение: появляется через 40 секунд, закрывается
+   крестиком, Esc и кликом по фону. Рабочая карточка, без декора.
+   --------------------------------------------------------------- */
+.invite {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(37, 61, 75, 0.38);
+  backdrop-filter: blur(2px);
+  animation: invite-fade 0.22s ease-out;
+}
+.invite__card {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  padding: 26px 22px 20px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--line-gold);
+  background: linear-gradient(180deg, #fffdfa 0%, #fbf3ec 100%);
+  box-shadow: 0 40px 90px -40px rgba(37, 61, 75, 0.6);
+  animation: invite-rise 0.26s ease-out;
+}
+.invite__close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+.invite__close:hover {
+  color: var(--ocean);
+  border-color: var(--gold);
+}
+.invite__later {
+  margin-top: 10px;
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 0.84rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.invite__later:hover {
+  color: var(--ocean);
+}
+@keyframes invite-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes invite-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .invite,
+  .invite__card {
+    animation: none;
+  }
+}
+
+.brand-name {
+  font-family: var(--font-display);
+  font-size: 1.42rem;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  color: var(--ocean);
+  font-weight: 600;
+}
+.brand-name--lg {
+  font-size: clamp(2.1rem, 5vw, 3rem);
+  letter-spacing: 0.05em;
+}
+.brand-sub {
+  /* В шапке — две строки мелким кеглем, чтобы не растягивать высоту. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 0.58rem;
+  line-height: 1.3;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  max-width: 46ch;
+}
+.brand-sub--lg {
+  display: block;
+  overflow: visible;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  letter-spacing: 0.06em;
+  text-transform: none;
+  max-width: 52ch;
+  color: var(--ink);
+}
+
 .btn--gold {
   background: linear-gradient(135deg, #d8bb92 0%, #c9a777 60%, #b9945f 100%);
   color: #2b2118;
@@ -542,7 +661,7 @@ textarea {
 }
 .input::placeholder,
 .textarea::placeholder {
-  color: #b3a9ad;
+  color: #8c8287;
 }
 
 /*

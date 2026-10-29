@@ -9,8 +9,8 @@ import type { Settings } from "./types";
  */
 export const DEFAULT_SETTINGS: Settings = {
   site: {
-    name: "Astra Pearl",
-    logoText: "Astra Pearl",
+    name: "Жемчужина",
+    logoText: "Жемчужина",
     tagline: "Натальная карта и Матрица судьбы",
     description:
       "Астрологический разбор и Матрица судьбы по дате рождения: реальные расчёты, понятные расшифровки и персональная консультация специалиста.",

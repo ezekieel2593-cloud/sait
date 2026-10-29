@@ -125,7 +125,7 @@ function send_email(string $subject, string $text): array
         'Content-Type: text/plain; charset=UTF-8',
         'Content-Transfer-Encoding: 8bit',
         'MIME-Version: 1.0',
-        'X-Mailer: AstraPearl/' . APP_VERSION,
+        'X-Mailer: Zhemchuzhina/' . APP_VERSION,
     ];
 
     $encodedSubject = '=?UTF-8?B?' . base64_encode($subject) . '?=';

@@ -155,7 +155,7 @@ export function matrixDetails(
       `Дата рождения: ${date}`,
       `Методика: ${chart.meta.methodology} (${chart.meta.version})`,
       `Свёртка чисел: ${chart.meta.reductionLabel}`,
-      `Порядок арканов: ${chart.meta.arcanumOrder}`,
+      `Порядок энергий: ${chart.meta.arcanumOrder}`,
       `Посчитано: ${chart.meta.computedAt}`,
     ])
   );
@@ -165,14 +165,14 @@ export function matrixDetails(
       "ВСЕ ПОЗИЦИИ",
       chart.points.map(
         (point) =>
-          `${point.title}: ${point.arcanum} — ${point.arcanumTitle} · формула: ${point.formula} (сфера: ${point.sphere}, роль: ${point.role})`
+          `${point.title}: ${point.arcanumTitle} · формула: ${point.formula} (сфера: ${point.sphere}, роль: ${point.role})`
       )
     )
   );
 
   parts.push(
     block("ЭНЕРГИЯ ГОДА", [
-      `${chart.yearEnergy.year}: ${chart.yearEnergy.arcanum} — ${chart.yearEnergy.arcanumTitle} · формула: ${chart.yearEnergy.formula}`,
+      `${chart.yearEnergy.year}: ${chart.yearEnergy.arcanumTitle} · формула: ${chart.yearEnergy.formula}`,
     ])
   );
 

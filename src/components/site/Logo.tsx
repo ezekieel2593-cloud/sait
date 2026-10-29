@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export function Logo({ text = "Astra Pearl", href = "/" }: { text?: string; href?: string }) {
+export function Logo({ text = "Жемчужина", href = "/" }: { text?: string; href?: string }) {
   return (
     <Link href={href} className="inline-flex items-center gap-2.5" aria-label={`${text} — на главную`}>
       <span className="relative grid h-9 w-9 place-items-center rounded-full border border-[var(--line-gold)] bg-white/70">

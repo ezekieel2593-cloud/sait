@@ -91,7 +91,7 @@ export function LockedCard({ section, index }: { section: InterpretationSection;
           </h3>
           <p className="mt-0.5 text-[0.78rem] text-[var(--ink-soft)]">
             {section.subtitle ? `${section.subtitle} · ` : ""}
-            {section.arcana ? "полная трактовка аркана" : "подробная расшифровка"} в полном разборе
+            {section.arcana ? "полная трактовка этой энергии" : "подробная расшифровка"} — в полном разборе
           </p>
           <div className="mt-3 space-y-1.5" aria-hidden="true">
             <div className="h-2 w-full rounded-full bg-[rgba(37,61,75,0.07)]" />

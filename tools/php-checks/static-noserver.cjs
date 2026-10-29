@@ -67,6 +67,13 @@ async function run() {
   check("config.js без серверного приёма заявок", window.ASTRA_CONFIG?.api?.enabled === false, String(window.ASTRA_CONFIG?.api?.enabled));
   check("без сервера нет кнопки «Войти»", !doc.querySelector('header a[href="cabinet/"]'));
 
+  const header = doc.querySelector("header");
+  check("название бренда — «Жемчужина»", /Жемчужина/.test(header?.textContent || ""), header?.textContent?.slice(0, 80));
+  check(
+    "под названием — строка про жемчужину души",
+    /Драгоценная жемчужина души/.test(header?.textContent || "")
+  );
+
   const date = doc.querySelector("#matrix-date");
   check("форма расчёта отрисована", Boolean(date));
   if (!date) return;
@@ -75,6 +82,14 @@ async function run() {
   doc.querySelector("form button").click();
   await wait(400);
   check("расчёт матрицы появился", doc.body.textContent.includes("Центр"));
+
+  const resultText = doc.body.textContent || "";
+  check("энергии называются «N-я энергия»", /\d+-я энергия/.test(resultText));
+  check("названий карт таро нет", !/Колесо Фортуны|Иерофант|Императрица/.test(resultText));
+  check("повторного «Бесплатная расшифровка» нет", !/Бесплатная расшифровка/i.test(resultText));
+  check("заголовок расшифровки на месте", /Ваша расшифровка/.test(resultText));
+  check("блок закрытых разделов заинтригован", /Что скрыто в вашей схеме/.test(resultText));
+  check("схема в жемчужной подаче", Boolean(doc.querySelector("figure svg")), doc.querySelector("figure")?.className);
 
   const takeForm = [...doc.querySelectorAll("form")].find((f) => f.querySelector("#lead-name"));
   check("форма заявки отрисована", Boolean(takeForm));
@@ -96,6 +111,69 @@ async function run() {
   check("текст заявки сформирован из расчёта", text.includes("Матрица судьбы") || text.includes("Центр"));
 
   // В версии без сервера политика должна честно говорить, что данные не хранятся в базе.
+  /* ------------------------ страница астрологии ------------------------ */
+
+  // Данные из ссылки: страница сразу считает карту, форму заполнять не нужно.
+  const astroUrl =
+    "https://example.com/astrology.html?" +
+    new URLSearchParams({
+      d: "1992-06-23",
+      a: "exact",
+      t: "14:30",
+      la: "55.16",
+      lo: "61.4",
+      tz: "Asia/Yekaterinburg",
+      p: "Челябинск",
+      c: "Россия",
+    }).toString();
+  const astroDom = new JSDOM(fs.readFileSync(path.join(dir, "astrology.html"), "utf8"), {
+    url: astroUrl,
+    runScripts: "dangerously",
+    pretendToBeVisual: true,
+  });
+  for (const script of astroDom.window.document.querySelectorAll("script[src]")) {
+    const src = script.getAttribute("src").replace(/^\//, "");
+    astroDom.window.eval(fs.readFileSync(path.join(dir, src), "utf8"));
+  }
+  await wait(600);
+  const astroText = astroDom.window.document.body.textContent || "";
+  check("астрология: карта посчиталась из ссылки", /Солнце/.test(astroText) && /Асцендент/.test(astroText));
+  check("астрология: колесо в жемчужной подаче", Boolean(astroDom.window.document.querySelector("figure svg")));
+  check("астрология: заголовок «Ваша расшифровка»", /Ваша расшифровка/.test(astroText));
+  check("астрология: «Бесплатная расшифровка» убрана", !/Бесплатная расшифровка/i.test(astroText));
+  check("астрология: интригующий блок про закрытые разделы", /Что ещё видно в вашей карте/.test(astroText));
+
+  /* --------------------- всплывающее приглашение --------------------- */
+
+  // Отдельная страница: подменяем задержку окна на 100 мс, чтобы не ждать 40 секунд.
+  const inviteDom = new JSDOM(fs.readFileSync(path.join(dir, "index.html"), "utf8"), {
+    url: "https://example.com/index.html",
+    runScripts: "dangerously",
+    pretendToBeVisual: true,
+  });
+  const inviteWindow = inviteDom.window;
+  const scripts = [...inviteWindow.document.querySelectorAll("script[src]")];
+  const configScript = scripts.find((node) => node.getAttribute("src").includes("config.js"));
+  if (configScript) {
+    inviteWindow.eval(fs.readFileSync(path.join(dir, configScript.getAttribute("src").replace(/^\//, "")), "utf8"));
+    inviteWindow.ASTRA_CONFIG.invite = { enabled: true, delayMs: 100 };
+  }
+  for (const script of scripts) {
+    if (script === configScript) continue;
+    const src = script.getAttribute("src").replace(/^\//, "");
+    inviteWindow.eval(fs.readFileSync(path.join(dir, src), "utf8"));
+  }
+  await wait(120);
+  check("до истечения времени окна нет", !inviteWindow.document.querySelector(".invite__card"));
+  await wait(500);
+  const invite = inviteWindow.document.querySelector(".invite__card");
+  check("через время появляется всплывающее окно", Boolean(invite));
+  check("в окне есть вопрос", Boolean(invite?.querySelector("#invite-title")));
+  check("в окне есть форма заявки", Boolean(invite?.querySelector("#lead-name")));
+  invite?.querySelector(".invite__close")?.dispatchEvent(new inviteWindow.Event("click", { bubbles: true }));
+  await wait(50);
+  check("окно закрывается крестиком", !inviteWindow.document.querySelector(".invite__card"));
+
   const privacyDom = new JSDOM(fs.readFileSync(path.join(dir, "privacy.html"), "utf8"), {
     url: "https://example.com/privacy.html",
     runScripts: "dangerously",

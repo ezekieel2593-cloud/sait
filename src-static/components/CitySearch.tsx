@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
-import { searchCities, type City } from "@/lib/astronomy/cities";
+import { CITIES, searchCities, type City } from "@/lib/astronomy/cities";
+
+const CITY_COUNT = CITIES.length;
 import { PinIcon } from "./icons-extra";
 
 export interface PlaceValue {
@@ -34,7 +36,7 @@ export function CitySearch({
     timezone: "",
   });
 
-  const results = useMemo(() => (query.trim().length < 2 ? [] : searchCities(query, 8)), [query]);
+  const results = useMemo(() => (query.trim().length < 2 ? [] : searchCities(query, 10)), [query]);
 
   const select = (city: City) => {
     onChange({
@@ -77,7 +79,7 @@ export function CitySearch({
           className="input input--icon"
           type="text"
           value={query}
-          placeholder="Начните вводить город"
+          placeholder="Город, посёлок или село"
           autoComplete="off"
           aria-invalid={Boolean(error)}
           aria-describedby={error ? "place-error" : undefined}
@@ -118,7 +120,8 @@ export function CitySearch({
         </p>
       ) : (
         <p className="field__hint">
-          Координаты и часовой пояс подставляются автоматически.{" "}
+          В справочнике {CITY_COUNT} городов и посёлков России, СНГ и мира — от мегаполисов до небольших районных
+          центров. Координаты и часовой пояс подставляются автоматически.{" "}
           <button type="button" className="underline decoration-dotted" onClick={() => setManual((v) => !v)}>
             {manual ? "скрыть ручной ввод" : "ввести координаты вручную"}
           </button>

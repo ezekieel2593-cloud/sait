@@ -58,10 +58,11 @@ export function MatrixPage() {
       <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
         <div>
           <p className="eyebrow">Матрица судьбы</p>
-          <h1 className="h-display mt-3">Матрица судьбы по 22 арканам</h1>
+          <h1 className="h-display mt-3">Матрица судьбы по 22 энергиям</h1>
           <p className="lead mt-4">
-            Дата рождения раскладывается на арканы по методике 22 старших арканов: личный квадрат, родовые программы,
-            каналы денег и отношений. Расчёт арифметический и детерминированный — без случайных чисел.
+            Дата рождения раскладывается на 22 энергии: личный квадрат, родовые программы, каналы денег и отношений.
+            Расчёт арифметический и детерминированный — без случайных чисел. Каждая энергия у вас своя — и читается
+            она по-своему.
           </p>
 
           <form
@@ -98,9 +99,8 @@ export function MatrixPage() {
           </form>
 
           <p className="mt-4 text-[0.8rem] leading-relaxed text-[var(--ink-soft)]">
-            Методика: {config.methodology.astrologyHouseSystemLabel.includes("Плацидус") ? "школа Ладини" : "школа Ладини"},
-            правило редукции — сложение цифр до диапазона 1–22, версия алгоритма <code>matrix-22-v1</code>.
-            Трактовки арканов — эзотерическая традиция, а не научно доказанные утверждения.
+            Методика: школа Ладини, правило редукции — сложение цифр до диапазона 1–22, версия алгоритма
+            <code>matrix-22-v1</code>. Трактовки энергий — эзотерическая традиция, а не научно доказанные утверждения.
           </p>
         </div>
 
@@ -121,10 +121,10 @@ function MatrixResult({ result }: { result: { chart: MatrixChart; date: string }
 
   const summary = [
     `Матрица судьбы, дата рождения ${date}`,
-    `Личный квадрат: A=${chart.byKey.A.arcanum}, B=${chart.byKey.B.arcanum}, C=${chart.byKey.C.arcanum}, D=${chart.byKey.D.arcanum}`,
-    `Центр: ${chart.byKey.center.arcanum} (${chart.byKey.center.arcanumTitle})`,
-    `Деньги: вход ${chart.byKey["money-entry"].arcanum}, середина ${chart.byKey["money-middle"].arcanum}`,
-    `Отношения: вход ${chart.byKey["love-entry"].arcanum}, середина ${chart.byKey["love-middle"].arcanum}`,
+    `Личный квадрат: A=${chart.byKey.A.arcanumTitle}, B=${chart.byKey.B.arcanumTitle}, C=${chart.byKey.C.arcanumTitle}, D=${chart.byKey.D.arcanumTitle}`,
+    `Центр: ${chart.byKey.center.arcanumTitle}`,
+    `Деньги: вход ${chart.byKey["money-entry"].arcanumTitle}, середина ${chart.byKey["money-middle"].arcanumTitle}`,
+    `Отношения: вход ${chart.byKey["love-entry"].arcanumTitle}, середина ${chart.byKey["love-middle"].arcanumTitle}`,
   ].join("\n");
 
   return (
@@ -136,16 +136,35 @@ function MatrixResult({ result }: { result: { chart: MatrixChart; date: string }
         </h2>
         <p className="mt-2 text-[0.92rem] leading-relaxed text-[var(--ink)]">{interpretation.lead}</p>
 
-        <div className="mt-4 grid gap-4 sm:grid-cols-[0.9fr_1.1fr] sm:items-start">
-          <div className="rounded-[var(--radius-md)] border border-[var(--line)] bg-white p-2">
+        <div className="mt-4 grid gap-4 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
+          <figure className="m-0 rounded-[var(--radius-md)] border border-[var(--line)] bg-[linear-gradient(180deg,#fffdfa,#fbf3ec)] p-2">
             <MatrixDiagram chart={chart} />
-          </div>
+            <figcaption className="px-2 pb-1 pt-1 text-[0.78rem] leading-relaxed text-[var(--ink-soft)]">
+              Девять ключевых энергий: центр, личный квадрат и родовые углы. Остальные — плашками ниже.
+            </figcaption>
+          </figure>
           <div className="grid gap-2">
             <div className="grid grid-cols-2 gap-2">
-              <Metric label="Центр" value={`${chart.byKey.center.arcanum}`} note={chart.byKey.center.arcanumTitle} />
-              <Metric label="Сила рода" value={`${chart.byKey["family-force"].arcanum}`} note={chart.byKey["family-force"].arcanumTitle} />
-              <Metric label="Деньги" value={`${chart.byKey["money-entry"].arcanum} / ${chart.byKey["money-middle"].arcanum}`} note="вход / середина" />
-              <Metric label="Отношения" value={`${chart.byKey["love-entry"].arcanum} / ${chart.byKey["love-middle"].arcanum}`} note="вход / середина" />
+              <Metric label="Центр" value={`${chart.byKey.center.arcanum}`} note="зона комфорта" />
+              <Metric label="Сила рода" value={`${chart.byKey["family-force"].arcanum}`} note="опора семьи" />
+              <Metric
+                label="Деньги"
+                value={`${chart.byKey["money-entry"].arcanum} / ${chart.byKey["money-middle"].arcanum}`}
+                note="вход / середина"
+              />
+              <Metric
+                label="Отношения"
+                value={`${chart.byKey["love-entry"].arcanum} / ${chart.byKey["love-middle"].arcanum}`}
+                note="вход / середина"
+              />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <EnergyChip value={chart.byKey["money-entry"].arcanum} label="вход в денежный канал" />
+              <EnergyChip value={chart.byKey["money-middle"].arcanum} label="середина денег" />
+              <EnergyChip value={chart.byKey["love-entry"].arcanum} label="вход в канал любви" />
+              <EnergyChip value={chart.byKey["love-middle"].arcanum} label="середина отношений" />
+              <EnergyChip value={chart.byKey.shared.arcanum} label="общая точка каналов" />
+              <EnergyChip value={chart.yearEnergy.arcanum} label={`энергия ${chart.yearEnergy.year} года`} />
             </div>
             <details className="rounded-[12px] border border-[var(--line)] bg-white p-3 text-[0.84rem]">
               <summary className="cursor-pointer text-[var(--turquoise-deep)]">Все расчётные позиции и формулы</summary>
@@ -153,9 +172,7 @@ function MatrixResult({ result }: { result: { chart: MatrixChart; date: string }
                 {[...chart.points, chart.yearEnergy].map((point) => (
                   <li key={point.key} className="flex flex-wrap items-baseline justify-between gap-2 border-b border-[var(--line)] py-1 last:border-0">
                     <span className="text-[var(--ink-soft)]">{point.title}</span>
-                    <span className="text-[var(--ocean)]">
-                      {point.arcanum} · {point.arcanumTitle}
-                    </span>
+                    <span className="text-[var(--ocean)]">{point.arcanumTitle}</span>
                     <span className="w-full text-[0.72rem] text-[var(--ink-faint)] sm:w-auto">{point.formula}</span>
                   </li>
                 ))}
@@ -166,7 +183,7 @@ function MatrixResult({ result }: { result: { chart: MatrixChart; date: string }
       </section>
 
       <section className="grid gap-3">
-        <h2 className="h-section">Бесплатная расшифровка</h2>
+        <h2 className="h-section">Ваша расшифровка</h2>
         {free.map((section, index) => (
           <InterpretationCard key={section.id} section={section} index={index} />
         ))}
@@ -174,9 +191,12 @@ function MatrixResult({ result }: { result: { chart: MatrixChart; date: string }
 
       {locked.length > 0 ? (
         <section className="grid gap-3">
-          <h2 className="h-section">В полном разборе</h2>
-          <p className="text-[0.9rem] text-[var(--ink-soft)]">
-            Ещё {locked.length} разделов: каналы, родовые программы, энергия года и предназначение. Их разбирает специалист.
+          <h2 className="h-section">Что скрыто в вашей схеме</h2>
+          <p className="max-w-[62ch] text-[0.94rem] leading-relaxed text-[var(--ink)]">
+            В вашей матрице посчитаны все энергии — открыто пока {free.length}. За остальными {locked.length} стоят ответы
+            на самые частые вопросы: почему деньги приходят рывками, откуда берётся один и тот же сценарий в отношениях,
+            что вы повторяете за родом и куда вам действительно стоит идти в этом году. Каждая энергия у вас уже есть —
+            остаётся прочитать её про вас.
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             {locked.slice(0, 4).map((section, index) => (
@@ -193,6 +213,18 @@ function MatrixResult({ result }: { result: { chart: MatrixChart; date: string }
         birth={date}
       />
     </div>
+  );
+}
+
+/** Жемчужная плашка для энергий, которые не вошли в схему. */
+function EnergyChip({ value, label }: { value: number; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-2 rounded-full border border-[var(--line-gold)] bg-[linear-gradient(180deg,#fffdfa,#fbf1ea)] py-1 pl-1 pr-3 text-[0.8rem] text-[var(--ink)]">
+      <span className="grid h-7 w-7 place-items-center rounded-full border border-[var(--line-gold)] bg-white font-[family-name:var(--font-display)] text-[0.95rem] font-semibold text-[var(--ocean)]">
+        {value}
+      </span>
+      {label}
+    </span>
   );
 }
 

@@ -38,10 +38,24 @@ export function NatalWheel({ chart }: { chart: NatalChart }) {
       }
     >
       <defs>
-        <radialGradient id="wheel-bg" cx="0.5" cy="0.5" r="0.6">
+        <radialGradient id="wheel-bg" cx="0.42" cy="0.36" r="0.72">
+          <stop offset="0" stopColor="#fffdfa" />
+          <stop offset="0.55" stopColor="#fbf4ee" />
+          <stop offset="1" stopColor="#efe0d9" />
+        </radialGradient>
+        <radialGradient id="wheel-pearl" cx="0.34" cy="0.28" r="0.8">
           <stop offset="0" stopColor="#ffffff" />
-          <stop offset="0.7" stopColor="#fdfbfa" />
-          <stop offset="1" stopColor="#f4eeea" />
+          <stop offset="0.5" stopColor="#fbf1ea" />
+          <stop offset="1" stopColor="#e4cfc8" />
+        </radialGradient>
+        <radialGradient id="wheel-center" cx="0.36" cy="0.3" r="0.8">
+          <stop offset="0" stopColor="#ffffff" />
+          <stop offset="0.55" stopColor="#fdf2ea" />
+          <stop offset="1" stopColor="#ecd8ce" />
+        </radialGradient>
+        <radialGradient id="wheel-glow" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0" stopColor="#ffffff" stopOpacity="0.9" />
+          <stop offset="1" stopColor="#ffffff" stopOpacity="0" />
         </radialGradient>
         <linearGradient id="wheel-gold" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stopColor="#C9A777" />
@@ -50,9 +64,10 @@ export function NatalWheel({ chart }: { chart: NatalChart }) {
       </defs>
 
       <circle cx={CENTER} cy={CENTER} r={R_OUTER + 14} fill="url(#wheel-bg)" />
+      <circle cx={CENTER} cy={CENTER} r={(R_OUTER + 14) * 0.62} fill="url(#wheel-glow)" opacity="0.8" />
       <circle cx={CENTER} cy={CENTER} r={R_OUTER + 14} fill="none" stroke="url(#wheel-gold)" strokeWidth="1" />
-      <circle cx={CENTER} cy={CENTER} r={R_OUTER} fill="none" stroke="rgba(37,61,75,0.18)" strokeWidth="1" />
-      <circle cx={CENTER} cy={CENTER} r={R_SIGNS} fill="none" stroke="rgba(201,167,119,0.55)" strokeWidth="1" />
+      <circle cx={CENTER} cy={CENTER} r={R_OUTER} fill="none" stroke="rgba(37,61,75,0.22)" strokeWidth="1" />
+      <circle cx={CENTER} cy={CENTER} r={R_SIGNS} fill="none" stroke="url(#wheel-gold)" strokeWidth="1.1" />
       <circle cx={CENTER} cy={CENTER} r={R_HOUSES} fill="none" stroke="rgba(37,61,75,0.12)" strokeWidth="1" />
 
       {/* Знаки */}
@@ -71,9 +86,9 @@ export function NatalWheel({ chart }: { chart: NatalChart }) {
               y={mid.y}
               textAnchor="middle"
               dominantBaseline="central"
-              fontSize="15"
-              fill="#8b8085"
-              fontFamily="Georgia, serif"
+              fontSize="16"
+              fill="#5c5158"
+              fontFamily="'Cormorant Garamond', Georgia, serif"
             >
               {sign.symbol}
             </text>
@@ -107,7 +122,7 @@ export function NatalWheel({ chart }: { chart: NatalChart }) {
                   strokeWidth={isAxis ? 1.4 : 0.8}
                   strokeDasharray={isAxis ? undefined : "3 6"}
                 />
-                <text x={label.x} y={label.y} textAnchor="middle" fontSize="9" fill="#a89ea2">
+                <text x={label.x} y={label.y} textAnchor="middle" fontSize="9" fill="#857a80">
                   {index + 1}
                 </text>
               </g>
@@ -126,7 +141,15 @@ export function NatalWheel({ chart }: { chart: NatalChart }) {
             stroke="rgba(111,168,174,0.65)"
             strokeWidth="1.4"
           />
-          <text x={polar(R_OUTER - 6, 0).x} y={polar(R_OUTER - 6, 0).y} textAnchor="end" fontSize="10" fill="#6fa8ae" fontWeight="600">
+          <text
+            x={polar(R_OUTER - 26, 0).x + 4}
+            y={polar(R_OUTER - 26, 0).y - 6}
+            textAnchor="start"
+            fontSize="10"
+            letterSpacing="0.08em"
+            fill="#41818a"
+            fontWeight="600"
+          >
             ASC
           </text>
         </g>
@@ -153,7 +176,9 @@ export function NatalWheel({ chart }: { chart: NatalChart }) {
         const point = polar(R_PLANETS - near * 16, angle);
         return (
           <g key={position.key}>
-            <circle cx={point.x} cy={point.y} r="13" fill="#ffffff" stroke="rgba(201,167,119,0.7)" strokeWidth="1" />
+            <ellipse cx={point.x} cy={point.y + 12} rx="10" ry="2.6" fill="rgba(94,74,66,0.14)" />
+            <circle cx={point.x} cy={point.y} r="14" fill="url(#wheel-pearl)" stroke="url(#wheel-gold)" strokeWidth="1" />
+            <ellipse cx={point.x - 4} cy={point.y - 5} rx="6" ry="4" fill="rgba(255,255,255,0.6)" />
             <text
               x={point.x}
               y={point.y}
@@ -183,15 +208,19 @@ export function NatalWheel({ chart }: { chart: NatalChart }) {
       })}
 
       {/* Центр */}
-      <circle cx={CENTER} cy={CENTER} r="66" fill="rgba(255,255,255,0.86)" stroke="rgba(201,167,119,0.35)" strokeWidth="0.8" />
-      <text x={CENTER} y={CENTER - 12} textAnchor="middle" fontSize="10" fill="#a89ea2">
+      <circle cx={CENTER} cy={CENTER} r="72" fill="url(#wheel-center)" stroke="url(#wheel-gold)" strokeWidth="1.2" />
+      <circle cx={CENTER} cy={CENTER} r="66" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="0.9" />
+      <ellipse cx={CENTER - 22} cy={CENTER - 34} rx="26" ry="16" fill="rgba(255,255,255,0.5)" />
+      <text x={CENTER} y={CENTER - 14} textAnchor="middle" fontSize="10" letterSpacing="0.12em" fill="#7d7078">
         СОЛНЦЕ
       </text>
-      <text x={CENTER} y={CENTER + 4} textAnchor="middle" fontSize="14" fill="#253d4b" fontFamily="Georgia, serif">
+      <text x={CENTER} y={CENTER + 4} textAnchor="middle" fontSize="16" fill="#3a2f36" fontFamily="'Cormorant Garamond', Georgia, serif" fontWeight="600">
         {chart.positions[0]?.sign}
       </text>
-      <text x={CENTER} y={CENTER + 24} textAnchor="middle" fontSize="9" fill="#a89ea2">
-        {chart.positions[0] ? `${Math.floor(chart.positions[0].degreeInSign)}° ${chart.positions[0].sign}` : ""}
+      <text x={CENTER} y={CENTER + 27} textAnchor="middle" fontSize="10" fill="#7d7078">
+        {chart.positions[0]
+          ? `${Math.floor(chart.positions[0].degreeInSign)}° ${Math.round((chart.positions[0].degreeInSign % 1) * 60)}′`
+          : ""}
       </text>
     </svg>
   );
