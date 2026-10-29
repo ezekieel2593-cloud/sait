@@ -123,9 +123,14 @@ npm run build:php           # release/astra-pearl-php.zip (≈0,5 МБ) → down
 [docs/UPLOAD-SPACEWEB.md](docs/UPLOAD-SPACEWEB.md), техническое описание —
 [docs/HOSTING-PHP.md](docs/HOSTING-PHP.md), краткая памятка лежит в архиве (`README.txt`).
 
-Проверки без хостинга: `node tools/php-checks/api-cabinet.cjs` (73 проверки в php-wasm на PHP 8.0–8.5),
-`setup-flow.cjs` (20 проверок установки), `node tools/php-checks/form-api.cjs` (20)
-и `node tools/php-checks/static-noserver.cjs` (10, jsdom).
+Кабинет открывается кнопкой **«Войти»** в шапке сайта (рядом с «Рассчитать карту»)
+или по адресу `/cabinet/`. В карточке заявки специалист видит не только контакт клиента,
+но и **полный расчёт**: положение каждой планеты с домом и ретроградностью, куспиды домов,
+все аспекты с орбисами, все точки Матрицы с формулами — то же, что видел клиент.
+
+Проверки без хостинга: `node tools/php-checks/api-cabinet.cjs` (76 проверок в php-wasm на PHP 8.0–8.5),
+`setup-flow.cjs` (20 проверок установки), `node tools/php-checks/form-api.cjs` (26)
+и `node tools/php-checks/static-noserver.cjs` (11, jsdom).
 Диагностика установки на хостинге — страница `check.php` в архиве
 (проверка: `node tools/php-checks/check-page.cjs`, 15 проверок).
 Установка (`setup.php`) сама создаёт `config.php` и записывает хеш пароля,

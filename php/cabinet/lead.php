@@ -81,6 +81,30 @@ cabinet_head('Заявка ' . ($lead['ref'] ?? ''));
       <p class="muted">Клиент не приложил расчёт — уточните данные рождения в переписке.</p>
     <?php endif; ?>
 
+    <?php
+      $details = (string) ($lead['details'] ?? '');
+      $detailsLines = $details === '' ? 0 : substr_count($details, "\n") + 1;
+    ?>
+    <h2>Полный расчёт для разбора</h2>
+    <?php if ($details !== ''): ?>
+      <p class="muted">
+        Всё, что видел клиент: положения планет с домами и ретроградностью, куспиды домов,
+        аспекты с орбисами, все точки Матрицы с формулами. Можно копировать и работать с этим текстом.
+      </p>
+      <details class="calc-more">
+        <summary>Показать полный расчёт (<?= (int) $detailsLines ?> строк)</summary>
+        <pre class="calc" id="details-text"><?= e($details) ?></pre>
+        <div class="actions">
+          <button type="button" class="secondary" onclick="navigator.clipboard.writeText(document.getElementById('details-text').innerText).then(()=>{this.textContent='Скопировано';setTimeout(()=>this.textContent='Скопировать полный расчёт',1800)})">Скопировать полный расчёт</button>
+        </div>
+      </details>
+    <?php else: ?>
+      <p class="muted">
+        Заявка пришла без подробного расчёта: клиент оставил её со страницы, где расчёт не выполнялся,
+        либо заявка старая. Данные рождения — в карточке выше.
+      </p>
+    <?php endif; ?>
+
     <h2>История</h2>
     <ul class="history">
       <?php foreach (array_reverse(is_array($lead['history'] ?? null) ? $lead['history'] : []) as $event): ?>

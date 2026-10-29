@@ -75,6 +75,7 @@ function create_lead(array $input): array
             'question' => $input['question'],
             'consent' => true,
             'calc' => $input['calc'],
+            'details' => $input['details'] ?? '',
             'place' => $input['place'] ?? '',
             'birth' => $input['birth'] ?? '',
             'status' => 'new',
@@ -174,6 +175,7 @@ function anonymize_lead(string $id): ?array
             $lead['contact'] = '';
             $lead['question'] = '';
             $lead['calc'] = '';
+            $lead['details'] = '';
             $lead['birth'] = '';
             $lead['place'] = '';
             $lead['notes'] = '';

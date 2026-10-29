@@ -65,6 +65,10 @@ function cabinet_head(string $title, bool $withNav = true): void
   .msg.warn { background:#fdf5e7; color:#7a5a1e; border:1px solid #ecd9b0; }
   pre.calc { white-space:pre-wrap; word-break:break-word; background:#fafbfb; border:1px solid var(--line);
     border-radius:8px; padding:10px; font-size:13px; margin:0; }
+  details.calc-more { margin:8px 0 0; }
+  details.calc-more > summary { cursor:pointer; font-size:14px; font-weight:600; color:var(--accent);
+    padding:6px 0; }
+  details.calc-more > summary:hover { text-decoration:underline; }
   dl.meta { display:grid; grid-template-columns:150px 1fr; gap:6px 12px; margin:0; font-size:14px; }
   dl.meta dt { color:var(--muted); }
   dl.meta dd { margin:0; word-break:break-word; }

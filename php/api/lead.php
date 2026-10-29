@@ -48,6 +48,7 @@ $contact = trim((string) ($body['contact'] ?? ''));
 $question = trim((string) ($body['question'] ?? ''));
 $consent = ($body['consent'] ?? false) === true;
 $calc = trim((string) ($body['calc'] ?? ''));
+$details = trim((string) ($body['details'] ?? ''));
 $birth = trim((string) ($body['birth'] ?? ''));
 $place = trim((string) ($body['place'] ?? ''));
 
@@ -71,6 +72,10 @@ if (str_len($question) > 1000) {
 if (str_len($calc) > 6000) {
     $calc = str_cut($calc, 6000);
 }
+// Полный расчёт для кабинета: все планеты, дома, аспекты и точки Матрицы.
+if (str_len($details) > 20000) {
+    $details = str_cut($details, 20000);
+}
 if (!$consent) {
     $fields['consent'] = 'Без согласия на обработку данных заявку принять нельзя';
 }
@@ -87,6 +92,7 @@ try {
         'contact' => $contact,
         'question' => $question,
         'calc' => $calc,
+        'details' => $details,
         'birth' => str_cut($birth, 300),
         'place' => str_cut($place, 200),
     ]);

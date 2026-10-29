@@ -14,22 +14,22 @@ npm init -y >/dev/null && npm i php-wasm     # ≈90 МБ, в репозитор
 ## Запуск проверок
 
 ```bash
-# 1. Серверная часть: API заявок, лимиты, кабинет, setup.php (68 проверок)
+# 1. Серверная часть: API заявок, лимиты, кабинет, setup.php (76 проверок)
 node tools/php-checks/api-cabinet.cjs
 
 # на конкретной версии PHP (php-wasm ставит 8.0, 8.1, 8.2, 8.3, 8.4, 8.5):
 PHP_VERSION=8.0 node tools/php-checks/api-cabinet.cjs
 
-# 2. Форма в собранном PHP-пакете (17 проверок, jsdom)
+# 2. Форма в собранном PHP-пакете (26 проверок, jsdom)
 npm run build:php && node tools/php-checks/form-api.cjs
 
-# 3. Установка: создание config.php и запись пароля (19 проверок)
+# 3. Установка: создание config.php и запись пароля (20 проверок)
 node tools/php-checks/setup-flow.cjs
 
 # 4. Диагностическая страница check.php (15 проверок)
 node tools/php-checks/check-page.cjs
 
-# 5. Статическая версия без сервера (10 проверок, jsdom)
+# 5. Статическая версия без сервера (11 проверок, jsdom)
 npm run build:static && node tools/php-checks/static-noserver.cjs
 ```
 

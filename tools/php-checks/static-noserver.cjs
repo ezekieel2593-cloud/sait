@@ -65,6 +65,7 @@ async function run() {
   await wait(400);
 
   check("config.js без серверного приёма заявок", window.ASTRA_CONFIG?.api?.enabled === false, String(window.ASTRA_CONFIG?.api?.enabled));
+  check("без сервера нет кнопки «Войти»", !doc.querySelector('header a[href="cabinet/"]'));
 
   const date = doc.querySelector("#matrix-date");
   check("форма расчёта отрисована", Boolean(date));

@@ -58,6 +58,12 @@ export function Header({ active }: { active?: string }) {
         </nav>
 
         <div className="flex items-center gap-2">
+          {/* Кабинет есть только там, где включён серверный приём заявок (PHP). */}
+          {config.api?.enabled ? (
+            <a href="cabinet/" className="btn btn--secondary btn--sm hidden sm:inline-flex" title="Кабинет специалиста">
+              Войти
+            </a>
+          ) : null}
           <a href="astrology.html" className="btn btn--primary btn--sm hidden sm:inline-flex">
             Рассчитать карту
           </a>
@@ -90,6 +96,15 @@ export function Header({ active }: { active?: string }) {
             <a href="matrix.html" className="btn btn--primary mt-2" onClick={() => setOpen(false)}>
               Открыть Матрицу судьбы
             </a>
+            {config.api?.enabled ? (
+              <a
+                href="cabinet/"
+                className="btn btn--secondary"
+                onClick={() => setOpen(false)}
+              >
+                Войти в кабинет
+              </a>
+            ) : null}
           </nav>
         </div>
       ) : null}

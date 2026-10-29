@@ -236,6 +236,7 @@ echo "loaded:$n";
     question: "Хочу разобрать финансовую линию",
     consent: true,
     calc: "Центр: 10. Деньги: 3 + 10",
+    details: "МАТРИЦА СУДЬБЫ — полный расчёт\nA: 5 — Справедливость\nЦентр: 10 — Колесо Фортуны",
     birth: "1992-06-23",
     place: "Челябинск",
     trap: "",
@@ -257,6 +258,7 @@ echo "loaded:$n";
   check("в файле есть имя клиента", stored.includes("Мария"));
   check("контакт сохранён", stored.includes("@maria_test"));
   check("расчёт сохранён", stored.includes("Центр: 10"));
+  check("полный расчёт сохранён", stored.includes("Колесо Фортуны"));
   check("нет сырого IP", !stored.includes("203.0.113.7"));
 
   /* ------------------------------ 2. валидация ----------------------------- */
@@ -356,6 +358,8 @@ echo "loaded:$n";
   const card = await request(php, { script: "/cabinet/lead.php", get: { id: firstId }, owner });
   check("карточка открывается", /Мария/.test(card.payload), card.payload.slice(0, 200));
   check("в карточке есть расчёт", /Центр: 10/.test(card.payload));
+  check("в карточке есть полный расчёт", /Колесо Фортуны/.test(card.payload));
+  check("полный расчёт свёрнут", /Показать полный расчёт/.test(card.payload));
   check("в карточке есть контакт", /maria_test/.test(card.payload));
   check("csrf-токен в формах карточки", card.payload.includes(`value="${CSRF}"`), String(CSRF));
 

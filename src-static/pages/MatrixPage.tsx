@@ -5,6 +5,7 @@ import { MatrixDiagram } from "@/components/charts/MatrixDiagram";
 import { InterpretationCard, LockedCard } from "@/components/result/InterpretationCard";
 import { getConfig } from "../config";
 import { LeadForm } from "../components/LeadForm";
+import { matrixDetails } from "../details";
 import { CalendarIcon } from "../components/icons-extra";
 
 function today(): string {
@@ -185,7 +186,12 @@ function MatrixResult({ result }: { result: { chart: MatrixChart; date: string }
         </section>
       ) : null}
 
-      <LeadForm direction="matrix" summary={summary} birth={date} />
+      <LeadForm
+        direction="matrix"
+        summary={summary}
+        details={matrixDetails(chart, date, interpretation)}
+        birth={date}
+      />
     </div>
   );
 }

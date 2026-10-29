@@ -7,6 +7,7 @@ import { offsetLabelAt } from "@/lib/astronomy/timezone";
 import { getConfig } from "../config";
 import { LeadForm } from "../components/LeadForm";
 import { CitySearch, type PlaceValue } from "../components/CitySearch";
+import { astrologyDetails } from "../details";
 import { CalendarIcon, ClockIcon } from "../components/icons-extra";
 import type { TimeAccuracy } from "@/lib/types";
 
@@ -372,6 +373,7 @@ function AstroResult({ result }: { result: { chart: NatalChart; label: string } 
       <LeadForm
         direction="astrology"
         summary={summary}
+        details={astrologyDetails(chart, label, interpretation)}
         birth={`${chart.birth.date}${chart.birth.time ? `, ${chart.birth.time}` : ""}${chart.birth.timeAccuracy === "unknown" ? " (время неизвестно)" : chart.birth.timeAccuracy === "approx" ? " (примерно)" : ""}`}
         place={chart.birth.placeName || label}
       />

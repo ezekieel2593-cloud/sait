@@ -78,6 +78,15 @@ async function run() {
 
   check("config.js включает серверный приём заявок", window.ASTRA_CONFIG?.api?.enabled === true, String(window.ASTRA_CONFIG?.api?.enabled));
 
+  const loginLink = doc.querySelector('header a[href="cabinet/"]');
+  check("в шапке есть кнопка «Войти»", Boolean(loginLink), doc.querySelector("header")?.innerHTML.slice(0, 200));
+  check("кнопка «Войти» подписана", /Войти/.test(loginLink?.textContent || ""), loginLink?.textContent);
+  check(
+    "«Войти» стоит рядом с «Рассчитать карту»",
+    Boolean(loginLink?.parentElement?.querySelector(".btn--primary")),
+    loginLink?.parentElement?.className
+  );
+
   const date = doc.querySelector("#matrix-date");
   check("форма расчёта отрисована", Boolean(date));
   if (!date) return;
@@ -113,7 +122,10 @@ async function run() {
     check("дата рождения приложена", body.birth === "1992-06-23", String(body.birth));
     check("согласие передано", body.consent === true, String(body.consent));
     check("honeypot пустой", body.trap === "", JSON.stringify(body.trap));
-    check("в теле нет лишних полей", Object.keys(body).length === 10, Object.keys(body).join(","));
+    check("полный расчёт приложен к заявке", (body.details || "").length > 200, String((body.details || "").length));
+    check("в полном расчёте есть все позиции матрицы", /ВСЕ ПОЗИЦИИ/.test(body.details || ""), (body.details || "").slice(0, 120));
+    check("в полном расчёте есть формулы", /формула:/.test(body.details || ""));
+    check("в теле нет лишних полей", Object.keys(body).length === 11, Object.keys(body).join(","));
   }
 
   const text = doc.body.textContent;

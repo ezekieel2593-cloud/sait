@@ -15,12 +15,18 @@ import { DocumentIcon, ShieldIcon } from "./icons-extra";
 export function LeadForm({
   direction,
   summary,
+  details = "",
   birth = "",
   place = "",
   compact = false,
 }: {
   direction: Direction;
   summary: string;
+  /**
+   * Полный расчёт для кабинета специалиста (все планеты, дома, аспекты,
+   * все точки Матрицы). Клиент его не видит — он уходит вместе с заявкой.
+   */
+  details?: string;
   /** Строка с данными рождения: «1992-06-23, 14:30 · Москва». */
   birth?: string;
   place?: string;
@@ -74,6 +80,7 @@ export function LeadForm({
             question: form.question.trim(),
             consent: true,
             calc: summary,
+            details,
             birth,
             place,
             trap: "",
