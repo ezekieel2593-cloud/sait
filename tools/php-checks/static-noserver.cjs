@@ -70,9 +70,25 @@ async function run() {
   const header = doc.querySelector("header");
   check("название бренда — «Жемчужина»", /Жемчужина/.test(header?.textContent || ""), header?.textContent?.slice(0, 80));
   check(
-    "под названием — строка про жемчужину души",
+    "под названием — «Драгоценная жемчужина души»",
     /Драгоценная жемчужина души/.test(header?.textContent || "")
   );
+
+  const photo = doc.querySelector(".page-photo");
+  check("фон сайта — жемчужная фотография", Boolean(photo), "нет слоя .page-photo");
+  check(
+    "фон подключён картинкой из images/",
+    /images\/pearl-background\.jpg/.test(photo?.getAttribute("style") || ""),
+    photo?.getAttribute("style")?.slice(0, 120)
+  );
+  check(
+    "фон есть в сборке",
+    fs.existsSync(path.join(dir, "images", "pearl-background.jpg")) &&
+      fs.existsSync(path.join(dir, "images", "pearl-background-mobile.jpg"))
+  );
+  const backgroundSize = fs.statSync(path.join(dir, "images", "pearl-background.jpg")).size;
+  check("фон не тяжелее 400 КБ", backgroundSize < 400_000, `${Math.round(backgroundSize / 1024)} КБ`);
+
 
   const date = doc.querySelector("#matrix-date");
   check("форма расчёта отрисована", Boolean(date));
@@ -156,16 +172,25 @@ async function run() {
   const configScript = scripts.find((node) => node.getAttribute("src").includes("config.js"));
   if (configScript) {
     inviteWindow.eval(fs.readFileSync(path.join(dir, configScript.getAttribute("src").replace(/^\//, "")), "utf8"));
-    inviteWindow.ASTRA_CONFIG.invite = { enabled: true, delayMs: 100 };
+    inviteWindow.ASTRA_CONFIG.invite = { enabled: true, delayMs: 1200 };
   }
   for (const script of scripts) {
     if (script === configScript) continue;
     const src = script.getAttribute("src").replace(/^\//, "");
     inviteWindow.eval(fs.readFileSync(path.join(dir, src), "utf8"));
   }
-  await wait(120);
+  await wait(400); // React успевает отрисовать главную
+  const homeText = inviteWindow.document.body.textContent || "";
+  check("на главной крупный заголовок-название", /Драгоценная жемчужина души/.test(homeText));
+  check("манифест: первый абзац", /В каждой женщине живёт своя драгоценная жемчужина/.test(homeText));
+  check("манифест: абзац про страхи и ожидания", /Иногда она скрыта за страхами/.test(homeText));
+  check("манифест: акцентная строка", /Ты не должна заслуживать свою ценность/.test(homeText));
+  check("манифест: финальная строка", /каждая женщина — драгоценность/.test(homeText));
+  check("манифест: блок оформлен", Boolean(inviteWindow.document.querySelector(".manifesto")));
+  check("на главной нет блока о специалисте", !/Фотография специалиста/.test(homeText));
+
   check("до истечения времени окна нет", !inviteWindow.document.querySelector(".invite__card"));
-  await wait(500);
+  await wait(1200);
   const invite = inviteWindow.document.querySelector(".invite__card");
   check("через время появляется всплывающее окно", Boolean(invite));
   check("в окне есть вопрос", Boolean(invite?.querySelector("#invite-title")));

@@ -11,7 +11,7 @@ npm run build:static
 STATIC_SITE_URL=https://example.com npm run build:static
 ```
 
-Результат: `release/static/` и архив `release/astra-pearl-static.zip` (≈0,4 МБ).
+Результат: `release/static/` и архив `release/astra-pearl-static.zip` (≈0,7 МБ).
 
 ## Установка
 

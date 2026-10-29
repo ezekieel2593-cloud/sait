@@ -110,12 +110,12 @@ Apache и `.htaccess`. Node.js, Composer и MySQL не нужны: расчёт�
 | Настройки | `config.js` + `config.php` |
 
 ```bash
-npm run build:php           # release/astra-pearl-php.zip (≈0,5 МБ) → download/ — сборка для SpaceWeb
+npm run build:php           # release/astra-pearl-php.zip (≈0,7 МБ) → download/ — сборка для SpaceWeb
 ```
 
 > **Не заливайте на хостинг ZIP репозитория** (кнопка «Code → Download ZIP» на GitHub):
 > там исходный код. Для сайта нужен один файл — [`download/astra-pearl-php.zip`](download/astra-pearl-php.zip)
-> (≈0,5 МБ). Памятка: [download/START-HERE.txt](download/START-HERE.txt).
+> (≈0,7 МБ). Памятка: [download/START-HERE.txt](download/START-HERE.txt).
 
 Содержимое `release/php` (архив `download/astra-pearl-php.zip`) заливается в `public_html`.
 Заявки сохраняются в файле на сервере, уведомления уходят в Telegram и на почту,
@@ -130,7 +130,7 @@ npm run build:php           # release/astra-pearl-php.zip (≈0,5 МБ) → down
 
 Проверки без хостинга: `node tools/php-checks/api-cabinet.cjs` (76 проверок в php-wasm на PHP 8.0–8.5),
 `setup-flow.cjs` (24 проверки установки), `node tools/php-checks/form-api.cjs` (31)
-и `node tools/php-checks/static-noserver.cjs` (29, jsdom).
+и `node tools/php-checks/static-noserver.cjs` (40, jsdom).
 Диагностика установки на хостинге — страница `check.php` в архиве
 (проверка: `node tools/php-checks/check-page.cjs`, 15 проверок).
 Установка (`setup.php`) сама создаёт `config.php` и записывает хеш пароля,

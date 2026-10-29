@@ -29,7 +29,7 @@ node tools/php-checks/setup-flow.cjs
 # 4. Диагностическая страница check.php (15 проверок)
 node tools/php-checks/check-page.cjs
 
-# 5. Статическая версия без сервера (29 проверок, jsdom)
+# 5. Статическая версия без сервера (40 проверок, jsdom)
 npm run build:static && node tools/php-checks/static-noserver.cjs
 ```
 

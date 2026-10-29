@@ -36,6 +36,16 @@ createRoot(root).render(
     <a className="skip-link" href="#main">
       Перейти к содержимому
     </a>
+    <div
+      className="page-photo"
+      aria-hidden="true"
+      style={
+        {
+          "--page-photo": 'url("images/pearl-background.jpg")',
+          "--page-photo-mobile": 'url("images/pearl-background-mobile.jpg")',
+        } as React.CSSProperties
+      }
+    />
     <div className="page-aura" aria-hidden="true" />
     <Header active={page === "home" ? undefined : `${page}.html`} />
     <main id="main">

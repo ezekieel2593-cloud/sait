@@ -10,6 +10,9 @@ export function Footer() {
       <div className="container grid gap-10 py-12 md:grid-cols-[1.3fr_1fr_1fr] md:py-16">
         <div className="max-w-sm">
           <p className="brand-name">{config.logoText}</p>
+          <p className="mt-1 font-[family-name:var(--font-display)] text-[1rem] uppercase tracking-[0.12em] text-[var(--ocean)]">
+            {config.brandTitle}
+          </p>
           <p className="brand-sub brand-sub--lg mt-2">{config.brandTagline}</p>
           <p className="mt-3 text-[0.92rem] leading-relaxed text-[var(--ink-soft)]">{config.tagline}. Расчёты выполняются по фиксированным алгоритмам с указанием версии методики.</p>
           <p className="mt-4 text-[0.8rem] leading-relaxed text-[var(--ink-faint)]">

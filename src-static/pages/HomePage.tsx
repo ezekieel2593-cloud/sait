@@ -12,11 +12,12 @@ export function HomePage() {
         <div className="container grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
           <div>
             <p className="eyebrow">Астрология · Матрица судьбы</p>
-            <h1 className="h-display mt-3 max-w-[16ch]">Натальная карта и Матрица судьбы по вашей дате</h1>
-            <p className="brand-sub brand-sub--lg mt-3">{config.brandTagline}</p>
-            <p className="lead mt-4 max-w-[52ch]">
-              Реальные расчёты по проверенным алгоритмам и понятная расшифровка: что даёт опору, где зоны роста и какие
-              вопросы стоит разобрать со специалистом. Результат — сразу, без регистрации.
+            <h1 className="h-display mt-3 max-w-[17ch] uppercase tracking-[0.02em]">{config.brandTitle}</h1>
+            <span className="gold-rule mt-4" aria-hidden="true" />
+            <p className="lead mt-4 max-w-[52ch]">{config.manifesto.lead}</p>
+            <p className="mt-3 max-w-[52ch] text-[0.94rem] leading-relaxed text-[var(--ink)]">
+              Здесь начинается разговор о вас: натальная карта и Матрица судьбы считаются по вашей дате рождения,
+              а расшифровка помогает увидеть свою силу спокойно и без чужих ожиданий.
             </p>
             <div className="mt-6 flex flex-wrap gap-2">
               <a href="astrology.html" className="btn btn--primary btn--lg">
@@ -47,6 +48,22 @@ export function HomePage() {
               text="22 энергии: личный квадрат, родовые программы, каналы денег и отношений, энергия года."
               bullets={["Центр и личный квадрат", "Родовой квадрат и сила рода", "Каналы денег и отношений"]}
             />
+          </div>
+        </div>
+      </section>
+
+      <section className="section section--tight" id="about">
+        <div className="container container--measure">
+          <div className="manifesto">
+            <p className="eyebrow justify-center">Манифест</p>
+            <h2 className="manifesto__title mt-3">{config.brandTitle}</h2>
+            <span className="manifesto__rule" aria-hidden="true" />
+            <p className="manifesto__lead">{config.manifesto.lead}</p>
+            {config.manifesto.paragraphs.map((paragraph) => (
+              <p key={paragraph.slice(0, 24)}>{paragraph}</p>
+            ))}
+            <p className="manifesto__accent">{config.manifesto.accent}</p>
+            <p className="manifesto__closing">{config.manifesto.closing}</p>
           </div>
         </div>
       </section>

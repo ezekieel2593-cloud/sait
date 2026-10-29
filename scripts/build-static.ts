@@ -119,9 +119,11 @@ for (const [from, to] of fontSources) {
 
 const imageDir = path.join(out, "images");
 fs.mkdirSync(imageDir, { recursive: true });
-for (const file of ["og-cover.svg", "specialist-placeholder.svg", "favicon.svg"]) {
-  const source = path.join(root, "public", "images", file);
-  if (fs.existsSync(source)) fs.copyFileSync(source, path.join(imageDir, file));
+// Копируем все картинки из public/images: фон сайта, обложку, иконку, плейсхолдер.
+const imageSource = path.join(root, "public", "images");
+for (const file of fs.readdirSync(imageSource)) {
+  if (!/\.(svg|png|jpe?g|webp|avif|ico)$/i.test(file)) continue;
+  fs.copyFileSync(path.join(imageSource, file), path.join(imageDir, file));
 }
 
 /* ------------------------------- HTML-страницы ------------------------------- */
@@ -277,6 +279,16 @@ window.ASTRA_CONFIG = {
   siteName: ${JSON.stringify(DEFAULT_CONFIG.siteName)},
   logoText: ${JSON.stringify(DEFAULT_CONFIG.logoText)},
   brandTagline: ${JSON.stringify(DEFAULT_CONFIG.brandTagline)},
+  // Полное название — крупный заголовок на главной и подпись в подвале
+  brandTitle: ${JSON.stringify(DEFAULT_CONFIG.brandTitle)},
+
+  // Манифест на главной: правьте тексты, не меняя код
+  manifesto: {
+    lead: ${JSON.stringify(DEFAULT_CONFIG.manifesto.lead)},
+    paragraphs: ${JSON.stringify(DEFAULT_CONFIG.manifesto.paragraphs, null, 2).replace(/\n/g, "\n  ")},
+    accent: ${JSON.stringify(DEFAULT_CONFIG.manifesto.accent)},
+    closing: ${JSON.stringify(DEFAULT_CONFIG.manifesto.closing)},
+  },
   tagline: ${JSON.stringify(DEFAULT_CONFIG.tagline)},
   description: ${JSON.stringify(DEFAULT_CONFIG.description)},
 
@@ -398,7 +410,10 @@ fs.writeFileSync(
    - siteUrl — адрес сайта, например "https://example.com"
    - contacts.telegram — ник в Telegram, например "my_nick" (или ссылка t.me/my_nick)
    - contacts.email — почта для заявок
-   - brandTagline — строка под названием сайта
+   - brandTitle — полное название, brandTagline — короткий девиз в подвале
+   - manifesto — тексты блока «Драгоценная жемчужина души» на главной
+   - фон сайта: положите свою картинку в images/pearl-background.jpg (и
+     images/pearl-background-mobile.jpg для телефона) с тем же именем
    - invite.delayMs — через сколько секунд показывать окно с формой (40000 = 40 секунд)
    - services.priceNote — стоимость, если хотите её показать
 3. Обновите страницу в браузере с очисткой кэша (Ctrl+F5).

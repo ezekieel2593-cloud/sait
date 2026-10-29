@@ -41,7 +41,7 @@ export function Header({ active }: { active?: string }) {
           <span className="flex flex-col">
             <span className="brand-name">{config.logoText}</span>
             <span className="mt-1 hidden lg:block">
-              <span className="brand-sub">{config.brandTagline}</span>
+              <span className="brand-sub uppercase tracking-[0.14em]">{config.brandTitle}</span>
             </span>
           </span>
         </a>
