@@ -23,7 +23,7 @@ PHP_VERSION=8.0 node tools/php-checks/api-cabinet.cjs
 # 2. Форма в собранном PHP-пакете (26 проверок, jsdom)
 npm run build:php && node tools/php-checks/form-api.cjs
 
-# 3. Установка: создание config.php и запись пароля (20 проверок)
+# 3. Установка: config.php, пароль, вход Adelina / astrolog (24 проверки)
 node tools/php-checks/setup-flow.cjs
 
 # 4. Диагностическая страница check.php (15 проверок)

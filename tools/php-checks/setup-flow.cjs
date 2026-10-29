@@ -151,6 +151,36 @@ echo "@@BODY@@" . ob_get_clean();
   const second = await doPost({ action: "create" });
   check("повторное создание не перезаписывает файл", /уже существует/.test(second) || (await readFile("/app/config.php")) === config);
 
+  /* ------------------- 2б. вход с паролем по умолчанию ------------------- */
+
+  // Сразу после установки действует логин Adelina и пароль astrolog.
+  // Проверяем именно работу формы: иначе человек останется без доступа.
+  const doLogin = (login, password) =>
+    run(`<?php
+define('APP_TEST_NO_EXIT', true);
+require_once '/app/inc/bootstrap.php';
+require_once '/app/inc/store.php';
+require_once '/app/inc/auth.php';
+require_once '/app/inc/view.php';
+app_config(true);
+$_SERVER['REQUEST_METHOD'] = 'POST';
+$_POST = ['login' => ${phpQuote(login)}, 'password' => ${phpQuote(password)}];
+$_GET = [];
+ob_start();
+try { include '/app/cabinet/index.php'; } catch (RuntimeException $e) { if ($e->getMessage() !== 'app_exit') echo "EX:" . $e->getMessage(); }
+$body = ob_get_clean();
+echo "@@OWNER@@" . (string) ($_SESSION['owner'] ?? "");
+echo "@@BODY@@" . $body;
+`);
+
+  const goodLogin = await doLogin("Adelina", "astrolog");
+  check("вход Adelina / astrolog сразу после установки", /@@OWNER@@Adelina/.test(goodLogin), goodLogin.slice(0, 120));
+  check("при входе нет сообщения об ошибке", !/Неверный логин или пароль|Вход не настроен/.test(goodLogin));
+
+  const badLogin = await doLogin("Adelina", "astrolog2");
+  check("неверный пароль не пускает", /Неверный логин или пароль/.test(badLogin));
+  check("после неудачного входа владельца в сессии нет", !/@@OWNER@@Adelina/.test(badLogin));
+
   /* ----------------------------- 3. пароль ------------------------------ */
 
   body = await doPost({ action: "password", password: "super-secret-123", passwordRepeat: "super-secret-123" });
