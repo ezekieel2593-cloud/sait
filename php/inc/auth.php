@@ -64,11 +64,10 @@ function is_logged_in(): bool
     return true;
 }
 
-/** Действующий хеш пароля: из config.php, а если он пуст — встроенный. */
+/** Хеш пароля из config.php (пустая строка — если владелец его ещё не задал). */
 function login_hash(): string
 {
-    $hash = trim((string) cfg('owner.passwordHash', ''));
-    return $hash !== '' ? $hash : DEFAULT_OWNER_HASH;
+    return trim((string) cfg('owner.passwordHash', ''));
 }
 
 function login_name(): string
@@ -77,10 +76,23 @@ function login_name(): string
     return $login !== '' ? $login : DEFAULT_OWNER_LOGIN;
 }
 
-/** Действует ли сейчас пароль по умолчанию — чтобы напомнить о смене. */
+/**
+ * Принимается ли вход по встроенным данным (Adelina / astrolog).
+ *
+ * По умолчанию — да: владелец не должен остаться без кабинета из-за забытого
+ * пароля или старого config.php. Выключается одной строкой в config.php:
+ *
+ *   'security' => ['allowDefaultLogin' => false],
+ */
+function login_allow_default(): bool
+{
+    return (bool) cfg('security.allowDefaultLogin', true);
+}
+
+/** Подходит ли встроенный пароль к текущему конфигу. */
 function login_using_default(): bool
 {
-    return password_verify(DEFAULT_OWNER_PASSWORD, login_hash());
+    return login_allow_default();
 }
 
 function attempt_login(string $identity, string $password): array
@@ -93,6 +105,9 @@ function attempt_login(string $identity, string $password): array
     $ownerLogin = login_name();
     $ownerEmail = trim((string) cfg('owner.email', ''));
     $hash = login_hash();
+    if ($hash === '' && !login_allow_default()) {
+        return ['ok' => false, 'error' => 'Вход не настроен: задайте пароль на странице setup.php.'];
+    }
 
     $limit = rate_limit('login:' . ip_hash(), (int) cfg('limits.loginAttempts', 6), (int) cfg('limits.lockMinutes', 15));
     if (!$limit['allowed']) {
@@ -111,7 +126,12 @@ function attempt_login(string $identity, string $password): array
     if (safe_lower($given) === safe_lower(DEFAULT_OWNER_LOGIN)) {
         $identityMatches = true;
     }
-    $passwordMatches = password_verify($password, $hash);
+    // Подходит либо свой пароль из config.php, либо встроенный — пока владелец
+    // не выключил его строкой 'allowDefaultLogin' => false.
+    $passwordMatches = $hash !== '' && password_verify($password, $hash);
+    if (!$passwordMatches && login_allow_default()) {
+        $passwordMatches = password_verify($password, DEFAULT_OWNER_HASH);
+    }
 
     if (!$identityMatches || !$passwordMatches) {
         return ['ok' => false, 'error' => 'Неверный логин или пароль.'];
@@ -121,6 +141,9 @@ function attempt_login(string $identity, string $password): array
     $_SESSION['owner'] = $ownerLogin !== '' ? $ownerLogin : DEFAULT_OWNER_LOGIN;
     $_SESSION['expires'] = time() + 12 * 3600;
     $_SESSION['csrf'] = bin2hex(random_bytes(16));
+    // Записываем сессию на диск сразу: если PHP не успеет закрыть её при
+    // редиректе, вход всё равно сохранится.
+    session_write_close();
     return ['ok' => true];
 }
 

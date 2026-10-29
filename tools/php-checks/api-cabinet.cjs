@@ -88,8 +88,11 @@ async function request(php, { script, method = "GET", server = {}, body = null, 
     "http_response_code(200);",
     "header_remove();",
     "if (session_status() === PHP_SESSION_ACTIVE) { session_write_close(); }",
-    "$_SESSION = [];",
   ];
+  // Свой id для каждого запроса: иначе session_start() подхватывает сессию
+  // предыдущего запроса из файла, и «гость» оказывается уже вошедшим.
+  parts.push(`session_id('test${Math.random().toString(16).slice(2)}${Date.now().toString(16)}');`);
+  parts.push("$_SESSION = [];");
   // php-wasm не сохраняет данные сессии между запусками, поэтому для проверок
   // кабинета сессия владельца наполняется заранее известными значениями.
   if (owner) {
@@ -107,7 +110,11 @@ async function request(php, { script, method = "GET", server = {}, body = null, 
   parts.push(`$_SERVER = array_merge($_SERVER, ${phpArray(merged)});`);
   parts.push(`$GLOBALS['APP_TEST_INPUT'] = ${body !== null ? phpQuote(JSON.stringify(body)) : "null"};`);
   if (post !== null) parts.push(`$_POST = ${phpArray(post)};`);
-  if (cookie !== null) parts.push(`$_COOKIE = ${phpArray(cookie)};`);
+  if (cookie !== null) {
+    parts.push(`$_COOKIE = ${phpArray(cookie)};`);
+    // Запрос «от вошедшего»: берём id сессии из cookie, как это делает браузер.
+    parts.push(`if (!empty($_COOKIE['astra_cabinet'])) { session_id((string) $_COOKIE['astra_cabinet']); }`);
+  }
   if (get !== null) parts.push(`$_GET = ${phpArray(get)};`);
   parts.push(`try { include ${phpQuote(APP + script)}; } catch (Throwable $e) { if ($e->getMessage() !== 'app_exit') { echo "\n@@TEST_ERROR@@" . get_class($e) . ': ' . $e->getMessage(); } }`);
   parts.push(`$body = ob_get_clean();`);
@@ -473,10 +480,72 @@ echo "loaded:$n";
   );
   res = await request(php, { script: "/cabinet/index.php", get: {}, cookie: cookiesFrom(emptyHash.headers) });
   check(
-    "при пароле по умолчанию кабинет предупреждает о смене",
-    /пароль по умолчанию/i.test(res.payload),
+    "в кабинете виден баннер про вход по умолчанию",
+    /Вход по паролю по умолчанию включён/.test(res.payload),
     res.payload.slice(0, 160)
   );
+
+  // В конфиге может остаться хеш забытого пароля — встроенный вход всё равно работает.
+  const foreignHash = await run(php, `<?php echo password_hash('zabytyi-parol-2025', PASSWORD_DEFAULT);`);
+  const withForeign = currentConfig.replace(/'passwordHash' => '[^']*'/, `'passwordHash' => '${foreignHash.trim()}'`);
+  await writeAppFile(php, "/config.php", withForeign);
+  const forgotten = await request(php, {
+    script: "/cabinet/index.php",
+    method: "POST",
+    post: { login: "Adelina", password: "astrolog" },
+    server: { REMOTE_ADDR: "203.0.113.62" },
+  });
+  check(
+    "забытый свой пароль не мешает входу Adelina / astrolog",
+    forgotten.status === 303,
+    `${forgotten.status} ${forgotten.payload.slice(0, 120)}`
+  );
+  const forgotSession = cookiesFrom(forgotten.headers);
+  res = await request(php, { script: "/cabinet/index.php", get: {}, cookie: forgotSession });
+  check("в кабинете баннер про вход по умолчанию", /Вход по паролю по умолчанию включён/.test(res.payload), res.payload.slice(0, 160));
+  check("в форме входа нет подсказки с паролем", !/пароль — тот, что вы задали/.test(res.payload));
+
+  // Свой пароль по-прежнему работает.
+  const ownAgain = await request(php, {
+    script: "/cabinet/index.php",
+    method: "POST",
+    post: { login: "Adelina", password: "zabytyi-parol-2025" },
+  });
+  check("свой пароль из конфига тоже пускает", ownAgain.status === 303, String(ownAgain.status));
+
+  // Владелец выключил встроенный вход — подходит только свой пароль.
+  const closed = `<?php
+return [
+    'siteName' => 'Astra Test',
+    'siteUrl' => 'https://astra-test.ru',
+    'owner' => ['login' => 'Adelina', 'email' => 'owner@astra-test.ru', 'passwordHash' => ${phpQuote(foreignHash.trim())}],
+    'telegram' => ['botToken' => '', 'chatId' => ''],
+    'mail' => ['adminEmail' => '', 'from' => '', 'subjectPrefix' => 'Заявка'],
+    'security' => ['salt' => 'test-salt', 'setupToken' => 'setup-token-1', 'allowInsecureCookie' => false, 'allowDefaultLogin' => false],
+    'limits' => ['leadsPerWindow' => 3, 'windowMinutes' => 15, 'loginAttempts' => 200, 'lockMinutes' => 15],
+    'retentionDays' => 365,
+    'timezoneOffsetHours' => 3,
+];
+`;
+  await writeAppFile(php, "/config.php", closed);
+  const closedDefault = await request(php, {
+    script: "/cabinet/index.php",
+    method: "POST",
+    post: { login: "Adelina", password: "astrolog" },
+    server: { REMOTE_ADDR: "203.0.113.63" },
+  });
+  check(
+    "allowDefaultLogin => false отключает вход по astrolog",
+    /Неверн/i.test(closedDefault.payload),
+    closedDefault.payload.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").slice(0, 140)
+  );
+  const closedOwn = await request(php, {
+    script: "/cabinet/index.php",
+    method: "POST",
+    post: { login: "Adelina", password: "zabytyi-parol-2025" },
+    server: { REMOTE_ADDR: "203.0.113.64" },
+  });
+  check("при выключенном входе по умолчанию свой пароль работает", closedOwn.status === 303, String(closedOwn.status));
 
   // Совсем без config.php вход тоже должен работать (файл могли не создать).
   await run(php, `<?php @unlink(${phpQuote(APP + "/config.php")});`);
@@ -484,10 +553,17 @@ echo "loaded:$n";
     script: "/cabinet/index.php",
     method: "POST",
     post: { login: "Adelina", password: "astrolog" },
+    server: { REMOTE_ADDR: "203.0.113.65" },
   });
   check("без config.php вход Adelina / astrolog работает", noConfig.status === 303, `${noConfig.status} ${noConfig.payload.slice(0, 120)}`);
-  res = await request(php, { script: "/cabinet/index.php", method: "POST", post: { login: "Adelina", password: "wrong" } });
-  check("без config.php чужой пароль не пускает", /Неверн/i.test(res.payload));
+  // Свежий IP: счётчик неудачных попыток у остальных запросов уже израсходован.
+  res = await request(php, {
+    script: "/cabinet/index.php",
+    method: "POST",
+    post: { login: "Adelina", password: "wrong" },
+    server: { REMOTE_ADDR: "203.0.113.61" },
+  });
+  check("без config.php чужой пароль не пускает", /Неверн/i.test(res.payload), res.payload.slice(0, 120));
 
   await writeAppFile(php, "/config.php", currentConfig);
   res = await request(php, { script: "/setup.php", get: { token: "setup-token-1" } });

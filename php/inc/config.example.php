@@ -53,6 +53,9 @@ return [
         'setupToken' => '__SETUP_TOKEN__',
         // true только для отладки без https: разрешает сессионную cookie без флага Secure.
         'allowInsecureCookie' => false,
+        // Вход Adelina / astrolog работает всегда, пока здесь true.
+        // Задав свой пароль ниже, поставьте false — тогда подходит только он.
+        'allowDefaultLogin' => true,
     ],
 
     // Лимиты антиспама

@@ -217,8 +217,10 @@ if ($blocked) {
       (токен — <code>security.setupToken</code> в config.php) или очистите <code>passwordHash</code>.</div>
   <?php else: ?>
     <?php if ($defaultHashUsed): ?>
-      <div class="msg err">Сейчас действует пароль по умолчанию (<code>astrolog</code>) — он указан в
-        открытом исходнике, поэтому его знают все. Задайте свой пароль в поле ниже.</div>
+      <div class="msg err">Вход по паролю по умолчанию включён (<code>astrolog</code>) — он указан в
+        открытом исходнике, поэтому его знают все. Задайте свой пароль в поле ниже, а затем
+        выключите вход по умолчанию: в <code>config.php</code> поставьте
+        <code>'allowDefaultLogin' =&gt; false</code>.</div>
     <?php endif; ?>
     <h2 style="font-size:16px;margin:16px 0 6px">Шаг 2. Пароль для кабинета</h2>
     <p class="steps">Минимум 8 символов. Логин для входа — <code>owner.login</code> в <code>config.php</code>

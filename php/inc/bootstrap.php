@@ -80,7 +80,7 @@ function app_config(bool $reload = false): array
         'owner' => ['login' => 'Adelina', 'email' => '', 'passwordHash' => ''],
         'telegram' => ['botToken' => '', 'chatId' => ''],
         'mail' => ['adminEmail' => '', 'from' => '', 'subjectPrefix' => 'Заявка с сайта'],
-        'security' => ['salt' => '', 'setupToken' => '', 'allowInsecureCookie' => false],
+        'security' => ['salt' => '', 'setupToken' => '', 'allowInsecureCookie' => false, 'allowDefaultLogin' => true],
         'limits' => ['leadsPerWindow' => 5, 'windowMinutes' => 15, 'loginAttempts' => 6, 'lockMinutes' => 15],
         'retentionDays' => 365,
         'timezoneOffsetHours' => 3,

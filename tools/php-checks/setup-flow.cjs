@@ -163,6 +163,10 @@ require_once '/app/inc/store.php';
 require_once '/app/inc/auth.php';
 require_once '/app/inc/view.php';
 app_config(true);
+// Чистая сессия: иначе состояние прошлого запроса подхватывается из файла.
+if (session_status() === PHP_SESSION_ACTIVE) { session_write_close(); }
+session_id('t' . bin2hex(random_bytes(8)));
+$_SESSION = [];
 $_SERVER['REQUEST_METHOD'] = 'POST';
 $_POST = ['login' => ${phpQuote(login)}, 'password' => ${phpQuote(password)}];
 $_GET = [];
@@ -216,7 +220,11 @@ echo "@@BODY@@" . $body;
   /* ----------------------- 5. доступ по токену -------------------------- */
 
   body = await doGet();
-  check("с дефолтным паролем страница снова открыта с предупреждением", /пароль по умолчанию/.test(body), body.slice(0, 160));
+  check(
+    "с дефолтным паролем страница снова открыта с предупреждением",
+    /по умолчанию/.test(body) && /astrolog/.test(body),
+    body.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").slice(0, 160)
+  );
   body = await doGet({ token: "wrong-token" });
   check("после смены пароля чужой токен не пускает (пока пароль пуст — пускает)", body.length > 0);
 
