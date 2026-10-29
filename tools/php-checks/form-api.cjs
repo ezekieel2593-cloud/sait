@@ -82,7 +82,7 @@ async function run() {
   check("название бренда — «Жемчужина»", /Жемчужина/.test(header?.textContent || ""));
   check("на главной нет блока о специалисте", !/Фотография специалиста/.test(doc.body.textContent || ""));
 
-  const loginLink = doc.querySelector('header a[href="cabinet/"]');
+  const loginLink = doc.querySelector('header a[href="cabinet/index.php"]');
   check("в шапке есть кнопка «Войти»", Boolean(loginLink), doc.querySelector("header")?.innerHTML.slice(0, 200));
   check("кнопка «Войти» подписана", /Войти/.test(loginLink?.textContent || ""), loginLink?.textContent);
   check(

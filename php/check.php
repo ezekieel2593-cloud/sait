@@ -37,12 +37,23 @@ $dataExists = is_dir($dataDir);
 $dataWritable = $dataExists && is_writable($dataDir);
 $configExists = is_file($root . '/config.php');
 $configHashSet = false;
+$configLogin = 'Adelina';
 if ($configExists) {
     $loaded = @include $root . '/config.php';
     if (is_array($loaded) && isset($loaded['owner']['passwordHash'])) {
         $configHashSet = trim((string) $loaded['owner']['passwordHash']) !== '';
     }
+    if (is_array($loaded) && !empty($loaded['owner']['login'])) {
+        $configLogin = (string) $loaded['owner']['login'];
+    }
 }
+// Пароль по умолчанию действует и без config.php — вход в кабинет работает всегда.
+$currentHash = '';
+if ($configHashSet) {
+    $currentHash = trim((string) $loaded['owner']['passwordHash']);
+}
+$usingDefault = $currentHash === '' || password_verify('astrolog', $currentHash);
+$sessionOk = is_dir($root . '/data/sessions') ? is_writable($root . '/data/sessions') : $dataWritable;
 $leadsFile = $dataDir . '/leads.php';
 $leadCount = 0;
 if (is_file($leadsFile)) {
@@ -107,9 +118,20 @@ $rows[] = array(
 );
 $rows[] = array(
     'Пароль кабинета',
-    $configHashSet ? 'задан' : 'не задан',
-    $configHashSet ? 'ok' : 'warn',
-    $configHashSet ? 'вход возможен' : 'откройте setup.php и задайте пароль — он запишется сам',
+    $usingDefault ? 'пароль по умолчанию' : 'свой пароль',
+    $usingDefault ? 'warn' : 'ok',
+    $usingDefault
+        ? 'вход работает: логин ' . htmlspecialchars($configLogin, ENT_QUOTES, 'UTF-8') . ', пароль astrolog. '
+            . 'Смените его на setup.php и удалите setup.php'
+        : 'вход по своему паролю',
+);
+$rows[] = array(
+    'Сессии входа',
+    $sessionOk ? 'папка data/sessions доступна' : 'НЕТ прав на запись',
+    $sessionOk ? 'ok' : 'bad',
+    $sessionOk
+        ? 'вход в кабинет запоминается в браузере'
+        : 'создайте папку data/sessions и поставьте права 775 — иначе после входа кабинет снова просит пароль',
 );
 $rows[] = array(
     'Заявок в базе',

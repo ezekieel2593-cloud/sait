@@ -94,6 +94,14 @@ function cabinet_head(string $title, bool $withNav = true): void
 </header>
 <?php endif; ?>
 <main class="wrap">
+<?php if ($withNav && function_exists('login_using_default') && login_using_default()): ?>
+  <div class="msg warn">
+    <strong>Сейчас действует пароль по умолчанию.</strong>
+    Логин <code><?= e(DEFAULT_OWNER_LOGIN) ?></code>, пароль <code><?= e(DEFAULT_OWNER_PASSWORD) ?></code> —
+    его знает каждый, кто читал инструкцию. Задайте свой на странице
+    <a href="../setup.php">setup.php</a>, после этого удалите setup.php.
+  </div>
+<?php endif; ?>
 <?php
 }
 
@@ -113,7 +121,10 @@ function render_login(?string $error = null, string $login = ''): void
     ?>
     <div class="login">
       <h1 style="margin-top:0">Вход в кабинет</h1>
-      <p class="muted">Доступ только для владельца сайта.</p>
+      <p class="muted">
+        Доступ только для владельца сайта. Логин — <strong><?= e(login_name()) ?></strong>,
+        пароль — тот, что вы задали на setup.php (до смены пароля подходит пароль по умолчанию).
+      </p>
       <?php if ($error !== null): ?>
         <div class="msg err"><?= e($error) ?></div>
       <?php endif; ?>

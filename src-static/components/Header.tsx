@@ -63,7 +63,7 @@ export function Header({ active }: { active?: string }) {
         <div className="flex items-center gap-2">
           {/* Кабинет есть только там, где включён серверный приём заявок (PHP). */}
           {config.api?.enabled ? (
-            <a href="cabinet/" className="btn btn--secondary btn--sm hidden md:inline-flex" title="Кабинет специалиста">
+            <a href="cabinet/index.php" className="btn btn--secondary btn--sm hidden md:inline-flex" title="Кабинет специалиста">
               Войти
             </a>
           ) : null}
@@ -101,7 +101,7 @@ export function Header({ active }: { active?: string }) {
             </a>
             {config.api?.enabled ? (
               <a
-                href="cabinet/"
+                href="cabinet/index.php"
                 className="btn btn--secondary"
                 onClick={() => setOpen(false)}
               >

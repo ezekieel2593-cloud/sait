@@ -8,11 +8,36 @@
 
 declare(strict_types=1);
 
+/**
+ * Логин и пароль владельца по умолчанию.
+ *
+ * Работают всегда — даже если config.php пуст, потерян или в нём не записан
+ * хеш. Владелец не должен остаться без доступа к кабинету из-за одного
+ * отсутствующего поля. Пароль по умолчанию виден в инструкции, поэтому
+ * кабинет напоминает о смене, а setup.php записывает свой хеш.
+ */
+const DEFAULT_OWNER_LOGIN = 'Adelina';
+const DEFAULT_OWNER_PASSWORD = 'astrolog';
+/** password_hash('astrolog') — тот же хеш, что в config.example.php. */
+const DEFAULT_OWNER_HASH = '$2y$12$IneZ2FGb4oXdF5KJCLFYVeGtxfZr/MX/wR7TAydNU9s1nf3by2aSS';
+
 function session_start_once(): void
 {
     if (session_status() === PHP_SESSION_ACTIVE) {
         return;
     }
+
+    // На shared-хостинге системная папка сессий бывает недоступна на запись:
+    // тогда вход «проходит», но сессия теряется и кабинет снова просит пароль.
+    // Держим сессии в data/sessions (папка закрыта .htaccess от браузера).
+    $sessionDir = APP_ROOT . '/data/sessions';
+    if (!is_dir($sessionDir)) {
+        @mkdir($sessionDir, 0775, true);
+    }
+    if (is_dir($sessionDir) && is_writable($sessionDir)) {
+        @session_save_path($sessionDir);
+    }
+
     session_set_cookie_params([
         'lifetime' => 0,
         'path' => '/',
@@ -39,16 +64,35 @@ function is_logged_in(): bool
     return true;
 }
 
+/** Действующий хеш пароля: из config.php, а если он пуст — встроенный. */
+function login_hash(): string
+{
+    $hash = trim((string) cfg('owner.passwordHash', ''));
+    return $hash !== '' ? $hash : DEFAULT_OWNER_HASH;
+}
+
+function login_name(): string
+{
+    $login = trim((string) cfg('owner.login', ''));
+    return $login !== '' ? $login : DEFAULT_OWNER_LOGIN;
+}
+
+/** Действует ли сейчас пароль по умолчанию — чтобы напомнить о смене. */
+function login_using_default(): bool
+{
+    return password_verify(DEFAULT_OWNER_PASSWORD, login_hash());
+}
+
 function attempt_login(string $identity, string $password): array
 {
     session_start_once();
-    $ownerLogin = trim((string) cfg('owner.login', ''));
-    $ownerEmail = trim((string) cfg('owner.email', ''));
-    $hash = (string) cfg('owner.passwordHash', '');
-
-    if (($ownerLogin === '' && $ownerEmail === '') || $hash === '') {
-        return ['ok' => false, 'error' => 'Вход не настроен: задайте пароль на странице setup.php.'];
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        return ['ok' => false, 'error' => 'Не удалось начать сессию на хостинге. Проверьте права на папку data/ (775) и откройте check.php.'];
     }
+
+    $ownerLogin = login_name();
+    $ownerEmail = trim((string) cfg('owner.email', ''));
+    $hash = login_hash();
 
     $limit = rate_limit('login:' . ip_hash(), (int) cfg('limits.loginAttempts', 6), (int) cfg('limits.lockMinutes', 15));
     if (!$limit['allowed']) {
@@ -63,6 +107,10 @@ function attempt_login(string $identity, string $password): array
     if ($ownerEmail !== '' && safe_lower($given) === safe_lower($ownerEmail)) {
         $identityMatches = true;
     }
+    // Встроенный логин тоже принимаем: config.php мог остаться от старой версии.
+    if (safe_lower($given) === safe_lower(DEFAULT_OWNER_LOGIN)) {
+        $identityMatches = true;
+    }
     $passwordMatches = password_verify($password, $hash);
 
     if (!$identityMatches || !$passwordMatches) {
@@ -70,7 +118,7 @@ function attempt_login(string $identity, string $password): array
     }
 
     session_regenerate_id(true);
-    $_SESSION['owner'] = $ownerLogin !== '' ? $ownerLogin : $ownerEmail;
+    $_SESSION['owner'] = $ownerLogin !== '' ? $ownerLogin : DEFAULT_OWNER_LOGIN;
     $_SESSION['expires'] = time() + 12 * 3600;
     $_SESSION['csrf'] = bin2hex(random_bytes(16));
     return ['ok' => true];

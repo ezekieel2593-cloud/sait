@@ -65,7 +65,7 @@ async function run() {
   await wait(400);
 
   check("config.js без серверного приёма заявок", window.ASTRA_CONFIG?.api?.enabled === false, String(window.ASTRA_CONFIG?.api?.enabled));
-  check("без сервера нет кнопки «Войти»", !doc.querySelector('header a[href="cabinet/"]'));
+  check("без сервера нет кнопки «Войти»", !doc.querySelector('header a[href="cabinet/index.php"]'));
 
   const header = doc.querySelector("header");
   check("название бренда — «Жемчужина»", /Жемчужина/.test(header?.textContent || ""), header?.textContent?.slice(0, 80));

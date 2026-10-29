@@ -457,6 +457,38 @@ echo "loaded:$n";
     post: { login: "Adelina", password: "astrolog" },
   });
   check("вход Adelina / astrolog работает сразу после установки", loginDefault.status === 303, `${loginDefault.status} ${loginDefault.payload.slice(0, 100)}`);
+  // Старая установка: config.php есть, но passwordHash пустой.
+  // Владелец всё равно должен попасть в кабинет по логину Adelina и паролю astrolog.
+  const withoutHash = currentConfig.replace(/'passwordHash' => '[^']*'/, "'passwordHash' => ''");
+  await writeAppFile(php, "/config.php", withoutHash);
+  const emptyHash = await request(php, {
+    script: "/cabinet/index.php",
+    method: "POST",
+    post: { login: "Adelina", password: "astrolog" },
+  });
+  check(
+    "пустой passwordHash: вход Adelina / astrolog работает",
+    emptyHash.status === 303,
+    `${emptyHash.status} ${emptyHash.payload.slice(0, 120)}`
+  );
+  res = await request(php, { script: "/cabinet/index.php", get: {}, cookie: cookiesFrom(emptyHash.headers) });
+  check(
+    "при пароле по умолчанию кабинет предупреждает о смене",
+    /пароль по умолчанию/i.test(res.payload),
+    res.payload.slice(0, 160)
+  );
+
+  // Совсем без config.php вход тоже должен работать (файл могли не создать).
+  await run(php, `<?php @unlink(${phpQuote(APP + "/config.php")});`);
+  const noConfig = await request(php, {
+    script: "/cabinet/index.php",
+    method: "POST",
+    post: { login: "Adelina", password: "astrolog" },
+  });
+  check("без config.php вход Adelina / astrolog работает", noConfig.status === 303, `${noConfig.status} ${noConfig.payload.slice(0, 120)}`);
+  res = await request(php, { script: "/cabinet/index.php", method: "POST", post: { login: "Adelina", password: "wrong" } });
+  check("без config.php чужой пароль не пускает", /Неверн/i.test(res.payload));
+
   await writeAppFile(php, "/config.php", currentConfig);
   res = await request(php, { script: "/setup.php", get: { token: "setup-token-1" } });
   check("с токеном открывается", res.status === 200 && /Пароль/.test(res.payload), res.payload.slice(0, 120));

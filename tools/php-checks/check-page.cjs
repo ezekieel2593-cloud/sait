@@ -89,8 +89,17 @@ file_put_contents('/app/data/leads.php', "<?php exit; ?>\\n" . json_encode(['ite
   await php.run("<?php $_SERVER['REQUEST_URI']='/check.php'; include '/app/check.php';");
   const ready = out;
   check("при готовой установке показано «Всё готово»", /Всё готово/.test(ready), ready.slice(-400));
-  check("пароль кабинета отмечен как заданный", /задан/.test(ready));
+  check("пароль кабинета: свой пароль", /свой пароль/.test(ready), ready.match(/Пароль кабинета[\s\S]{0,200}/)?.[0]);
   check("хеш пароля не выводится", !/\$2y\$10\$hash/.test(ready));
+  check("строка про сессии входа есть", /Сессии входа/.test(ready));
+
+  // Свежая установка: действует пароль по умолчанию — страница обязана это сказать.
+  await php.run(`<?php file_put_contents('/app/config.php', "<?php return ['owner'=>['login'=>'Adelina','email'=>'owner@test.ru','passwordHash'=>'']];");`);
+  out = "";
+  await php.run("<?php $_SERVER['REQUEST_URI']='/check.php'; include '/app/check.php';");
+  const fresh = out;
+  check("с пустым хешем: «пароль по умолчанию»", /пароль по умолчанию/.test(fresh));
+  check("подсказаны логин и пароль входа", /Adelina/.test(fresh) && /astrolog/.test(fresh));
   check("посчитаны заявки из файла (2)", /<td>2<\/td>/.test(ready), ready.match(/Заявок в базе[\s\S]{0,200}/)?.[0]);
 
   console.log(`\nИтого: ${pass} ok, ${fail} fail`);
