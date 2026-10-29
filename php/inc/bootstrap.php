@@ -77,7 +77,7 @@ function app_config(bool $reload = false): array
     $defaults = [
         'siteName' => 'Astra Pearl',
         'siteUrl' => '',
-        'owner' => ['email' => '', 'passwordHash' => ''],
+        'owner' => ['login' => 'Adelina', 'email' => '', 'passwordHash' => ''],
         'telegram' => ['botToken' => '', 'chatId' => ''],
         'mail' => ['adminEmail' => '', 'from' => '', 'subjectPrefix' => 'Заявка с сайта'],
         'security' => ['salt' => '', 'setupToken' => '', 'allowInsecureCookie' => false],

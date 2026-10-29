@@ -14,11 +14,12 @@ require_once __DIR__ . '/../inc/view.php';
 session_start_once();
 
 $loginError = null;
-$email = '';
+$loginValue = '';
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['password'])) {
-    $email = (string) ($_POST['email'] ?? '');
-    $result = attempt_login($email, (string) $_POST['password']);
+    // Поле называется login; старое имя email принимаем для совместимости.
+    $loginValue = (string) ($_POST['login'] ?? $_POST['email'] ?? '');
+    $result = attempt_login($loginValue, (string) $_POST['password']);
     if ($result['ok']) {
         header('Location: index.php', true, 303);
         app_exit();
@@ -27,7 +28,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['password'])) 
 }
 
 if (!is_logged_in()) {
-    render_login($loginError, $email);
+    render_login($loginError, $loginValue);
     app_exit();
 }
 

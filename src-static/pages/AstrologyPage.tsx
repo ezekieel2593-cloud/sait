@@ -139,7 +139,7 @@ export function AstrologyPage() {
                     </span>
                     <input
                       id="astro-date"
-                      className="input pl-9"
+                      className="input input--date"
                       type="date"
                       min="1900-01-01"
                       max={today()}
@@ -186,7 +186,7 @@ export function AstrologyPage() {
                         </span>
                         <input
                           id="astro-time"
-                          className="input pl-9"
+                          className="input input--time"
                           type="time"
                           value={time}
                           aria-invalid={Boolean(errors.time)}

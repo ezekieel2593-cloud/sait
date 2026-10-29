@@ -101,6 +101,9 @@ async function request(php, { script, method = "GET", server = {}, body = null, 
     parts.push(`$_SESSION['csrf'] = ${phpQuote(owner.csrf)};`);
   }
   parts.push("ob_start();");
+  // Конфиг кэшируется в памяти: между запросами перечитываем файл.
+  parts.push(`require_once ${phpQuote(APP + "/inc/bootstrap.php")};`);
+  parts.push(`app_config(true);`);
   parts.push(`$_SERVER = array_merge($_SERVER, ${phpArray(merged)});`);
   parts.push(`$GLOBALS['APP_TEST_INPUT'] = ${body !== null ? phpQuote(JSON.stringify(body)) : "null"};`);
   if (post !== null) parts.push(`$_POST = ${phpArray(post)};`);
@@ -126,6 +129,12 @@ async function request(php, { script, method = "GET", server = {}, body = null, 
     /* не JSON */
   }
   return { status: Number(parsed.status) || 0, payload, json, headers: parsed.headers || [] };
+}
+
+/** Пишет файл в ФС wasm через PHP: FS-кэш wasm не всегда видит изменения. */
+async function writeAppFile(php, rel, contents) {
+  const b64 = Buffer.from(contents, "utf8").toString("base64");
+  return run(php, `<?php file_put_contents(${phpQuote(APP + rel)}, base64_decode('${b64}'));`);
 }
 
 /** Читает файл из ФС wasm без запуска PHP. */
@@ -189,11 +198,11 @@ function walkFiles(dir, prefix = "") {
 return [
     'siteName' => 'Astra Test',
     'siteUrl' => 'https://astra-test.ru',
-    'owner' => ['email' => 'owner@astra-test.ru', 'passwordHash' => ${phpQuote(hash.trim())}],
+    'owner' => ['login' => 'Adelina', 'email' => 'owner@astra-test.ru', 'passwordHash' => ${phpQuote(hash.trim())}],
     'telegram' => ['botToken' => '', 'chatId' => ''],
     'mail' => ['adminEmail' => '', 'from' => '', 'subjectPrefix' => 'Заявка'],
     'security' => ['salt' => 'test-salt', 'setupToken' => 'setup-token-1', 'allowInsecureCookie' => false],
-    'limits' => ['leadsPerWindow' => 3, 'windowMinutes' => 15, 'loginAttempts' => 3, 'lockMinutes' => 15],
+    'limits' => ['leadsPerWindow' => 3, 'windowMinutes' => 15, 'loginAttempts' => 12, 'lockMinutes' => 15],
     'retentionDays' => 365,
     'timezoneOffsetHours' => 3,
 ];
@@ -317,14 +326,15 @@ echo "loaded:$n";
   res = await request(php, {
     script: "/cabinet/index.php",
     method: "POST",
-    post: { email: "owner@astra-test.ru", password: "wrong-password" },
+    post: { login: "Adelina", password: "wrong-password" },
   });
   check("неверный пароль не пускает", /Неверн/i.test(res.payload) && res.status === 200, res.payload.slice(0, 160));
+  check("в форме есть поле логина", /id="login"/.test(res.payload) && !/id="email"/.test(res.payload), res.payload.slice(0, 200));
 
   const okLogin = await request(php, {
     script: "/cabinet/index.php",
     method: "POST",
-    post: { email: "owner@astra-test.ru", password: "test-password-123" },
+    post: { login: "Adelina", password: "test-password-123" },
   });
   const session = cookiesFrom(okLogin.headers);
   check("верный пароль даёт редирект", okLogin.status === 303, String(okLogin.status));
@@ -420,12 +430,36 @@ echo "loaded:$n";
   /* ------------------------------ 7. setup.php ----------------------------- */
 
   console.log("\n7. setup.php");
+  const emailLogin = await request(php, {
+    script: "/cabinet/index.php",
+    method: "POST",
+    post: { login: "owner@astra-test.ru", password: "test-password-123" },
+  });
+
   res = await request(php, { script: "/setup.php" });
-  check("setup закрыт при заданном пароле", res.status === 403, String(res.status));
+  check("setup закрыт при своём пароле", res.status === 403, String(res.status));
+
+  // Пароль по умолчанию (astrolog) не должен запирать установку: страница остаётся
+  // открытой и требует его сменить.
+  const defaultHash = await run(php, `<?php echo password_hash('astrolog', PASSWORD_DEFAULT);`);
+  const currentConfig = await readAppFile(php, "/config.php");
+  const withDefault = currentConfig.replace(/'passwordHash' => '[^']*'/, `'passwordHash' => '${defaultHash.trim()}'`);
+  await writeAppFile(php, "/config.php", withDefault);
+  res = await request(php, { script: "/setup.php" });
+  check("с паролем по умолчанию setup открыт и просит смену", res.status === 200 && /по умолчанию/.test(res.payload), String(res.status));
+  const loginDefault = await request(php, {
+    script: "/cabinet/index.php",
+    method: "POST",
+    post: { login: "Adelina", password: "astrolog" },
+  });
+  check("вход Adelina / astrolog работает сразу после установки", loginDefault.status === 303, `${loginDefault.status} ${loginDefault.payload.slice(0, 100)}`);
+  await writeAppFile(php, "/config.php", currentConfig);
   res = await request(php, { script: "/setup.php", get: { token: "setup-token-1" } });
   check("с токеном открывается", res.status === 200 && /Пароль/.test(res.payload), res.payload.slice(0, 120));
   res = await request(php, { script: "/setup.php", method: "POST", get: { token: "setup-token-1" }, post: { action: "password", password: "short", passwordRepeat: "short" } });
   check("короткий пароль отклонён", /не короче/i.test(res.payload), res.payload.slice(0, 200));
+
+  check("вход по почте тоже работает (резервный логин)", emailLogin.status === 303, `${emailLogin.status} ${emailLogin.payload.slice(0, 120)}`);
 
   const before = await readAppFile(php, "/config.php");
   res = await request(php, { script: "/setup.php", method: "POST", get: { token: "setup-token-1" }, post: { action: "password", password: "long-enough-password", passwordRepeat: "long-enough-password" } });

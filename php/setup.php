@@ -32,13 +32,17 @@ foreach ([APP_ROOT . '/config.example.php', APP_ROOT . '/inc/config.example.php'
 }
 
 $hashConfigured = trim((string) cfg('owner.passwordHash', '')) !== '';
+// Пароль по умолчанию из config.example.php. Пока он действует, setup.php
+// остаётся открытым без токена: иначе владелец остался бы с известным паролем.
+$defaultPassword = 'astrolog';
+$defaultHashUsed = $hashConfigured && password_verify($defaultPassword, (string) cfg('owner.passwordHash', ''));
 $configExists = is_file($configPath);
 $configWritable = $configExists ? is_writable($configPath) : is_writable(APP_ROOT);
 $expected = (string) cfg('security.setupToken', '');
 $given = (string) ($_GET['token'] ?? '');
-// Токен нужен только чтобы сменить уже заданный пароль.
+// Токен нужен только чтобы сменить уже заданный (не дефолтный) пароль.
 $tokenGiven = $expected !== '' && $given !== '' && hash_equals($expected, $given);
-$blocked = $hashConfigured && !$tokenGiven;
+$blocked = $hashConfigured && !$defaultHashUsed && !$tokenGiven;
 
 $message = null;
 $error = null;
@@ -117,8 +121,8 @@ if ($method === 'POST') {
     } elseif ($action === 'password') {
         $password = (string) ($_POST['password'] ?? '');
         $repeat = (string) ($_POST['passwordRepeat'] ?? '');
-        if (strlen($password) < 10) {
-            $error = 'Пароль должен быть не короче 10 символов';
+        if (strlen($password) < 8) {
+            $error = 'Пароль должен быть не короче 8 символов';
         } elseif ($password !== $repeat) {
             $error = 'Пароли не совпадают — введите одинаково в оба поля';
         } elseif (!is_file($configPath)) {
@@ -208,20 +212,25 @@ if ($blocked) {
       <input type="hidden" name="action" value="create">
       <button type="submit" <?= $configWritable ? '' : 'disabled' ?>>Создать config.php</button>
     </form>
-  <?php elseif ($hashConfigured && !$tokenGiven): ?>
+  <?php elseif ($blocked): ?>
     <div class="msg info">Пароль уже задан. Чтобы сменить его, откройте <code>setup.php?token=…</code>
       (токен — <code>security.setupToken</code> в config.php) или очистите <code>passwordHash</code>.</div>
   <?php else: ?>
+    <?php if ($defaultHashUsed): ?>
+      <div class="msg err">Сейчас действует пароль по умолчанию (<code>astrolog</code>) — он указан в
+        открытом исходнике, поэтому его знают все. Задайте свой пароль в поле ниже.</div>
+    <?php endif; ?>
     <h2 style="font-size:16px;margin:16px 0 6px">Шаг 2. Пароль для кабинета</h2>
-    <p class="steps">Минимум 10 символов. Это единственный пароль: логин — почта из <code>config.php</code>
-      (<code>owner.email</code>). Хеш запишется в конфиг автоматически
+    <p class="steps">Минимум 8 символов. Логин для входа — <code>owner.login</code> в <code>config.php</code>
+      (сейчас <code><?= e((string) cfg('owner.login', 'Adelina')) ?></code>; можно входить и по <code>owner.email</code>).
+      Хеш запишется в конфиг автоматически
       <?= $configWritable ? '' : 'не сможет записаться: файл закрыт от записи — тогда скопируйте его вручную' ?>.</p>
     <form method="post">
       <input type="hidden" name="action" value="password">
       <label for="password">Пароль</label>
-      <input id="password" type="password" name="password" autocomplete="new-password" minlength="10" required>
+      <input id="password" type="password" name="password" autocomplete="new-password" minlength="8" required>
       <label for="passwordRepeat">Повторите пароль</label>
-      <input id="passwordRepeat" type="password" name="passwordRepeat" autocomplete="new-password" minlength="10" required>
+      <input id="passwordRepeat" type="password" name="passwordRepeat" autocomplete="new-password" minlength="8" required>
       <button type="submit">Задать пароль</button>
     </form>
 
@@ -239,9 +248,10 @@ if ($blocked) {
 
   <hr style="border:0;border-top:1px solid #e6e9eb;margin:20px 0 14px">
   <p class="steps" style="margin:0">
-    <?php if ($hashConfigured || $written): ?>
+    <?php if (($hashConfigured && !$defaultHashUsed) || $written): ?>
       <strong>Готово.</strong> Удалите файл <code>setup.php</code> с хостинга и войдите в
-      <a href="cabinet/">кабинет</a>. Проверить установку целиком: <a href="check.php">check.php</a>.
+      <a href="cabinet/">кабинет</a>. Логин: <code><?= e((string) cfg('owner.login', 'Adelina')) ?></code>.
+      Проверить установку целиком: <a href="check.php">check.php</a>.
     <?php else: ?>
       Проверить состояние сайта можно на странице <a href="check.php">check.php</a>.
       Файл <code>setup.php</code> удалите сразу после настройки.

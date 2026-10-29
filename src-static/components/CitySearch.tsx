@@ -74,7 +74,7 @@ export function CitySearch({
         </span>
         <input
           id="place-input"
-          className="input pl-9"
+          className="input input--icon"
           type="text"
           value={query}
           placeholder="Начните вводить город"

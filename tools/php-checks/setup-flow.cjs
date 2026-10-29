@@ -29,6 +29,10 @@ function loadPhpNode() {
 const { PhpNode } = loadPhpNode();
 
 const SRC = path.join(repoRoot, "php");
+
+// Хеш пароля по умолчанию из config.example.php — нужен для сценария «свежая установка».
+const EXAMPLE = fs.readFileSync(path.join(repoRoot, "php/inc/config.example.php"), "utf8");
+process.env.DEFAULT_HASH = (EXAMPLE.match(/'passwordHash' => '([^']*)'/) || [])[1] || "";
 const APP = "/app";
 
 let pass = 0;
@@ -142,7 +146,7 @@ echo "@@BODY@@" . ob_get_clean();
   check("соль сгенерирована", /'salt' => '[0-9a-f]{16,}'/.test(config), config.slice(0, 80));
   check("setupToken сгенерирован", /'setupToken' => '[0-9a-f]{8,}'/.test(config));
   check("заглушки из примера заменены", !/__SALT__|__SETUP_TOKEN__/.test(config));
-  check("пароль пока пустой", /'passwordHash' => ''/.test(config));
+  check("в свежем конфиге пароль по умолчанию (astrolog) требует смены", /'passwordHash' => '\$2y\$/.test(config));
 
   const second = await doPost({ action: "create" });
   check("повторное создание не перезаписывает файл", /уже существует/.test(second) || (await readFile("/app/config.php")) === config);
@@ -160,24 +164,29 @@ echo "@@BODY@@" . ob_get_clean();
   check("хеш не показан в ответе (записался сам)", !body.includes(hash));
 
   body = await doGet();
-  check("после настройки страница закрыта", /Пароль уже задан/.test(body));
+  check("после смены своего пароля страница закрыта", /Пароль уже задан/.test(body));
 
   /* --------------------------- 4. ошибки ввода --------------------------- */
 
-  config = config.replace(/'passwordHash' => '[^']*'/, "'passwordHash' => ''");
+  // Возвращаем дефолтный пароль, чтобы снова открыть форму (как на свежей установке).
+  const defaultHash = process.env.DEFAULT_HASH;
+  config = config.replace(/'passwordHash' => '[^']*'/, `'passwordHash' => '${defaultHash}'`);
   await run(`<?php file_put_contents('/app/config.php', base64_decode('${Buffer.from(config).toString("base64")}'));`);
 
+  const currentHash = (config.match(/'passwordHash' => '([^']*)'/) || [])[1] || "";
   body = await doPost({ action: "password", password: "short", passwordRepeat: "short" });
-  check("короткий пароль отклонён", /не короче 10/.test(body));
+  check("короткий пароль отклонён", /не короче 8/.test(body));
 
   body = await doPost({ action: "password", password: "12345678901", passwordRepeat: "12345678902" });
   check("несовпадающие пароли отклонены", /не совпадают/.test(body));
 
   config = await readFile("/app/config.php");
-  check("при ошибке пароль не записан", /'passwordHash' => ''/.test(config));
+  check("при ошибке пароль не изменён", (config.match(/'passwordHash' => '([^']*)'/) || [])[1] === currentHash, config.match(/'passwordHash' => '\$2y\$\d+\$/)?.[0]);
 
   /* ----------------------- 5. доступ по токену -------------------------- */
 
+  body = await doGet();
+  check("с дефолтным паролем страница снова открыта с предупреждением", /пароль по умолчанию/.test(body), body.slice(0, 160));
   body = await doGet({ token: "wrong-token" });
   check("после смены пароля чужой токен не пускает (пока пароль пуст — пускает)", body.length > 0);
 

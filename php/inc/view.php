@@ -102,7 +102,7 @@ function cabinet_foot(): void
 <?php
 }
 
-function render_login(?string $error = null, string $email = ''): void
+function render_login(?string $error = null, string $login = ''): void
 {
     cabinet_headers();
     cabinet_head('Вход', false);
@@ -114,8 +114,8 @@ function render_login(?string $error = null, string $email = ''): void
         <div class="msg err"><?= e($error) ?></div>
       <?php endif; ?>
       <form method="post" action="index.php">
-        <label for="email">E-mail</label>
-        <input id="email" type="email" name="email" value="<?= e($email) ?>" autocomplete="username" required>
+        <label for="login">Логин</label>
+        <input id="login" type="text" name="login" value="<?= e($login) ?>" autocomplete="username" autocapitalize="off" spellcheck="false" required>
         <label for="password">Пароль</label>
         <input id="password" type="password" name="password" autocomplete="current-password" required>
         <div class="actions">

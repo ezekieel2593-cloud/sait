@@ -79,7 +79,7 @@ export function MatrixPage() {
                 </span>
                 <input
                   id="matrix-date"
-                  className="input pl-9"
+                  className="input input--date"
                   type="date"
                   min={MIN_DATE}
                   max={today()}

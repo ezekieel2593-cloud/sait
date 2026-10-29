@@ -1,7 +1,8 @@
 <?php
 /**
  * Авторизация владельца в кабинете.
- * Один аккаунт: e-mail и хеш пароля (password_hash) в config.php.
+ * Один аккаунт: логин (owner.login), почта (owner.email) и хеш пароля в config.php.
+ * Войти можно по логину или по почте — что удобнее.
  * Сессия — PHP session с httpOnly/SameSite cookie, вход ограничен по попыткам.
  */
 
@@ -38,14 +39,15 @@ function is_logged_in(): bool
     return true;
 }
 
-function attempt_login(string $email, string $password): array
+function attempt_login(string $identity, string $password): array
 {
     session_start_once();
+    $ownerLogin = trim((string) cfg('owner.login', ''));
     $ownerEmail = trim((string) cfg('owner.email', ''));
     $hash = (string) cfg('owner.passwordHash', '');
 
-    if ($ownerEmail === '' || $hash === '') {
-        return ['ok' => false, 'error' => 'Владелец ещё не настроил вход: заполните owner в config.php (см. setup.php).'];
+    if (($ownerLogin === '' && $ownerEmail === '') || $hash === '') {
+        return ['ok' => false, 'error' => 'Вход не настроен: задайте пароль на странице setup.php.'];
     }
 
     $limit = rate_limit('login:' . ip_hash(), (int) cfg('limits.loginAttempts', 6), (int) cfg('limits.lockMinutes', 15));
@@ -53,15 +55,22 @@ function attempt_login(string $email, string $password): array
         return ['ok' => false, 'error' => 'Слишком много попыток входа. Попробуйте через 15 минут.'];
     }
 
-    $emailMatches = safe_lower(trim($email)) === safe_lower($ownerEmail);
+    $given = trim($identity);
+    $identityMatches = false;
+    if ($ownerLogin !== '' && safe_lower($given) === safe_lower($ownerLogin)) {
+        $identityMatches = true;
+    }
+    if ($ownerEmail !== '' && safe_lower($given) === safe_lower($ownerEmail)) {
+        $identityMatches = true;
+    }
     $passwordMatches = password_verify($password, $hash);
 
-    if (!$emailMatches || !$passwordMatches) {
-        return ['ok' => false, 'error' => 'Неверная почта или пароль.'];
+    if (!$identityMatches || !$passwordMatches) {
+        return ['ok' => false, 'error' => 'Неверный логин или пароль.'];
     }
 
     session_regenerate_id(true);
-    $_SESSION['owner'] = $ownerEmail;
+    $_SESSION['owner'] = $ownerLogin !== '' ? $ownerLogin : $ownerEmail;
     $_SESSION['expires'] = time() + 12 * 3600;
     $_SESSION['csrf'] = bin2hex(random_bytes(16));
     return ['ok' => true];
