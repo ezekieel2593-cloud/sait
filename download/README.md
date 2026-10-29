@@ -1,51 +1,36 @@
-# Готовые архивы
+# Готовый архив для SpaceWeb
 
 > **Если вы пришли с GitHub.** Нажимать «Download ZIP» на странице репозитория и заливать
-> этот архив на хостинг — не нужно: там исходный код (`src`, `tests`, `scripts`, `package.json`).
-> Для сайта на SpaceWeb нужен **один файл из этой папки — `astra-pearl-php.zip`**.
+> этот архив на хостинг — не нужно: там исходный код (`src`, `src-static`, `tests`, `scripts`,
+> `package.json`). Для сайта нужен **один файл из этой папки — `astra-pearl-php.zip`**.
 > Краткая памятка: [START-HERE.txt](START-HERE.txt).
 > Подробная инструкция по заливке: [../docs/UPLOAD-SPACEWEB.md](../docs/UPLOAD-SPACEWEB.md).
 
-Собираются командами `npm run build:static`, `npm run build:php` и `npm run package:release`.
+| Файл | Размер | Для чего |
+| --- | --- | --- |
+| `astra-pearl-php.zip` | ≈0,5 МБ | **Сайт для SpaceWeb** (обычный PHP-хостинг): страницы + приём заявок + кабинет. Нужен только PHP 8.x, без Node.js и MySQL. |
 
-| Файл | Для чего |
-| --- | --- |
-| `astra-pearl-static.zip` | **Статическая версия**: только HTML/CSS/JS. Заливается по FTP в корень сайта, Node.js не нужен. |
-| `astra-pearl-php.zip` | **PHP-хостинг (SpaceWeb и аналоги)**: статические страницы + PHP-приём заявок и кабинет. Нужен PHP 8.x, без Node.js и MySQL. Инструкция — `README.txt` в архиве и `docs/HOSTING-PHP.md`. |
-| `astra-pearl-hosting.zip` | Серверная версия (Next.js standalone): кабинет, заявки в базе, уведомления. Нужен Node.js 22.5+. |
-| `astra-pearl-hosting.tar.gz` | То же для Linux-серверов. |
+В архиве нет `config.php` — он создаётся на сервере при установке, поэтому обновление
+сайта не сбрасывает пароль и не трогает заявки.
 
-## Версия для PHP-хостинга (SpaceWeb)
+## Как поставить
 
 ```bash
 unzip astra-pearl-php.zip -d public_html     # index.html должен оказаться в корне
-# затем: /setup.php → задать пароль → вставить хеш в config.php → удалить setup.php
+# затем: https://ваш-домен/setup.php → «Создать config.php» → задать свой пароль → удалить setup.php
 ```
 
 Работает: расчёты в браузере, сохранение заявок на сервере, уведомления в Telegram
 и на почту, кабинет со статусами, заметками и обезличиванием.
 Не работает (и не заявляется): оплата онлайн, автоматические ответы клиенту.
 
-## Статическая версия (FTP)
+## Про другие сборки
+
+В репозитории хранится только этот архив — под SpaceWeb. Остальные варианты
+собираются из исходного кода на машине разработчика и не хранятся в git:
 
 ```bash
-unzip astra-pearl-static.zip -d site
-# залить содержимое site/ по FTP в public_html (или www, htdocs)
-```
-
-Затем отредактируйте на хостинге `config.js`: `siteUrl`, `contacts.telegram`, `contacts.email`,
-данные специалиста. Инструкция — `README.txt` внутри архива.
-
-Работает: расчёты натальной карты и Матрицы судьбы в браузере, бесплатная расшифровка,
-формирование заявки как сообщения в Telegram/почту.
-Не работает: кабинет специалиста, хранение заявок в базе, автоматические уведомления.
-
-## Серверная версия
-
-```bash
-unzip astra-pearl-hosting.zip -d /srv
-cd /srv/astra-pearl
-cp .env.example .env
-node tools/create-specialist.mjs --email you@example.com --name "Имя" --password 'длинный-пароль'
-./start.sh
+npm run build:php        # пересобрать этот архив (release/ + download/astra-pearl-php.zip)
+npm run build:static     # вариант «без сервера»: release/static/, если вдруг понадобится
+npm run package:release  # серверная версия на Node.js (VPS), ~14 МБ
 ```

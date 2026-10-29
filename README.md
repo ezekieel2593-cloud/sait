@@ -76,9 +76,7 @@ npm run create-specialist -- --email a@b.c --reset-password
 npm run maintenance                 # обезличить старые заявки, почистить лимиты и сессии
 npm test                            # vitest: расчёты, валидация, заявки, API
 npm run build && npm start          # production-сборка
-npm run package:release             # серверный архив для хостинга в release/
-npm run build:static                # статический архив для FTP в release/
-npm run build:php                   # архив для PHP-хостинга (SpaceWeb) в release/ и download/
+npm run build:php                   # архив для SpaceWeb в release/ и download/ (единственная сборка в репозитории)
 npx tsc --noEmit                    # проверка типов
 ```
 
@@ -94,75 +92,48 @@ npx tsc --noEmit                    # проверка типов
 Разбор не является медицинской, юридической или финансовой рекомендацией и не заменяет
 консультацию специалиста.
 
-## Две версии продукта
+## Версия для SpaceWeb (PHP-хостинг)
 
-| | Статическая (FTP) | PHP-хостинг (SpaceWeb) | Серверная (Node.js) |
-| --- | --- | --- | --- |
-| Заливка | FTP в любой хостинг | PHP 8.x + Apache, `public_html` | Node.js 22.5+, VPS/PaaS |
-| База данных | не нужна | не нужна (файлы в `data/`) | SQLite |
-| Расчёты | в браузере | в браузере | на сервере |
-| Заявки | формируются как сообщение | сохраняются на сервере + Telegram/письмо | сохраняются в базе, уведомления |
-| Кабинет специалиста | нет | да (`/cabinet/`) | да |
-| Настройки | `config.js` | `config.js` + `config.php` | кабинет `/specialist/settings` |
+Сайт — это PHP-приложение для обычного shared-хостинга SpaceWeb: `public_html`, PHP 8.x,
+Apache и `.htaccess`. Node.js, Composer и MySQL не нужны: расчёты идут в браузере,
+заявки лежат в файле на сервере, уведомления уходят в Telegram и на почту, кабинет
+специалиста открывается по логину и паролю.
+
+| | SpaceWeb (PHP) |
+| --- | --- |
+| Заливка | файловый менеджер панели или FTP, `public_html` |
+| Требования | PHP 8.x + Apache, права на запись в `data/` |
+| База данных | не нужна (файлы в `data/`) |
+| Расчёты | в браузере (`astro-v1`, `matrix-22-v1`) |
+| Заявки | сохраняются на сервере + Telegram/письмо |
+| Кабинет специалиста | да (`/cabinet/`) |
+| Настройки | `config.js` + `config.php` |
 
 ```bash
-npm run build:static        # release/astra-pearl-static.zip (≈0,4 МБ) — залить по FTP
-npm run build:php           # release/astra-pearl-php.zip (≈0,5 МБ) — PHP-хостинг, SpaceWeb
-npm run package:release     # release/astra-pearl-<версия>.zip (≈14 МБ) — нужен Node.js
+npm run build:php           # release/astra-pearl-php.zip (≈0,5 МБ) → download/ — сборка для SpaceWeb
 ```
-
-### Версия для PHP-хостинга (SpaceWeb, Beget, Timeweb)
 
 > **Не заливайте на хостинг ZIP репозитория** (кнопка «Code → Download ZIP» на GitHub):
 > там исходный код. Для сайта нужен один файл — [`download/astra-pearl-php.zip`](download/astra-pearl-php.zip)
 > (≈0,5 МБ). Памятка: [download/START-HERE.txt](download/START-HERE.txt).
 
 Содержимое `release/php` (архив `download/astra-pearl-php.zip`) заливается в `public_html`.
-Нужен только PHP 8.x и Apache: Node.js, Composer и MySQL не требуются.
 Заявки сохраняются в файле на сервере, уведомления уходят в Telegram и на почту,
 кабинет специалиста работает по паролю. Пошаговая установка «как залить» —
 [docs/UPLOAD-SPACEWEB.md](docs/UPLOAD-SPACEWEB.md), техническое описание —
 [docs/HOSTING-PHP.md](docs/HOSTING-PHP.md), краткая памятка лежит в архиве (`README.txt`).
 
-Проверки без хостинга: `node tools/php-checks/api-cabinet.cjs` (69 проверок в php-wasm на PHP 8.0–8.5), `setup-flow.cjs` (19 проверок установки),
-`node tools/php-checks/form-api.cjs` и `node tools/php-checks/static-noserver.cjs` (jsdom).
+Проверки без хостинга: `node tools/php-checks/api-cabinet.cjs` (73 проверки в php-wasm на PHP 8.0–8.5),
+`setup-flow.cjs` (20 проверок установки), `node tools/php-checks/form-api.cjs` (20)
+и `node tools/php-checks/static-noserver.cjs` (10, jsdom).
 Диагностика установки на хостинге — страница `check.php` в архиве
 (проверка: `node tools/php-checks/check-page.cjs`, 15 проверок).
 Установка (`setup.php`) сама создаёт `config.php` и записывает хеш пароля,
 поэтому `config.php` не входит в архив и не сбрасывается при обновлениях.
 
-### Статическая версия (просто залить по FTP)
-
-Содержимое `release/static` заливается в корень сайта (`public_html`, `www`, `htdocs`).
-Node.js, PHP и база данных не нужны. После заливки отредактируйте на хостинге `config.js`:
-адрес сайта, Telegram/почту для заявок, данные специалиста. Инструкция — `README.txt` внутри архива.
-
-Что есть: натальная карта и Матрица судьбы считаются в браузере (`astro-v1`, `matrix-22-v1`),
-бесплатные разделы расшифровки, честно закрытая платная часть, форма заявки, которая собирает
-сообщение и открывает диалог в Telegram или письмо. Чего нет: кабинет, хранение заявок в базе,
-автоуведомления — для этого нужна серверная версия.
-
-## Архив для хостинга
-
-```bash
-npm run package:release
-```
-
-Скрипт собирает `release/astra-pearl-<версия>.zip` (и `.tar.gz`) с готовой
-standalone-сборкой, заполненной базой, `.env.example` и утилитами на чистом Node:
-
-| В архиве | Назначение |
-| --- | --- |
-| `server.js`, `.next/`, `node_modules/` | готовое приложение (сборка на сервере не нужна) |
-| `data/app.db` | база: услуги, база знаний, настройки по умолчанию |
-| `tools/init-db.mjs` | создание/обновление схемы и справочников |
-| `tools/create-specialist.mjs` | создание аккаунта, смена пароля, список аккаунтов |
-| `tools/maintenance.mjs` | плановая чистка: обезличивание старых заявок, сессии, лимиты |
-| `start.sh` | запуск с чтением `.env` |
-| `HOSTING.md`, `docs/` | инструкция по заливке и документация |
-
-Требования хостинга: Node.js 22.5+, постоянный диск, HTTPS. Инструкция внутри архива —
-`HOSTING.md`.
+В репозитории хранится **только эта сборка**. Остальные варианты (страницы без PHP —
+`npm run build:static`; серверная версия на Node.js — `npm run package:release`)
+собираются из исходного кода при необходимости и в git не попадают.
 
 ## Структура проекта
 

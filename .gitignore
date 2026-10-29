@@ -35,5 +35,9 @@ coverage/
 php/config.php
 php/data/
 
-# Готовые архивы для хостинга (собираются npm run package:release)
+# Готовые сборки: release/ целиком и все архивы, кроме единственной
+# нужной — astra-pearl-php.zip для SpaceWeb (она лежит в download/).
 release/
+download/*.zip
+download/*.tar.gz
+!download/astra-pearl-php.zip
