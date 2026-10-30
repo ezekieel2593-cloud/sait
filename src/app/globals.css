@@ -49,9 +49,10 @@
   --gold: #c9a777;
   --gold-soft: #e6d3b6;
   --ocean: #253d4b;
-  --ink: #473f44;
-  --ink-soft: #655b61;
-  --ink-faint: #857a80;
+  /* Текст: почти чёрный, чтобы читался на перламутровом фоне и на телефоне. */
+  --ink: #2f262b;
+  --ink-soft: #4a4046;
+  --ink-faint: #6d6268;
 
   --line: rgba(37, 61, 75, 0.12);
   --line-strong: rgba(37, 61, 75, 0.2);
@@ -79,10 +80,11 @@ body {
   background-color: var(--pearl);
   color: var(--ink);
   font-family: var(--font-sans), system-ui, sans-serif;
-  font-size: 16.5px;
-  line-height: 1.68;
+  /* Крупнее и свободнее: базовый кегль 17.5px, межстрочный 1.75. */
+  font-size: 17.5px;
+  line-height: 1.75;
   font-weight: 400;
-  letter-spacing: 0.002em;
+  letter-spacing: 0.004em;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   overflow-x: hidden;
@@ -222,9 +224,9 @@ textarea {
 }
 
 .lead {
-  font-size: clamp(1rem, 1.35vw, 1.1rem);
-  color: var(--ink-soft);
-  line-height: 1.72;
+  font-size: clamp(1.05rem, 1.45vw, 1.18rem);
+  color: var(--ink);
+  line-height: 1.75;
 }
 .prose-measure {
   max-width: var(--measure);
@@ -755,7 +757,7 @@ textarea {
 }
 .input::placeholder,
 .textarea::placeholder {
-  color: #8c8287;
+  color: #6d6268;
 }
 
 /*

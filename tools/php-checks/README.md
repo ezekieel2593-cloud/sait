@@ -20,7 +20,7 @@ node tools/php-checks/api-cabinet.cjs
 # на конкретной версии PHP (php-wasm ставит 8.0, 8.1, 8.2, 8.3, 8.4, 8.5):
 PHP_VERSION=8.0 node tools/php-checks/api-cabinet.cjs
 
-# 2. Форма в собранном PHP-пакете (34 проверки, jsdom)
+# 2. Форма в собранном PHP-пакете (35 проверок, jsdom)
 npm run build:php && node tools/php-checks/form-api.cjs
 
 # 3. Установка: config.php, пароль, вход Adelina / astrolog (24 проверки)
@@ -29,7 +29,7 @@ node tools/php-checks/setup-flow.cjs
 # 4. Диагностическая страница check.php (18 проверок)
 node tools/php-checks/check-page.cjs
 
-# 5. Статическая версия без сервера (40 проверок, jsdom)
+# 5. Статическая версия без сервера (47 проверок, jsdom)
 npm run build:static && node tools/php-checks/static-noserver.cjs
 ```
 

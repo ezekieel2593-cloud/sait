@@ -340,8 +340,8 @@ window.ASTRA_CONFIG = {
   },
 
   // Всплывающее приглашение с вопросом и формой.
-  // delayMs — через сколько миллисекунд показывать (40000 = 40 секунд),
-  // enabled: false — не показывать совсем. Окно выходит один раз за визит.
+  // delayMs — через сколько миллисекунд показывать и как часто повторять
+  // (180000 = 3 минуты). enabled: false — не показывать совсем.
   invite: {
     enabled: ${DEFAULT_CONFIG.invite.enabled},
     delayMs: ${DEFAULT_CONFIG.invite.delayMs},
@@ -414,7 +414,7 @@ fs.writeFileSync(
    - manifesto — тексты блока «Драгоценная жемчужина души» на главной
    - фон сайта: положите свою картинку в images/pearl-background.jpg (и
      images/pearl-background-mobile.jpg для телефона) с тем же именем
-   - invite.delayMs — через сколько секунд показывать окно с формой (40000 = 40 секунд)
+   - invite.delayMs — как часто показывать окно с формой (180000 = каждые 3 минуты)
    - services.priceNote — стоимость, если хотите её показать
 3. Обновите страницу в браузере с очисткой кэша (Ctrl+F5).
 4. Замените домен в sitemap.xml и robots.txt (по умолчанию там example.com):

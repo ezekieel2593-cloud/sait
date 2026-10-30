@@ -19,6 +19,7 @@ export function LeadForm({
   birth = "",
   place = "",
   compact = false,
+  onSent,
 }: {
   direction: Direction;
   summary: string;
@@ -31,6 +32,8 @@ export function LeadForm({
   birth?: string;
   place?: string;
   compact?: boolean;
+  /** Вызывается после того, как заявка принята сервером. */
+  onSent?: () => void;
 }) {
   const config = getConfig();
   const [form, setForm] = useState({
@@ -100,6 +103,7 @@ export function LeadForm({
           return;
         }
         setSaved({ reference: data.reference, delivered: data.delivered ?? [] });
+        onSent?.();
       } catch {
         setErrors({ form: "Сеть недоступна. Попробуйте отправить заявку ещё раз." });
       } finally {
@@ -151,14 +155,12 @@ export function LeadForm({
         </span>
         <h2 className="mt-4 font-[family-name:var(--font-display)] text-[1.55rem] text-[var(--ocean)]">Заявка принята</h2>
         <p className="mt-2 text-[0.92rem] leading-relaxed text-[var(--ink)]">
-          Номер вашей заявки — <strong className="text-[var(--ocean)]">{saved.reference}</strong>. Она уже в кабинете
-          специалиста, ответ придёт в выбранный вами канал связи.
+          Номер вашей заявки — <strong className="text-[var(--ocean)]">{saved.reference}</strong>. Специалист свяжется
+          с вами по выбранному каналу связи.
         </p>
-        {saved.delivered.length === 0 ? (
-          <p className="note note--info mt-3 text-[0.84rem]">
-            Специалист увидит заявку в кабинете; уведомления на почту и в мессенджер настраиваются владельцем сайта.
-          </p>
-        ) : null}
+        <p className="note note--info mt-3 text-[0.84rem]">
+          Если в течение дня ответа нет — напишите ещё раз: заявка могла не дойти.
+        </p>
         <p className="mt-3 text-[0.82rem] text-[var(--ink-soft)]">
           Сохраните номер: по нему проще найти переписку. Данные хранятся не дольше{" "}
           {config.legal.dataRetentionDays} дней и удаляются по запросу.
@@ -329,8 +331,8 @@ export function LeadForm({
         <div className="note note--info">
           <ShieldIcon className="mt-0.5 h-4 w-4 shrink-0" />
           <p>
-            Заявка сохраняется на сервере сайта и сразу появляется в кабинете специалиста. Данные используются только
-            для подготовки ответа. Нажимая кнопку, вы подтверждаете согласие на обработку персональных данных.
+            Заявка сразу уходит специалисту. Данные используются только для подготовки ответа. Нажимая кнопку,
+            вы подтверждаете согласие на обработку персональных данных.
           </p>
         </div>
       ) : (

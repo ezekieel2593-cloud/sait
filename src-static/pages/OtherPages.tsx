@@ -39,9 +39,6 @@ export function FullReadingPage() {
               </li>
             ))}
           </ul>
-          <p className="mt-3 text-[0.86rem] text-[var(--ink-soft)]">
-            {config.services.priceNote || "Стоимость и сроки специалист подтверждает в переписке — без скрытых доплат."}
-          </p>
         </section>
       </div>
 
@@ -49,7 +46,7 @@ export function FullReadingPage() {
         <h2 className="h-card">Как проходит работа</h2>
         <ol className="mt-3 grid gap-2 text-[0.9rem] leading-relaxed text-[var(--ink)]">
           <li>1. Вы отправляете заявку: имя, канал связи, вопрос и данные рождения.</li>
-          <li>2. Специалист подтверждает получение, стоимость и сроки.</li>
+          <li>2. Специалист связывается с вами по выбранному каналу связи.</li>
           <li>3. Вы получаете письменный разбор и/или онлайн-встречу.</li>
         </ol>
         <div className="note note--info mt-4">

@@ -188,6 +188,15 @@ async function run() {
   check("манифест: финальная строка", /каждая женщина — драгоценность/.test(homeText));
   check("манифест: блок оформлен", Boolean(inviteWindow.document.querySelector(".manifesto")));
   check("на главной нет блока о специалисте", !/Фотография специалиста/.test(homeText));
+  check("текст про кабинет специалиста убран", !/появляется в кабинете специалиста|ответ придёт в выбранный/.test(homeText));
+  // Текст для серверной версии лежит в бандле: на статике показывается ветка без сервера.
+  // Кириллица в бандле записана как \uXXXX — раскодируем перед поиском.
+  const bundleSource = fs
+    .readFileSync(path.join(dir, "app.js"), "utf8")
+    .replace(/\\u([0-9a-f]{4})/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+  check("написано, что специалист свяжется по выбранному каналу", /Специалист свяжется с вами по выбранному каналу связи/.test(bundleSource));
+  check("нет строки про стоимость и сроки в config.js", !/указывает в config\.js/.test(homeText));
+  check("нет строки «подтверждает в переписке — без скрытых доплат»", !/без скрытых доплат/.test(homeText));
 
   check("до истечения времени окна нет", !inviteWindow.document.querySelector(".invite__card"));
   await wait(1200);
@@ -198,6 +207,17 @@ async function run() {
   invite?.querySelector(".invite__close")?.dispatchEvent(new inviteWindow.Event("click", { bubbles: true }));
   await wait(50);
   check("окно закрывается крестиком", !inviteWindow.document.querySelector(".invite__card"));
+
+  // Окно не одноразовое: после закрытия оно возвращается через тот же интервал.
+  await wait(1400);
+  check("окно появляется снова после закрытия (каждые N минут)", Boolean(inviteWindow.document.querySelector(".invite__card")));
+  inviteWindow.document.querySelector(".invite__close")?.dispatchEvent(new inviteWindow.Event("click", { bubbles: true }));
+  await wait(50);
+  check("повторное окно тоже закрывается", !inviteWindow.document.querySelector(".invite__card"));
+
+  // Один раз за визит больше не навязываем: в коде нет sessionStorage-защёлки.
+  const inviteSource = fs.readFileSync(path.join(dir, "app.js"), "utf8");
+  check("окно повторяется, а не показывается один раз", !/invite-shown/.test(inviteSource));
 
   const privacyDom = new JSDOM(fs.readFileSync(path.join(dir, "privacy.html"), "utf8"), {
     url: "https://example.com/privacy.html",

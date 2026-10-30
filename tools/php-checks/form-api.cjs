@@ -117,7 +117,8 @@ async function run() {
   check("зелёно-бирюзовый оттенок кнопок убран", !/cdeacc|aed6d9/i.test(css));
   const secondaryBlock = (css.match(/\.btn--secondary\s*\{[^}]*\}/) || [])[0] || "";
   check("вторая кнопка с голубой рамкой", /#8cb8d0/i.test(secondaryBlock), secondaryBlock.slice(0, 120));
-  check("пометка о том, что заявка сохраняется на сервере", /кабинете специалиста/.test(takeForm.textContent));
+  check("пометка о том, что заявка сразу уходит специалисту", /Заявка сразу уходит специалисту/.test(takeForm.textContent));
+  check("нет слов про «появляется в кабинете специалиста»", !/появляется в кабинете специалиста/.test(doc.body.textContent));
 
   setValue(takeForm.querySelector("#lead-name"), "Мария");
   setValue(takeForm.querySelector("#lead-contact"), "@maria_test");

@@ -19,9 +19,9 @@ function cabinet_head(string $title, bool $withNav = true): void
 <meta name="robots" content="noindex, nofollow">
 <title><?= e($title) ?> — кабинет</title>
 <style>
-  :root { --line:#dcdfe3; --ink:#1f2a30; --muted:#68737b; --accent:#2b6d8c; --bg:#f5f6f7; --warn:#8d4147; }
+  :root { --line:#dcdfe3; --ink:#1a2429; --muted:#54606a; --accent:#2b6d8c; --bg:#f5f6f7; --warn:#8d4147; }
   * { box-sizing: border-box; }
-  body { margin:0; font:15px/1.55 -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color:var(--ink); background:var(--bg); }
+  body { margin:0; font:15.5px/1.6 -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color:var(--ink); background:var(--bg); }
   a { color: var(--accent); }
   header.top { background:#fff; border-bottom:1px solid var(--line); position:sticky; top:0; z-index:5; }
   .wrap { max-width:1080px; margin:0 auto; padding:14px 18px; }

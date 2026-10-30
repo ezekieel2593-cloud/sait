@@ -70,15 +70,15 @@ export const DEFAULT_CONFIG: StaticConfig = {
     ],
     fullReadingFormat: [
       "Онлайн-встреча 60–90 минут или письменный разбор",
-      "Срок подготовки — по договорённости со специалистом",
-      "Стоимость и сроки специалист указывает в config.js",
+      "Срок подготовки и стоимость — по договорённости со специалистом",
     ],
   },
   freeResult: { astrologyCardCount: 4, matrixPointCount: 5 },
   methodology: { astrologyHouseSystem: "placidus", astrologyHouseSystemLabel: "Плацидус (Placidus)" },
   legal: { privacyUpdatedAt: "2026-01-01", dataRetentionDays: 365, responsiblePerson: "Владелец проекта" },
   api: { enabled: false, base: "api" },
-  invite: { enabled: true, delayMs: 40000 },
+  // Окно с формой показывается каждые 3 минуты нахождения на сайте.
+  invite: { enabled: true, delayMs: 180000 },
   faq: [
     {
       question: "Как рассчитывается натальная карта?",

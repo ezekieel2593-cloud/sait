@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Direction } from "@/lib/types";
 import { LeadForm } from "./LeadForm";
 
@@ -6,21 +6,23 @@ import { LeadForm } from "./LeadForm";
  * Мягкое приглашение через некоторое время на сайте.
  *
  * Задача — не перехватить человека сразу, а дать ему спокойно посмотреть
- * страницу и через полминуты предложить разбор со специалистом.
+ * страницу и предложить разбор со специалистом.
  *
  * Правила, чтобы окно не мешало:
- *  - появляется один раз за визит (sessionStorage);
+ *  - появляется каждые 3 минуты нахождения на сайте (`invite.delayMs`);
+ *  - после отправки заявки из окна больше не показывается;
  *  - не показывается на юридических страницах;
  *  - закрывается крестиком, клавишей Esc и кликом по фону;
- *  - таймер запускается только в браузере и не работает при prefers-reduced-motion.
+ *  - не перекрывает окно тому, кто в этот момент заполняет форму;
+ *  - таймер запускается только в браузере.
  */
 
-const KEY = "zhemchuzhina:invite-shown";
-const DEFAULT_DELAY_MS = 40_000;
+const DEFAULT_DELAY_MS = 180_000;
 
 /**
  * Задержку можно переопределить в config.js (`invite.delayMs`) —
- * например, поставить 60 секунд или отключить окно (`invite.enabled: false`).
+ * например, 300000 для показа раз в 5 минут или 0 для проверки.
+ * Отключить окно целиком: `invite.enabled: false`.
  */
 function inviteSettings(): { enabled: boolean; delayMs: number } {
   const raw = (globalThis as unknown as { ASTRA_CONFIG?: { invite?: { enabled?: boolean; delayMs?: number } } })
@@ -57,48 +59,54 @@ const COPY: Record<string, { question: string; text: string; direction: Directio
 export function SoftInvite({ page }: { page: string }) {
   const [open, setOpen] = useState(false);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const timerRef = useRef(0);
+  /** Заявка из окна отправлена — больше не показываем. */
+  const sentRef = useRef(false);
   const copy = COPY[page] ?? COPY.home!;
+
+  /** Открыть сейчас или, если человек печатает, повторить попытку позже. */
+  const openWhenFree = useCallback((attempt = 0) => {
+    const active = document.activeElement;
+    const busy =
+      active instanceof HTMLElement && ["INPUT", "TEXTAREA", "SELECT"].includes(active.tagName);
+    if (busy && attempt < 3) {
+      timerRef.current = window.setTimeout(() => openWhenFree(attempt + 1), 20_000);
+      return;
+    }
+    setOpen(true);
+  }, []);
+
+  const scheduleNext = useCallback(
+    (delayMs: number) => {
+      window.clearTimeout(timerRef.current);
+      timerRef.current = window.setTimeout(() => {
+        if (sentRef.current) return;
+        openWhenFree();
+      }, delayMs);
+    },
+    [openWhenFree],
+  );
 
   useEffect(() => {
     if (page === "privacy" || page === "terms") return;
     if (typeof window === "undefined") return;
     const settings = inviteSettings();
     if (!settings.enabled) return;
-    try {
-      if (window.sessionStorage.getItem(KEY) === "1") return;
-    } catch {
-      /* приватный режим: показываем окно без запоминания */
-    }
-    let timer = 0;
-    let attempts = 0;
+    // Первое окно — через delayMs, дальше — заново после каждого закрытия.
+    scheduleNext(settings.delayMs);
+    return () => window.clearTimeout(timerRef.current);
+  }, [page, scheduleNext]);
 
-    const tryOpen = () => {
-      // Не перекрываем окно тому, кто прямо сейчас заполняет форму.
-      const active = document.activeElement;
-      const busy =
-        active instanceof HTMLElement &&
-        ["INPUT", "TEXTAREA", "SELECT"].includes(active.tagName);
-      if (busy && attempts < 3) {
-        attempts += 1;
-        timer = window.setTimeout(tryOpen, 20_000);
-        return;
-      }
-      setOpen(true);
-      try {
-        window.sessionStorage.setItem(KEY, "1");
-      } catch {
-        /* ничего страшного */
-      }
-    };
-
-    timer = window.setTimeout(tryOpen, settings.delayMs);
-    return () => window.clearTimeout(timer);
-  }, [page]);
+  /** Закрыть окно и назначить следующее через тот же интервал. */
+  const close = () => {
+    setOpen(false);
+    if (!sentRef.current) scheduleNext(inviteSettings().delayMs);
+  };
 
   useEffect(() => {
     if (!open) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") close();
     };
     document.addEventListener("keydown", onKey);
     const previous = document.body.style.overflow;
@@ -112,8 +120,13 @@ export function SoftInvite({ page }: { page: string }) {
 
   if (!open) return null;
 
+  const handleSent = () => {
+    sentRef.current = true;
+    window.clearTimeout(timerRef.current);
+  };
+
   return (
-    <div className="invite" role="presentation" onClick={() => setOpen(false)}>
+    <div className="invite" role="presentation" onClick={close}>
       <div
         className="invite__card"
         role="dialog"
@@ -121,7 +134,7 @@ export function SoftInvite({ page }: { page: string }) {
         aria-labelledby="invite-title"
         onClick={(event) => event.stopPropagation()}
       >
-        <button ref={closeRef} type="button" className="invite__close" aria-label="Закрыть окно" onClick={() => setOpen(false)}>
+        <button ref={closeRef} type="button" className="invite__close" aria-label="Закрыть окно" onClick={close}>
           ✕
         </button>
 
@@ -132,10 +145,10 @@ export function SoftInvite({ page }: { page: string }) {
         <p className="mt-2 text-[0.92rem] leading-relaxed text-[var(--ink)]">{copy.text}</p>
 
         <div className="mt-4">
-          <LeadForm direction={copy.direction} summary="Заявка из всплывающего окна" compact />
+          <LeadForm direction={copy.direction} summary="Заявка из всплывающего окна" compact onSent={handleSent} />
         </div>
 
-        <button type="button" className="invite__later" onClick={() => setOpen(false)}>
+        <button type="button" className="invite__later" onClick={close}>
           Позже, сначала посмотрю сайт
         </button>
       </div>

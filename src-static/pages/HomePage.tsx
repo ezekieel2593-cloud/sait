@@ -108,10 +108,6 @@ export function HomePage() {
                 </li>
               ))}
             </ul>
-            <p className="text-[0.86rem] text-[var(--ink-soft)]">
-              {config.services.priceNote || "Стоимость и сроки специалист подтверждает в переписке."}
-              {config.services.turnaround ? ` · ${config.services.turnaround}` : ""}
-            </p>
             <a href="full-reading.html" className="btn btn--secondary btn--sm w-fit">
               Подробнее о полном разборе <ArrowRightIcon className="h-4 w-4" />
             </a>
@@ -158,7 +154,7 @@ export function HomePage() {
           <h2 className="h-section">Остались вопросы — напишите</h2>
           <p className="mt-2 text-[0.92rem] text-[var(--ink-soft)]">
             {config.api?.enabled
-              ? "Заявка сохраняется на сервере и сразу появляется в кабинете специалиста — ответ придёт в выбранный канал связи."
+              ? "Специалист свяжется с вами по выбранному каналу связи."
               : "Заявка формируется как сообщение: вы сами отправляете его в Telegram или письмом."}
           </p>
           <div className="mt-4">
