@@ -110,12 +110,12 @@ Apache и `.htaccess`. Node.js, Composer и MySQL не нужны: расчёт�
 | Настройки | `config.js` + `config.php` |
 
 ```bash
-npm run build:php           # release/astra-pearl-php.zip (≈0,7 МБ) → download/ — сборка для SpaceWeb
+npm run build:php           # release/astra-pearl-php.zip (≈0,8 МБ) → download/ — сборка для SpaceWeb
 ```
 
 > **Не заливайте на хостинг ZIP репозитория** (кнопка «Code → Download ZIP» на GitHub):
 > там исходный код. Для сайта нужен один файл — [`download/astra-pearl-php.zip`](download/astra-pearl-php.zip)
-> (≈0,7 МБ). Памятка: [download/START-HERE.txt](download/START-HERE.txt).
+> (≈0,8 МБ). Памятка: [download/START-HERE.txt](download/START-HERE.txt).
 
 Содержимое `release/php` (архив `download/astra-pearl-php.zip`) заливается в `public_html`.
 Заявки сохраняются в файле на сервере, уведомления уходят в Telegram и на почту,
