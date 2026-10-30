@@ -48,7 +48,7 @@ const dom = new JSDOM(fs.readFileSync(page, "utf8"), {
 
 const { window } = dom;
 for (const script of window.document.querySelectorAll("script[src]")) {
-  const src = script.getAttribute("src").replace(/^\//, "");
+  const src = script.getAttribute("src").replace(/^\//, "").split("?")[0];
   window.eval(fs.readFileSync(path.join(dir, src), "utf8"));
 }
 
@@ -88,6 +88,17 @@ async function run() {
   );
   const backgroundSize = fs.statSync(path.join(dir, "images", "pearl-background.jpg")).size;
   check("фон не тяжелее 400 КБ", backgroundSize < 400_000, `${Math.round(backgroundSize / 1024)} КБ`);
+
+  // Кэш браузера: адреса файлов должны меняться вместе со сборкой,
+  // иначе после загрузки нового архива посетитель видит старое.
+  const htmlSource = fs.readFileSync(path.join(dir, "index.html"), "utf8");
+  const cssSource = fs.readFileSync(path.join(dir, "styles.css"), "utf8");
+  check("стили подключены с версией", /styles\.css\?v=[0-9a-f]{6,}/.test(htmlSource), htmlSource.match(/styles\.css[^"]*/)?.[0]);
+  check("скрипт подключён с версией", /app\.js\?v=[0-9a-f]{6,}/.test(htmlSource), htmlSource.match(/app\.js[^"]*/)?.[0]);
+  check("настройки подключены с версией", /config\.js\?v=[0-9a-f]{6,}/.test(htmlSource));
+  check("фон подключён с версией файла", /pearl-background\.jpg\?v=[0-9a-f]{6,}/.test(photo?.getAttribute("style") || ""), photo?.getAttribute("style")?.slice(0, 160));
+  check("у фонового слоя нет отрицательного z-index", !/\.page-photo\{[^}]*z-index:-/.test(cssSource));
+  check("контент выше фона", /main,\s*footer\{[^}]*z-index:\s*2/.test(cssSource));
 
 
   const date = doc.querySelector("#matrix-date");
@@ -148,7 +159,7 @@ async function run() {
     pretendToBeVisual: true,
   });
   for (const script of astroDom.window.document.querySelectorAll("script[src]")) {
-    const src = script.getAttribute("src").replace(/^\//, "");
+    const src = script.getAttribute("src").replace(/^\//, "").split("?")[0];
     astroDom.window.eval(fs.readFileSync(path.join(dir, src), "utf8"));
   }
   await wait(600);
@@ -171,12 +182,12 @@ async function run() {
   const scripts = [...inviteWindow.document.querySelectorAll("script[src]")];
   const configScript = scripts.find((node) => node.getAttribute("src").includes("config.js"));
   if (configScript) {
-    inviteWindow.eval(fs.readFileSync(path.join(dir, configScript.getAttribute("src").replace(/^\//, "")), "utf8"));
+    inviteWindow.eval(fs.readFileSync(path.join(dir, configScript.getAttribute("src").replace(/^\//, "").split("?")[0]), "utf8"));
     inviteWindow.ASTRA_CONFIG.invite = { enabled: true, delayMs: 1200 };
   }
   for (const script of scripts) {
     if (script === configScript) continue;
-    const src = script.getAttribute("src").replace(/^\//, "");
+    const src = script.getAttribute("src").replace(/^\//, "").split("?")[0];
     inviteWindow.eval(fs.readFileSync(path.join(dir, src), "utf8"));
   }
   await wait(400); // React успевает отрисовать главную
@@ -225,7 +236,7 @@ async function run() {
     pretendToBeVisual: true,
   });
   for (const script of privacyDom.window.document.querySelectorAll("script[src]")) {
-    const src = script.getAttribute("src").replace(/^\//, "");
+    const src = script.getAttribute("src").replace(/^\//, "").split("?")[0];
     privacyDom.window.eval(fs.readFileSync(path.join(dir, src), "utf8"));
   }
   await wait(400);

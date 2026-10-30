@@ -58,7 +58,7 @@ const dom = new JSDOM(fs.readFileSync(page, "utf8"), {
 
 const { window } = dom;
 for (const script of window.document.querySelectorAll("script[src]")) {
-  const src = script.getAttribute("src").replace(/^\//, "");
+  const src = script.getAttribute("src").replace(/^\//, "").split("?")[0];
   window.eval(fs.readFileSync(path.join(dir, src), "utf8"));
 }
 
@@ -157,7 +157,7 @@ async function run() {
     pretendToBeVisual: true,
   });
   for (const script of privacyDom.window.document.querySelectorAll("script[src]")) {
-    const src = script.getAttribute("src").replace(/^\//, "");
+    const src = script.getAttribute("src").replace(/^\//, "").split("?")[0];
     privacyDom.window.eval(fs.readFileSync(path.join(dir, src), "utf8"));
   }
   await wait(400);

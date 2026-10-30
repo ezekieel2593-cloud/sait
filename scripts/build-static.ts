@@ -8,6 +8,7 @@
  * Расчёты выполняются в браузере, кабинет и заявки в базе в этой версии недоступны.
  */
 import { execFileSync } from "node:child_process";
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import * as esbuild from "esbuild";
@@ -126,6 +127,34 @@ for (const file of fs.readdirSync(imageSource)) {
   fs.copyFileSync(path.join(imageSource, file), path.join(imageDir, file));
 }
 
+/** Короткий отпечаток файла: меняется вместе с картинкой. */
+const fileHash = (file: string) =>
+  crypto.createHash("md5").update(fs.readFileSync(path.join(imageSource, file))).digest("hex").slice(0, 8);
+
+/**
+ * Фон сайта отдаём со «штампом версии» в адресе: images/pearl-background.jpg?v=abc123.
+ * Файл при этом лежит под своим именем (его удобно заменить), а браузер видит
+ * новый адрес и не показывает старую картинку из кэша.
+ */
+const versioned = (file: string, fallback: string) => {
+  const full = path.join(imageSource, file);
+  return fs.existsSync(full) ? `images/${file}?v=${fileHash(file)}` : fallback;
+};
+const backgroundUrl = versioned("pearl-background.jpg", "images/pearl-background.jpg");
+const backgroundMobileUrl = versioned("pearl-background-mobile.jpg", backgroundUrl);
+
+/**
+ * Версия сборки — попадает в адреса styles.css, app.js и config.js.
+ * Браузер видит новый адрес и забирает свежие файлы: в .htaccess у них
+ * стоит кэш «7 дней», без этой метки правки выглядели бы «не применились».
+ */
+const BUILD_ID = crypto
+  .createHash("md5")
+  .update(fs.readFileSync(path.join(out, "app.js")))
+  .update(fs.readFileSync(path.join(out, "styles.css")))
+  .digest("hex")
+  .slice(0, 8);
+
 /* ------------------------------- HTML-страницы ------------------------------- */
 
 log("страницы");
@@ -212,7 +241,7 @@ ${canonical}
 <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="fonts/manrope-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/cormorant-cyrillic-400.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=${BUILD_ID}">
 </head>
 <body data-page="${meta.page}" data-title="${meta.title}">
 <div id="root"></div>
@@ -224,8 +253,8 @@ ${canonical}
       Включите его и обновите страницу.</p>
   </div>
 </noscript>
-<script src="config.js"></script>
-<script src="app.js" defer></script>
+<script src="config.js?v=${BUILD_ID}"></script>
+<script src="app.js?v=${BUILD_ID}" defer></script>
 </body>
 </html>
 `;
@@ -246,7 +275,7 @@ fs.writeFileSync(
 <title>Страница не найдена — ${DEFAULT_CONFIG.siteName}</title>
 <meta name="robots" content="noindex">
 <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=${BUILD_ID}">
 </head>
 <body>
 <div class="container container--measure" style="padding:80px 0;text-align:center">
@@ -337,6 +366,12 @@ window.ASTRA_CONFIG = {
   api: {
     enabled: ${apiEnabled},
     base: ${JSON.stringify(apiBase)},
+  },
+
+  // Фон сайта (пути с отпечатком файла — чтобы браузер не показывал старую картинку)
+  assets: {
+    background: ${JSON.stringify(backgroundUrl)},
+    backgroundMobile: ${JSON.stringify(backgroundMobileUrl)},
   },
 
   // Всплывающее приглашение с вопросом и формой.

@@ -251,36 +251,44 @@ textarea {
 .page-photo {
   position: fixed;
   inset: 0;
-  z-index: -2;
+  /* Без отрицательного z-index: фон гарантированно виден во всех браузерах,
+     контент лежит выше (main/footer — z-index 2, шапка — свой). */
+  z-index: 0;
   pointer-events: none;
   background-image: var(--page-photo, none);
   background-size: cover;
   background-position: center 42%;
   background-repeat: no-repeat;
-  opacity: 0.9;
+  opacity: 1;
 }
 .page-photo::after {
   content: "";
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, rgba(255, 253, 250, 0.5) 0%, rgba(255, 253, 250, 0.12) 36%, rgba(255, 253, 250, 0.38) 100%),
-    radial-gradient(56% 50% at 14% 8%, rgba(255, 255, 255, 0.66) 0%, transparent 74%),
-    radial-gradient(46% 42% at 88% 8%, rgba(220, 240, 241, 0.3) 0%, transparent 72%);
+    linear-gradient(180deg, rgba(255, 253, 250, 0.42) 0%, rgba(255, 253, 250, 0.06) 38%, rgba(255, 253, 250, 0.3) 100%),
+    radial-gradient(56% 50% at 14% 8%, rgba(255, 255, 255, 0.55) 0%, transparent 74%);
 }
 @media (max-width: 700px) {
   .page-photo {
     background-image: var(--page-photo-mobile, var(--page-photo, none));
     background-position: center 30%;
-    opacity: 0.82;
+    opacity: 1;
   }
+}
+
+/* Контент выше фонового слоя. */
+main,
+footer {
+  position: relative;
+  z-index: 2;
 }
 
 .page-aura {
   position: fixed;
   inset: 0 0 auto 0;
   height: 100vh;
-  z-index: -1;
+  z-index: 1;
   pointer-events: none;
   background:
     radial-gradient(46% 38% at 18% 4%, rgba(184, 221, 224, 0.5) 0%, transparent 68%),

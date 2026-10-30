@@ -25,6 +25,8 @@ export interface StaticConfig {
   legal: { privacyUpdatedAt: string; dataRetentionDays: number; responsiblePerson: string };
   /** Серверный приём заявок (PHP на хостинге). Если выключено — заявка формируется как сообщение. */
   api: { enabled: boolean; base: string };
+  /** Фон сайта: подставляется сборкой с отпечатком файла. */
+  assets?: { background?: string; backgroundMobile?: string };
   /** Всплывающее приглашение с вопросом и формой: через сколько секунд показывать. */
   invite: { enabled: boolean; delayMs: number };
   faq: { question: string; answer: string }[];

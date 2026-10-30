@@ -7,6 +7,7 @@ import { HomePage } from "./pages/HomePage";
 import { AstrologyPage } from "./pages/AstrologyPage";
 import { MatrixPage } from "./pages/MatrixPage";
 import { FullReadingPage, PrivacyPage, TermsPage } from "./pages/OtherPages";
+import { getConfig } from "./config";
 
 /**
  * Точка входа статической (FTP) версии.
@@ -23,6 +24,11 @@ const PAGES: Record<string, () => React.ReactElement> = {
 };
 
 const page = document.body.dataset.page ?? "home";
+
+// Фон: пути приходят из config.js с отпечатком файла, поэтому после
+// обновления архива браузер сразу берёт новую картинку.
+const background = getConfig().assets?.background || "images/pearl-background.jpg";
+const backgroundMobile = getConfig().assets?.backgroundMobile || background;
 const Page = PAGES[page] ?? HomePage;
 
 // Заголовок документа для клиентских переходов по истории
@@ -41,8 +47,8 @@ createRoot(root).render(
       aria-hidden="true"
       style={
         {
-          "--page-photo": 'url("images/pearl-background.jpg")',
-          "--page-photo-mobile": 'url("images/pearl-background-mobile.jpg")',
+          "--page-photo": `url("${background}")`,
+          "--page-photo-mobile": `url("${backgroundMobile}")`,
         } as React.CSSProperties
       }
     />
