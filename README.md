@@ -129,7 +129,7 @@ npm run build:php           # release/astra-pearl-php.zip (≈0,7 МБ) → down
 все аспекты с орбисами, все точки Матрицы с формулами — то же, что видел клиент.
 
 Проверки без хостинга: `node tools/php-checks/api-cabinet.cjs` (86 проверок в php-wasm на PHP 8.0–8.5),
-`setup-flow.cjs` (24 проверки установки), `node tools/php-checks/form-api.cjs` (31)
+`setup-flow.cjs` (24 проверки установки), `node tools/php-checks/form-api.cjs` (34)
 и `node tools/php-checks/static-noserver.cjs` (40, jsdom).
 Диагностика установки на хостинге — страница `check.php` в архиве
 (проверка: `node tools/php-checks/check-page.cjs`, 18 проверок).

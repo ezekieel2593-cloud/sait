@@ -19,7 +19,7 @@ function cabinet_head(string $title, bool $withNav = true): void
 <meta name="robots" content="noindex, nofollow">
 <title><?= e($title) ?> — кабинет</title>
 <style>
-  :root { --line:#dcdfe3; --ink:#1f2a30; --muted:#68737b; --accent:#1f5f6b; --bg:#f5f6f7; --warn:#8d4147; }
+  :root { --line:#dcdfe3; --ink:#1f2a30; --muted:#68737b; --accent:#2b6d8c; --bg:#f5f6f7; --warn:#8d4147; }
   * { box-sizing: border-box; }
   body { margin:0; font:15px/1.55 -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color:var(--ink); background:var(--bg); }
   a { color: var(--accent); }
@@ -42,7 +42,7 @@ function cabinet_head(string $title, bool $withNav = true): void
   th { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-weight:600; }
   tr:hover td { background:#fafbfb; }
   .badge { display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; background:#eef1f3; }
-  .badge.s-new { background:#e6f2f4; color:#1f5f6b; }
+  .badge.s-new { background:#e6f2f7; color:#2b6d8c; }
   .badge.s-in_progress { background:#f6eedd; color:#7a5c25; }
   .badge.s-done { background:#e7f0ea; color:#2c5c40; }
   .badge.s-cancelled { background:#f0f0f0; color:#6b7178; }

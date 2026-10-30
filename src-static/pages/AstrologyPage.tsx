@@ -119,7 +119,7 @@ export function AstrologyPage() {
                       index === step
                         ? "bg-[var(--ocean)] text-white"
                         : index < step
-                          ? "bg-[rgba(184,221,224,0.35)] text-[#245b66]"
+                          ? "bg-[rgba(169,214,236,0.42)] text-[#1d4a60]"
                           : "bg-[rgba(37,61,75,0.06)] text-[var(--ink-faint)]"
                     }`}
                     aria-current={index === step ? "step" : undefined}

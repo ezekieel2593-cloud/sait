@@ -109,6 +109,14 @@ async function run() {
   if (!takeForm) return;
 
   check("кнопка подписана как отправка на сервер", /Отправить заявку/.test(takeForm.textContent), takeForm.querySelector("button")?.textContent);
+
+  // Оформление кнопок: голубой оттенок вместо зелёно-бирюзового.
+  const css = fs.readFileSync(path.join(dir, "styles.css"), "utf8");
+  const primaryBlock = (css.match(/\.btn--primary\s*\{[^}]*\}/) || [])[0] || "";
+  check("основная кнопка голубая", /d5edfb/i.test(primaryBlock) && /a9d6ec/i.test(primaryBlock), primaryBlock.slice(0, 120));
+  check("зелёно-бирюзовый оттенок кнопок убран", !/cdeacc|aed6d9/i.test(css));
+  const secondaryBlock = (css.match(/\.btn--secondary\s*\{[^}]*\}/) || [])[0] || "";
+  check("вторая кнопка с голубой рамкой", /#8cb8d0/i.test(secondaryBlock), secondaryBlock.slice(0, 120));
   check("пометка о том, что заявка сохраняется на сервере", /кабинете специалиста/.test(takeForm.textContent));
 
   setValue(takeForm.querySelector("#lead-name"), "Мария");
