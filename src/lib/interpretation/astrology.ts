@@ -165,6 +165,8 @@ export interface AstrologyInterpretationOptions {
   freeSections?: number;
   maxAspects?: number;
   includeHouses?: boolean;
+  /** true — открыть все разделы (владелец в кабинете). */
+  includePremium?: boolean;
 }
 
 export function buildAstrologyInterpretation(
@@ -194,7 +196,7 @@ export function buildAstrologyInterpretation(
   // Проставляем премиум-флаг: первые N разделов открыты
   const prepared = sections.map((section, index) => ({
     ...section,
-    premium: section.premium ? true : index >= freeSections,
+    premium: options.includePremium === true ? false : section.premium ? true : index >= freeSections,
   }));
 
   const openedCount = prepared.filter((section) => !section.premium).length;

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Direction } from "@/lib/types";
 import { LeadForm } from "./LeadForm";
+import { useAdmin } from "../admin";
 
 /**
  * Мягкое приглашение через некоторое время на сайте.
@@ -58,6 +59,8 @@ const COPY: Record<string, { question: string; text: string; direction: Directio
 
 export function SoftInvite({ page }: { page: string }) {
   const [open, setOpen] = useState(false);
+  // Владельцу окно с приглашением не нужно: он и так знает про услуги.
+  const admin = useAdmin();
   const closeRef = useRef<HTMLButtonElement>(null);
   const timerRef = useRef(0);
   /** Заявка из окна отправлена — больше не показываем. */
@@ -88,6 +91,7 @@ export function SoftInvite({ page }: { page: string }) {
   );
 
   useEffect(() => {
+    if (admin) return;
     if (page === "privacy" || page === "terms") return;
     if (typeof window === "undefined") return;
     const settings = inviteSettings();
@@ -95,7 +99,7 @@ export function SoftInvite({ page }: { page: string }) {
     // Первое окно — через delayMs, дальше — заново после каждого закрытия.
     scheduleNext(settings.delayMs);
     return () => window.clearTimeout(timerRef.current);
-  }, [page, scheduleNext]);
+  }, [page, scheduleNext, admin]);
 
   /** Закрыть окно и назначить следующее через тот же интервал. */
   const close = () => {
@@ -118,7 +122,7 @@ export function SoftInvite({ page }: { page: string }) {
     };
   }, [open]);
 
-  if (!open) return null;
+  if (!open || admin) return null;
 
   const handleSent = () => {
     sentRef.current = true;

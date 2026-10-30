@@ -45,6 +45,14 @@ const dom = new JSDOM(fs.readFileSync(page, "utf8"), {
   virtualConsole: vc,
   beforeParse(window) {
     window.fetch = (url, options) => {
+      // Страница спрашивает, вошёл ли владелец: отвечаем «гость».
+      if (String(url).includes("session.php")) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({ ok: true, admin: false, login: "" }),
+        });
+      }
       posted = { url, body: JSON.parse(options.body) };
       return Promise.resolve({
         ok: true,

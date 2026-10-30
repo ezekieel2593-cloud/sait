@@ -917,6 +917,18 @@ footer {
   background: rgba(244, 251, 251, 0.95);
   color: #3b5a63;
 }
+/* Плашка владельца на странице результата: рабочий вид, без декора. */
+.note--admin {
+  display: block;
+  padding: 0.875rem 1.125rem;
+  border: 1px solid var(--line-gold);
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, #fffdfa 0%, #fdf6ee 100%);
+  color: var(--ink);
+  font-size: 0.92rem;
+  line-height: 1.65;
+}
+
 .note--warn {
   border-color: rgba(198, 106, 112, 0.4);
   background: rgba(253, 246, 246, 0.95);

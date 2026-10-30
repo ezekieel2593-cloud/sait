@@ -27,6 +27,8 @@ function cabinet_head(string $title, bool $withNav = true): void
   .wrap { max-width:1080px; margin:0 auto; padding:14px 18px; }
   .top .wrap { display:flex; flex-wrap:wrap; align-items:center; gap:12px; justify-content:space-between; }
   .brand { font-weight:600; }
+  .brand .who { display:block; font-weight:400; font-size:12.5px; color:var(--muted); margin-top:2px; }
+  .brand .who strong { color:var(--ink); }
   nav.tabs { display:flex; gap:6px; flex-wrap:wrap; }
   nav.tabs a { padding:6px 10px; border-radius:8px; text-decoration:none; color:var(--ink); border:1px solid transparent; font-size:14px; }
   nav.tabs a.active { background:#eef4f5; border-color:#cfe0e3; color:var(--accent); }
@@ -84,10 +86,18 @@ function cabinet_head(string $title, bool $withNav = true): void
 <?php if ($withNav): ?>
 <header class="top">
   <div class="wrap">
-    <div class="brand">Кабинет · <?= e((string) cfg('siteName', 'Жемчужина')) ?></div>
+    <div class="brand">
+      Кабинет · <?= e((string) cfg('siteName', 'Жемчужина')) ?>
+      <?php $ownerName = (string) ($_SESSION['owner'] ?? ''); ?>
+      <?php if ($ownerName !== ''): ?>
+        <span class="who">вошли как <strong><?= e($ownerName) ?></strong></span>
+      <?php endif; ?>
+    </div>
     <nav class="tabs">
       <a href="index.php" class="<?= basename($_SERVER['SCRIPT_NAME'] ?? '') === 'index.php' ? 'active' : '' ?>">Заявки</a>
       <a href="../index.html" target="_blank" rel="noopener">Сайт</a>
+      <a href="../astrology.html" target="_blank" rel="noopener" title="На сайте под вашим входом открыты все разделы">Полная карта</a>
+      <a href="../matrix.html" target="_blank" rel="noopener" title="На сайте под вашим входом открыты все разделы">Полная матрица</a>
       <a href="logout.php">Выйти</a>
     </nav>
   </div>

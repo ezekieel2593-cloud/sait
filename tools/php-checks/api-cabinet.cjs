@@ -656,6 +656,44 @@ return [
   const cabinetOk = await request(php, { script: "/cabinet/index.php", owner });
   check("предупреждение о правах исчезло", !/не сохраняются/.test(cabinetOk.payload));
 
+  /* ------------------- 11б. api/session.php (кто смотрит) ------------------- */
+
+  console.log("\n11б. Признак владельца для страниц сайта");
+  res = await request(php, { script: "/api/session.php" });
+  check(
+    "гостю: admin = false",
+    res.status === 200 && res.json?.admin === false && res.json?.ok === true,
+    `${res.status} ${JSON.stringify(res.json).slice(0, 120)}`
+  );
+  check("гостю логин не раскрывается", !res.json?.login);
+  check("запрет кэширования", res.headers.some((h) => /no-store/i.test(h)));
+
+  // Входим по-настоящему и повторяем запрос с cookie.
+  const loginForSession = await request(php, {
+    script: "/cabinet/index.php",
+    method: "POST",
+    post: { login: "Adelina", password: "test-password-123" },
+    server: { REMOTE_ADDR: "203.0.113.70" },
+  });
+  const ownerCookie = cookiesFrom(loginForSession.headers);
+  res = await request(php, { script: "/api/session.php", cookie: ownerCookie });
+  check(
+    "владельцу: admin = true",
+    res.json?.admin === true,
+    `${res.status} ${JSON.stringify(res.json).slice(0, 120)}`
+  );
+  check("владельцу: логин Adelina", res.json?.login === "Adelina", String(res.json?.login));
+
+  const ownerCabinet = await request(php, { script: "/cabinet/index.php", cookie: ownerCookie });
+  check("в кабинете подписано, кто вошёл", /вошли как/.test(ownerCabinet.payload) && /Adelina/.test(ownerCabinet.payload));
+  check(
+    "в кабинете есть переходы на полный разбор",
+    /href="\.\.\/matrix\.html"/.test(ownerCabinet.payload) && /href="\.\.\/astrology\.html"/.test(ownerCabinet.payload)
+  );
+
+  res = await request(php, { script: "/api/session.php", method: "POST" });
+  check("POST в session.php отклонён", res.status === 405, String(res.status));
+
   /* ------------------------------- 12. logout ------------------------------- */
 
   console.log("\n12. Выход");

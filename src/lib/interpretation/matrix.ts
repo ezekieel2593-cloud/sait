@@ -47,6 +47,11 @@ function pointSection(point: MatrixPoint): InterpretationSection {
 
 export interface MatrixInterpretationOptions {
   freeSections?: number;
+  /**
+   * true — открыть все разделы (владелец в кабинете).
+   * Ограничения бесплатной версии к его расчётам не применяются.
+   */
+  includePremium?: boolean;
 }
 
 export function buildMatrixInterpretation(
@@ -79,7 +84,7 @@ export function buildMatrixInterpretation(
 
   const prepared = sections.map((section, index) => ({
     ...section,
-    premium: section.premium ? true : index >= freeSections,
+    premium: options.includePremium === true ? false : section.premium ? true : index >= freeSections,
   }));
 
   const center = chart.byKey.center!;

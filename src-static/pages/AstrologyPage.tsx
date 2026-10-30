@@ -5,9 +5,11 @@ import { NatalWheel } from "@/components/charts/NatalWheel";
 import { InterpretationCard, LockedCard } from "@/components/result/InterpretationCard";
 import { offsetLabelAt } from "@/lib/astronomy/timezone";
 import { getConfig } from "../config";
+import { useAdmin } from "../admin";
 import { LeadForm } from "../components/LeadForm";
 import { CitySearch, type PlaceValue } from "../components/CitySearch";
 import { astrologyDetails } from "../details";
+import { AdminNote } from "../components/AdminNote";
 import { CalendarIcon, ClockIcon } from "../components/icons-extra";
 import type { TimeAccuracy } from "@/lib/types";
 
@@ -266,10 +268,12 @@ export function AstrologyPage() {
 
 function AstroResult({ result }: { result: { chart: NatalChart; label: string } }) {
   const config = getConfig();
+  const admin = useAdmin();
   const { chart, label } = result;
   const interpretation = buildAstrologyInterpretation(chart, {
-    freeSections: config.freeResult.astrologyCardCount,
+    freeSections: admin ? 999 : config.freeResult.astrologyCardCount,
     includeHouses: true,
+    includePremium: admin,
   });
   const free = interpretation.sections.filter((section) => !section.premium);
   const locked = interpretation.sections.filter((section) => section.premium);
@@ -353,8 +357,10 @@ function AstroResult({ result }: { result: { chart: NatalChart; label: string } 
         ) : null}
       </section>
 
+      {admin ? <AdminNote locked={locked.length} /> : null}
+
       <section className="grid gap-3">
-        <h2 className="h-section">Ваша расшифровка</h2>
+        <h2 className="h-section">{admin ? "Полная расшифровка" : "Ваша расшифровка"}</h2>
         {free.map((section, index) => (
           <InterpretationCard key={section.id} section={section} index={index} />
         ))}
@@ -377,13 +383,15 @@ function AstroResult({ result }: { result: { chart: NatalChart; label: string } 
         </section>
       ) : null}
 
-      <LeadForm
-        direction="astrology"
-        summary={summary}
-        details={astrologyDetails(chart, label, interpretation)}
-        birth={`${chart.birth.date}${chart.birth.time ? `, ${chart.birth.time}` : ""}${chart.birth.timeAccuracy === "unknown" ? " (время неизвестно)" : chart.birth.timeAccuracy === "approx" ? " (примерно)" : ""}`}
-        place={chart.birth.placeName || label}
-      />
+      {admin ? null : (
+        <LeadForm
+          direction="astrology"
+          summary={summary}
+          details={astrologyDetails(chart, label, interpretation)}
+          birth={`${chart.birth.date}${chart.birth.time ? `, ${chart.birth.time}` : ""}${chart.birth.timeAccuracy === "unknown" ? " (время неизвестно)" : chart.birth.timeAccuracy === "approx" ? " (примерно)" : ""}`}
+          place={chart.birth.placeName || label}
+        />
+      )}
     </div>
   );
 }

@@ -4,8 +4,10 @@ import { buildMatrixInterpretation } from "@/lib/interpretation/matrix";
 import { MatrixDiagram } from "@/components/charts/MatrixDiagram";
 import { InterpretationCard, LockedCard } from "@/components/result/InterpretationCard";
 import { getConfig } from "../config";
+import { useAdmin } from "../admin";
 import { LeadForm } from "../components/LeadForm";
 import { matrixDetails } from "../details";
+import { AdminNote } from "../components/AdminNote";
 import { CalendarIcon } from "../components/icons-extra";
 
 function today(): string {
@@ -114,8 +116,13 @@ export function MatrixPage() {
 
 function MatrixResult({ result }: { result: { chart: MatrixChart; date: string } }) {
   const config = getConfig();
+  const admin = useAdmin();
   const { chart, date } = result;
-  const interpretation = buildMatrixInterpretation(chart, { freeSections: config.freeResult.matrixPointCount });
+  // Владелец видит все разделы: ограничения бесплатной версии к нему не применяются.
+  const interpretation = buildMatrixInterpretation(chart, {
+    freeSections: admin ? 999 : config.freeResult.matrixPointCount,
+    includePremium: admin,
+  });
   const free = interpretation.sections.filter((section) => !section.premium);
   const locked = interpretation.sections.filter((section) => section.premium);
 
@@ -182,8 +189,10 @@ function MatrixResult({ result }: { result: { chart: MatrixChart; date: string }
         </div>
       </section>
 
+      {admin ? <AdminNote locked={locked.length} /> : null}
+
       <section className="grid gap-3">
-        <h2 className="h-section">Ваша расшифровка</h2>
+        <h2 className="h-section">{admin ? "Полная расшифровка" : "Ваша расшифровка"}</h2>
         {free.map((section, index) => (
           <InterpretationCard key={section.id} section={section} index={index} />
         ))}
@@ -206,12 +215,14 @@ function MatrixResult({ result }: { result: { chart: MatrixChart; date: string }
         </section>
       ) : null}
 
-      <LeadForm
-        direction="matrix"
-        summary={summary}
-        details={matrixDetails(chart, date, interpretation)}
-        birth={date}
-      />
+      {admin ? null : (
+        <LeadForm
+          direction="matrix"
+          summary={summary}
+          details={matrixDetails(chart, date, interpretation)}
+          birth={date}
+        />
+      )}
     </div>
   );
 }

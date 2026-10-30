@@ -8,6 +8,7 @@ import { AstrologyPage } from "./pages/AstrologyPage";
 import { MatrixPage } from "./pages/MatrixPage";
 import { FullReadingPage, PrivacyPage, TermsPage } from "./pages/OtherPages";
 import { getConfig } from "./config";
+import { AdminProvider } from "./admin";
 
 /**
  * Точка входа статической (FTP) версии.
@@ -39,6 +40,7 @@ if (!root) throw new Error("Не найден контейнер #root");
 
 createRoot(root).render(
   <StrictMode>
+    <AdminProvider>
     <a className="skip-link" href="#main">
       Перейти к содержимому
     </a>
@@ -59,5 +61,6 @@ createRoot(root).render(
     </main>
     <Footer />
     <SoftInvite page={page} />
+    </AdminProvider>
   </StrictMode>
 );
