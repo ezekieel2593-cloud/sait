@@ -339,9 +339,31 @@ function AstroResult({ result }: { result: { chart: NatalChart; label: string } 
                   ))}
                 </div>
               ) : null}
-              <p className="mt-3 text-[0.78rem] text-[var(--ink-soft)]">
-                Аспектов в пределах орбисов: {chart.aspects.length}
-              </p>
+              {chart.aspects.length ? (
+                <>
+                  <p className="mt-3 text-[0.78rem] font-semibold uppercase tracking-[0.1em] text-[var(--ink-faint)]">
+                    Аспекты ({chart.aspects.length})
+                  </p>
+                  <ul className="mt-1 grid gap-0.5 text-[0.8rem]">
+                    {chart.aspects.map((aspect) => (
+                      <li
+                        key={`${aspect.a}-${aspect.b}`}
+                        className="flex flex-wrap items-baseline justify-between gap-2 border-b border-[var(--line)] py-0.5 last:border-0"
+                      >
+                        <span className="text-[var(--ink-soft)]">
+                          {aspect.symbol} {aspect.name}
+                        </span>
+                        <span className="text-[var(--ocean)]">
+                          {aspect.aName} — {aspect.bName}
+                        </span>
+                        <span className="text-[0.72rem] text-[var(--ink-faint)]">орб {aspect.orb.toFixed(1)}°</span>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              ) : (
+                <p className="mt-3 text-[0.78rem] text-[var(--ink-soft)]">Точных аспектов в допустимых орбисах нет.</p>
+              )}
             </details>
           </div>
         </div>

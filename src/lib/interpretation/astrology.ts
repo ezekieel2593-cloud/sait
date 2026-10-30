@@ -38,7 +38,7 @@ function planetSection(position: PlanetPosition): InterpretationSection {
 
   const paragraphs: string[] = [];
   if (planetEntry) {
-    paragraphs.push(`${position.name} отвечает за ${planetEntry.details.theme ?? "ключевую тему карты"}.`);
+    paragraphs.push(`Тема ${position.name} — ${planetEntry.details.theme ?? "ключевая тема карты"}.`);
   }
   if (signEntry) {
     paragraphs.push(`${position.name} в знаке ${sign.name} (${position.formatted}): ${signEntry.summary}`);
@@ -141,21 +141,100 @@ function aspectSections(chart: NatalChart, limit: number): InterpretationSection
   });
 }
 
+/** Ключ планеты по её русскому названию — для поиска текста об управителе. */
+const PLANET_KEY_BY_NAME: Record<string, string> = PLANETS.reduce<Record<string, string>>((acc, planet) => {
+  acc[planet.name] = planet.key;
+  return acc;
+}, {});
+
+/**
+ * Разделы домов: не «сфера + список планет», а полноценный разбор.
+ *
+ * Для каждого дома собираем четыре слоя — знак на куспиде, управителя и его
+ * положение в карте, планеты внутри и аспекты к ним. Именно эта связка делает
+ * дом личным: без неё карточка дома одинаково звучит у всех людей.
+ */
 function houseSections(chart: NatalChart): InterpretationSection[] {
   if (!chart.houses) return [];
+
   return chart.houses.slice(0, 12).map((house) => {
     const entry = getEntry("house", `house${house.number}`);
+    const spot = entry?.details.sphere ?? house.sphere;
     const planetsInHouse = chart.positions.filter((position) => position.house === house.number);
+
+    const cuspSign = SIGNS.find((sign) => sign.name === house.sign);
+    const cuspEntry = cuspSign ? getSignEntry(cuspSign.index) : undefined;
+
+    const rulerName = cuspSign?.ruler ?? "";
+    const rulerKey = PLANET_KEY_BY_NAME[rulerName] ?? "";
+    const ruler = rulerKey ? chart.positions.find((position) => position.key === rulerKey) : undefined;
+    const rulerEntry = rulerKey ? getEntry("planet", rulerKey) : undefined;
+    const rulerHouseEntry = ruler?.house ? getEntry("house", `house${ruler.house}`) : undefined;
+
+    const paragraphs: string[] = [];
+    paragraphs.push(entry ? entry.summary : `Сфера дома: ${spot}.`);
+
+    if (cuspEntry) {
+      paragraphs.push(
+        `На куспиде — ${house.sign}: тема «${spot}» раскрывается через этот знак. ${cuspEntry.summary}`
+      );
+    }
+
+    if (ruler) {
+      const rulerTheme = rulerEntry?.details.theme ?? "своя тема";
+      const rulerPlace = ruler.house
+        ? `в ${ruler.house} доме — «${rulerHouseEntry?.details.sphere ?? "своя сфера"}»`
+        : "дом не определяется: время рождения неизвестно";
+      paragraphs.push(
+        `Управитель дома — ${rulerName}, его тема — ${rulerTheme}. В вашей карте ${rulerName} находится в знаке ${ruler.sign}, ${rulerPlace}. Именно там тема «${spot}» находит опору и развитие.`
+      );
+    }
+
+    if (planetsInHouse.length) {
+      for (const position of planetsInHouse) {
+        const planetEntry = getEntry("planet", position.key);
+        const planetSign = getSignEntry(signIndexByName(position.sign));
+        const theme = planetEntry?.details.theme ?? "свою тему";
+        const retro = position.retrograde
+          ? " Ретроградность: тема раскрывается через внутреннюю работу и переосмысление."
+          : "";
+        const signNote = position.sign === house.sign ? "" : planetSign?.summary ?? "";
+        paragraphs.push(
+          `${position.name} в знаке ${position.sign}: в этом доме работает тема «${theme}».${signNote ? ` ${signNote}` : ""}${retro}`
+        );
+      }
+    } else {
+      paragraphs.push(
+        `Планет в этом доме нет: тема не звучит громко сама по себе, её ведут знак на куспиде и управитель.`
+      );
+    }
+
+    // Аспекты, которые касаются планет этого дома, — самая точная деталь.
+    const housePlanetKeys = new Set(planetsInHouse.map((position) => position.key));
+    const related = chart.aspects
+      .filter((aspect) => housePlanetKeys.has(aspect.a) || housePlanetKeys.has(aspect.b))
+      .sort((a, b) => a.orb - b.orb)
+      .slice(0, 2);
+    if (related.length) {
+      const phrases = related.map((aspect) => `${aspect.name} ${aspect.aName}–${aspect.bName} (орб ${aspect.orb.toFixed(1)}°)`);
+      paragraphs.push(
+        `Аспекты к планетам дома: ${phrases.join("; ")}. Они показывают, с какими сферами тема связана и где она встречает напряжение.`
+      );
+    }
+
+    const recommendations = [
+      ...(cuspEntry?.recommendations ?? []),
+      ...planetsInHouse.flatMap((position) => getEntry("planet", position.key)?.recommendations ?? []),
+    ].slice(0, 3);
+
     return {
       id: `house-${house.number}`,
       title: `${house.title}: ${house.sign}`,
-      subtitle: `${house.formatted} · ${house.sphere}`,
-      paragraphs: [
-        entry?.summary ?? "",
-        planetsInHouse.length
-          ? `В этом доме: ${planetsInHouse.map((p) => p.name).join(", ")}.`
-          : "Планет в этом доме нет — тема включается через управителя и транзиты.",
-      ].filter(Boolean),
+      subtitle: `${house.formatted} · ${spot}`,
+      paragraphs: paragraphs.filter(Boolean),
+      positive: cuspEntry?.positive,
+      shadow: cuspEntry?.shadow,
+      recommendations: recommendations.length ? recommendations : undefined,
       premium: true,
     };
   });
@@ -174,7 +253,7 @@ export function buildAstrologyInterpretation(
   options: AstrologyInterpretationOptions = {}
 ): Interpretation {
   const freeSections = Math.max(3, options.freeSections ?? 4);
-  const maxAspects = options.maxAspects ?? 6;
+  const maxAspects = options.maxAspects ?? 24;
 
   const sun = chart.positions.find((position) => position.key === "sun")!;
   const moon = chart.positions.find((position) => position.key === "moon")!;

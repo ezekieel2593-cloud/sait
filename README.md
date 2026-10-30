@@ -131,7 +131,7 @@ npm run build:php           # release/astra-pearl-php.zip (≈0,8 МБ) → down
 Проверки без хостинга: `node tools/php-checks/api-cabinet.cjs` (94 проверки в php-wasm на PHP 8.0–8.5),
 `setup-flow.cjs` (24 проверки установки), `node tools/php-checks/form-api.cjs` (35)
 и `node tools/php-checks/static-noserver.cjs` (58, jsdom) и
-`node tools/php-checks/admin-view.cjs` (22, jsdom).
+`node tools/php-checks/admin-view.cjs` (30, jsdom).
 Диагностика установки на хостинге — страница `check.php` в архиве
 (проверка: `node tools/php-checks/check-page.cjs`, 18 проверок).
 Установка (`setup.php`) сама создаёт `config.php` и записывает хеш пароля,

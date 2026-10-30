@@ -164,6 +164,21 @@ async function calculateMatrix(page) {
   check("гостю не показывают плашку владельца", !/Вы вошли как владелец/.test(guestAstroText));
   check("гость видит форму заявки", Boolean(guestAstroDoc.querySelector("#lead-name")));
 
+  /* ------------------------- описание всех 12 домов ----------------------- */
+
+  console.log("\n5. Дома в разборе карты");
+  const houseCards = (astroText.match(/Управитель дома — /g) || []).length;
+  check("у владельца разобраны все 12 домов", houseCards >= 12, String(houseCards));
+  check("у домов есть знак на куспиде", (astroText.match(/На куспиде — /g) || []).length >= 12);
+  check("у домов есть управитель и его положение", /В вашей карте .+ находится в знаке /.test(astroText));
+  check("планеты внутри дома описаны", /в этом доме работает тема/.test(astroText));
+  check("аспекты к планетам дома показаны", /Аспекты к планетам дома: /.test(astroText));
+  const recBlocks = (astroText.match(/Рекомендации/g) || []).length;
+  check("в карточках домов есть рекомендации", recBlocks >= 12, String(recBlocks));
+  check("список всех аспектов в деталях", /Аспекты \(\d+\)/.test(astroText));
+  const guestHouses = (guestAstroText.match(/Управитель дома — /g) || []).length;
+  check("гостю дома закрыты", guestHouses === 0, String(guestHouses));
+
   console.log(`\nИтого: ${pass} ok, ${fail} fail`);
   process.exit(fail === 0 ? 0 : 1);
 })();
