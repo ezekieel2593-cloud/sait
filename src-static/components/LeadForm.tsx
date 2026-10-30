@@ -181,7 +181,7 @@ export function LeadForm({
           После отправки специалист подтвердит получение.
         </p>
 
-        <pre className="mt-3 max-h-64 overflow-auto whitespace-pre-wrap rounded-[12px] border border-[var(--line)] bg-[#fbfbfc] p-3 text-[0.82rem] leading-relaxed text-[var(--ink)]">
+        <pre className="mt-3 max-h-64 overflow-auto whitespace-pre-wrap rounded-[0.75rem] border border-[var(--line)] bg-[#fbfbfc] p-3 text-[0.82rem] leading-relaxed text-[var(--ink)]">
 {message}
         </pre>
 

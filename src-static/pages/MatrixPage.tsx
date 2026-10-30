@@ -166,7 +166,7 @@ function MatrixResult({ result }: { result: { chart: MatrixChart; date: string }
               <EnergyChip value={chart.byKey.shared.arcanum} label="общая точка каналов" />
               <EnergyChip value={chart.yearEnergy.arcanum} label={`энергия ${chart.yearEnergy.year} года`} />
             </div>
-            <details className="rounded-[12px] border border-[var(--line)] bg-white p-3 text-[0.84rem]">
+            <details className="rounded-[0.75rem] border border-[var(--line)] bg-white p-3 text-[0.84rem]">
               <summary className="cursor-pointer text-[var(--turquoise-deep)]">Все расчётные позиции и формулы</summary>
               <ul className="mt-2 grid gap-1">
                 {[...chart.points, chart.yearEnergy].map((point) => (
@@ -230,7 +230,7 @@ function EnergyChip({ value, label }: { value: number; label: string }) {
 
 function Metric({ label, value, note }: { label: string; value: string; note: string }) {
   return (
-    <div className="rounded-[12px] border border-[var(--line)] bg-white p-3">
+    <div className="rounded-[0.75rem] border border-[var(--line)] bg-white p-3">
       <p className="text-[0.7rem] uppercase tracking-[0.1em] text-[var(--ink-faint)]">{label}</p>
       <p className="mt-0.5 font-[family-name:var(--font-display)] text-[1.5rem] leading-none text-[var(--ocean)]">{value}</p>
       <p className="mt-1 text-[0.76rem] text-[var(--ink-soft)]">{note}</p>

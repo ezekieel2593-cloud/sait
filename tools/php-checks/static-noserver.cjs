@@ -100,6 +100,13 @@ async function run() {
   check("у фонового слоя нет отрицательного z-index", !/\.page-photo\{[^}]*z-index:-/.test(cssSource));
   check("контент выше фона", /main,\s*footer\{[^}]*z-index:\s*2/.test(cssSource));
 
+  // ПК-масштаб: на широких экранах весь интерфейс крупнее на 25%.
+  check("на ПК корневой кегль 125%", /@media \(min-width:1024px\)\{html\{font-size:125%\}\}/.test(cssSource), cssSource.match(/@media \(min-width:1024px\)\{html\{[^}]*\}/)?.[0]);
+  check("на телефоне масштаб 100%", /html\{[^}]*font-size:100%/.test(cssSource));
+  check("размеры контейнера в rem", /\.container\{[^}]*max-width:75rem/.test(cssSource));
+  check("кегль текста в rem", /\.h-display\{[^}]*font-size:clamp\(2\.5rem/.test(cssSource));
+  check("пиксельных кеглей не осталось", !/font-size:\s*1[0-9](\.\d+)?px/.test(cssSource));
+
 
   const date = doc.querySelector("#matrix-date");
   check("форма расчёта отрисована", Boolean(date));

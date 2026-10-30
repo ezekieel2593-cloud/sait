@@ -24,7 +24,7 @@ export function Header({ active }: { active?: string }) {
 
   return (
     <header className="sticky top-0 z-40 border-b border-[var(--line)] bg-[rgba(246,240,236,0.86)] backdrop-blur">
-      <div className="container flex h-[68px] items-center justify-between gap-4">
+      <div className="container flex h-[4.25rem] items-center justify-between gap-4">
         <a href="index.html" className="flex items-center gap-2.5" aria-label={`${config.siteName} — на главную`}>
           <span className="grid h-9 w-9 place-items-center rounded-full border border-[var(--line-gold)] bg-white/70">
             <svg viewBox="0 0 32 32" className="h-6 w-6" aria-hidden="true">
@@ -41,17 +41,17 @@ export function Header({ active }: { active?: string }) {
           <span className="flex flex-col">
             <span className="brand-name">{config.logoText}</span>
             <span className="mt-1 hidden lg:block">
-              <span className="brand-sub uppercase tracking-[0.14em]">{config.brandTitle}</span>
+              <span className="brand-sub max-w-[11rem] uppercase tracking-[0.14em]">{config.brandTitle}</span>
             </span>
           </span>
         </a>
 
-        <nav className="hidden items-center gap-1 lg:flex" aria-label="Основная навигация">
+        <nav className="hidden items-center gap-0.5 lg:flex" aria-label="Основная навигация">
           {links.map((link) => (
             <a
               key={link.href}
               href={link.href}
-              className={`rounded-full px-3 py-2 text-[0.9rem] transition-colors hover:text-[var(--ocean)] ${
+              className={`rounded-full px-2.5 py-2 text-[0.9rem] transition-colors hover:text-[var(--ocean)] ${
                 active === link.href ? "text-[var(--ocean)]" : "text-[var(--ink)]"
               }`}
             >

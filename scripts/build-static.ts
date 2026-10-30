@@ -246,7 +246,7 @@ ${canonical}
 <body data-page="${meta.page}" data-title="${meta.title}">
 <div id="root"></div>
 <noscript>
-  <div style="max-width:640px;margin:48px auto;padding:0 20px;font-family:system-ui,sans-serif;color:#253d4b">
+  <div style="max-width:40rem;margin:3rem auto;padding:0 1.25rem;font-family:system-ui,sans-serif;color:#253d4b">
     <h1>${meta.title}</h1>
     <p>${meta.description}</p>
     <p>Для расчёта натальной карты и Матрицы судьбы нужен JavaScript: вычисления выполняются прямо в браузере.
@@ -278,11 +278,11 @@ fs.writeFileSync(
 <link rel="stylesheet" href="styles.css?v=${BUILD_ID}">
 </head>
 <body>
-<div class="container container--measure" style="padding:80px 0;text-align:center">
+<div class="container container--measure" style="padding:5rem 0;text-align:center">
   <p style="font-family:'Cormorant Garamond',serif;font-size:clamp(4rem,14vw,7rem);line-height:1;color:#253d4b;margin:0">404</p>
-  <h1 style="font-family:'Cormorant Garamond',serif;color:#253d4b;margin-top:12px">Страница не найдена</h1>
+  <h1 style="font-family:'Cormorant Garamond',serif;color:#253d4b;margin-top:0.75rem">Страница не найдена</h1>
   <p style="color:#665c60">Возможно, ссылка устарела. Начните заново — это займёт меньше минуты.</p>
-  <div style="margin-top:24px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+  <div style="margin-top:1.5rem;display:flex;gap:0.5rem;justify-content:center;flex-wrap:wrap">
     <a class="btn btn--primary btn--sm" href="index.html">На главную</a>
     <a class="btn btn--secondary btn--sm" href="astrology.html">Рассчитать карту</a>
     <a class="btn btn--secondary btn--sm" href="matrix.html">Открыть матрицу</a>

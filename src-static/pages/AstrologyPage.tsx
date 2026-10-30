@@ -312,7 +312,7 @@ function AstroResult({ result }: { result: { chart: NatalChart; label: string } 
               />
               <Metric label="MC" value={degreeOnly(chart.midheaven.formatted)} note={chart.midheaven.sign} />
             </div>
-            <details className="rounded-[12px] border border-[var(--line)] bg-white p-3 text-[0.84rem]">
+            <details className="rounded-[0.75rem] border border-[var(--line)] bg-white p-3 text-[0.84rem]">
               <summary className="cursor-pointer text-[var(--turquoise-deep)]">Планеты, дома и аспекты</summary>
               <ul className="mt-2 grid gap-1">
                 {chart.positions.map((position) => (
@@ -396,7 +396,7 @@ function degreeOnly(formatted: string): string {
 
 function Metric({ label, value, note }: { label: string; value: string; note: string }) {
   return (
-    <div className="rounded-[12px] border border-[var(--line)] bg-white p-3">
+    <div className="rounded-[0.75rem] border border-[var(--line)] bg-white p-3">
       <p className="text-[0.7rem] uppercase tracking-[0.1em] text-[var(--ink-faint)]">{label}</p>
       <p className="mt-0.5 font-[family-name:var(--font-display)] text-[1.3rem] leading-tight text-[var(--ocean)]">{value}</p>
       <p className="mt-0.5 text-[0.72rem] text-[var(--ink-soft)]">{note}</p>

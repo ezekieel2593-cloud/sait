@@ -93,7 +93,7 @@ export function CitySearch({
       </div>
 
       {open && results.length > 0 ? (
-        <ul className="mt-1 max-h-64 overflow-auto rounded-[12px] border border-[var(--line)] bg-white shadow-[var(--shadow-soft)]">
+        <ul className="mt-1 max-h-64 overflow-auto rounded-[0.75rem] border border-[var(--line)] bg-white shadow-[var(--shadow-soft)]">
           {results.map((city) => (
             <li key={`${city.id}-${city.country}`}>
               <button
@@ -129,7 +129,7 @@ export function CitySearch({
       )}
 
       {manual ? (
-        <div className="mt-2 grid gap-2 rounded-[12px] border border-[var(--line)] bg-white p-3 sm:grid-cols-2">
+        <div className="mt-2 grid gap-2 rounded-[0.75rem] border border-[var(--line)] bg-white p-3 sm:grid-cols-2">
           <label className="grid gap-1 text-[0.8rem]">
             <span className="text-[var(--ink-soft)]">Название</span>
             <input
