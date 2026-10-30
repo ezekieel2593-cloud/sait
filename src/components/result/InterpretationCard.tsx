@@ -26,6 +26,27 @@ export function InterpretationCard({ section, index }: { section: Interpretation
         ))}
       </div>
 
+      {section.table?.rows.length ? (
+        <div className="mt-3 overflow-hidden rounded-[var(--radius-sm)] border border-[var(--line)] bg-white">
+          {section.table.caption ? (
+            <p className="border-b border-[var(--line)] px-3 py-1.5 text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-[var(--ink-faint)]">
+              {section.table.caption}
+            </p>
+          ) : null}
+          <dl className="grid text-[0.82rem]">
+            {section.table.rows.map((row, rowIndex) => (
+              <div
+                key={`${row.label}-${rowIndex}`}
+                className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 border-b border-[var(--line)] px-3 py-1.5 last:border-0"
+              >
+                <dt className="text-[var(--ink-soft)]">{row.label}</dt>
+                <dd className="m-0 text-right text-[var(--ocean)]">{row.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      ) : null}
+
       {section.positive?.length || section.shadow?.length ? (
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {section.positive?.length ? (

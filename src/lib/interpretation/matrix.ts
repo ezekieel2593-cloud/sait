@@ -9,7 +9,7 @@ import type { Interpretation, InterpretationSection } from "./types";
 
 const FREE_POINTS = ["center", "A", "B", "D", "money-entry", "love-entry"];
 
-function pointSection(point: MatrixPoint): InterpretationSection {
+function pointSection(point: MatrixPoint, detailed = false): InterpretationSection {
   const position = getPositionEntry(point.key);
   const arcana = getArcanumEntry(point.arcanum);
 
@@ -31,6 +31,22 @@ function pointSection(point: MatrixPoint): InterpretationSection {
     paragraphs.push(`Задача энергии: ${arcana.details.karma}`);
   }
 
+  // Расширенный разбор для владельца: место точки в схеме, все трактовки аркана
+  // по сферам и точные числа, из которых получилось значение.
+  if (detailed) {
+    paragraphs.push(`Где стоит: ${point.role}. Сфера: ${point.sphere}.`);
+    if (arcana?.details.money && !["money-entry", "money-middle", "shared"].includes(point.key)) {
+      paragraphs.push(`Деньги в этой энергии: ${arcana.details.money}`);
+    }
+    if (arcana?.details.love && !["love-entry", "love-middle", "shared"].includes(point.key)) {
+      paragraphs.push(`Отношения в этой энергии: ${arcana.details.love}`);
+    }
+    if (arcana?.details.karma && !["D", "center", "family-force"].includes(point.key)) {
+      paragraphs.push(`Задача энергии: ${arcana.details.karma}`);
+    }
+    if (arcana?.methodology) paragraphs.push(`Методика трактовки: ${arcana.methodology}.`);
+  }
+
   return {
     id: `point-${point.key}`,
     title: point.title,
@@ -42,7 +58,105 @@ function pointSection(point: MatrixPoint): InterpretationSection {
     premium: !FREE_POINTS.includes(point.key),
     arcana: point.arcanum,
     sourceNote: arcana?.source?.title,
+    table: detailed
+      ? {
+          caption: "Расчёт точки",
+          rows: [
+            { label: "Энергия", value: energyLabel(point.arcanum) },
+            { label: "Формула", value: point.formula },
+            { label: "До редукции", value: String(point.raw) },
+            { label: "Позиция в схеме", value: point.role },
+            { label: "Сфера", value: point.sphere },
+            ...(arcana?.source?.title ? [{ label: "Источник трактовки", value: arcana.source.title }] : []),
+          ],
+        }
+      : undefined,
   };
+}
+
+/**
+ * Технические разделы матрицы — только в расширенном разборе владельца.
+ * Показывают всю схему: каждую точку с формулой и «сырым» числом, каналы
+ * денег и отношений, родовые углы и параметры методики.
+ */
+function matrixCalculationSections(chart: MatrixChart): InterpretationSection[] {
+  const allPoints = [...chart.points, chart.yearEnergy];
+  const sections: InterpretationSection[] = [];
+
+  sections.push({
+    id: "data-matrix-scheme",
+    title: "Схема расчёта: все позиции",
+    subtitle: `${allPoints.length} точек · ${chart.meta.version}`,
+    paragraphs: [],
+    table: {
+      caption: "Позиция, энергия, формула и число до редукции",
+      rows: allPoints.map((point) => ({
+        label: `${point.title} — ${point.sphere}`,
+        value: `${energyLabel(point.arcanum)} · ${point.formula} → ${point.raw}`,
+      })),
+    },
+    premium: false,
+  });
+
+  sections.push({
+    id: "data-matrix-channels",
+    title: "Каналы денег и отношений",
+    subtitle: "вход, середина и общая точка",
+    paragraphs: [],
+    table: {
+      caption: "Как связаны каналы",
+      rows: [
+        {
+          label: "Деньги: вход",
+          value: `${energyLabel(chart.byKey["money-entry"].arcanum)} · ${chart.byKey["money-entry"].formula}`,
+        },
+        {
+          label: "Деньги: середина",
+          value: `${energyLabel(chart.byKey["money-middle"].arcanum)} · ${chart.byKey["money-middle"].formula}`,
+        },
+        {
+          label: "Отношения: вход",
+          value: `${energyLabel(chart.byKey["love-entry"].arcanum)} · ${chart.byKey["love-entry"].formula}`,
+        },
+        {
+          label: "Отношения: середина",
+          value: `${energyLabel(chart.byKey["love-middle"].arcanum)} · ${chart.byKey["love-middle"].formula}`,
+        },
+        {
+          label: "Общая точка каналов",
+          value: `${energyLabel(chart.byKey.shared.arcanum)} · ${chart.byKey.shared.formula}`,
+        },
+        {
+          label: "Сила рода",
+          value: `${energyLabel(chart.byKey["family-force"].arcanum)} · ${chart.byKey["family-force"].formula}`,
+        },
+      ],
+    },
+    premium: false,
+  });
+
+  sections.push({
+    id: "data-matrix-meta",
+    title: "Параметры расчёта",
+    subtitle: chart.meta.version,
+    paragraphs: [],
+    table: {
+      caption: "Методика и версия",
+      rows: [
+        { label: "Дата рождения", value: chart.birth.date },
+        { label: "День / месяц / год", value: `${chart.birth.day} / ${chart.birth.month} / ${chart.birth.year}` },
+        { label: "Методика", value: chart.meta.methodology },
+        { label: "Редукция", value: chart.meta.reductionLabel },
+        { label: "Порядок арканов", value: chart.meta.arcanumOrder },
+        { label: "Версия", value: chart.meta.version },
+        { label: "Рассчитано", value: chart.meta.computedAt },
+        { label: "Энергия года", value: `${chart.yearEnergy.year}: ${energyLabel(chart.yearEnergy.arcanum)}` },
+      ],
+    },
+    premium: false,
+  });
+
+  return sections;
 }
 
 export interface MatrixInterpretationOptions {
@@ -52,6 +166,12 @@ export interface MatrixInterpretationOptions {
    * Ограничения бесплатной версии к его расчётам не применяются.
    */
   includePremium?: boolean;
+  /**
+   * true — расширенный разбор для владельца: формула и «сырое» число у каждой
+   * энергии, трактовки аркана по всем сферам, таблица всей схемы расчёта.
+   * Гостю эти данные не передаются.
+   */
+  detailed?: boolean;
 }
 
 export function buildMatrixInterpretation(
@@ -80,11 +200,21 @@ export function buildMatrixInterpretation(
     .map((key) => chart.byKey[key])
     .filter((point): point is MatrixPoint => Boolean(point));
 
-  const sections = [...ordered.map(pointSection), pointSection(chart.yearEnergy)];
+  const detailed = options.detailed === true;
+  const sections = [
+    ...ordered.map((point) => pointSection(point, detailed)),
+    pointSection(chart.yearEnergy, detailed),
+    ...(detailed ? matrixCalculationSections(chart) : []),
+  ];
 
   const prepared = sections.map((section, index) => ({
     ...section,
-    premium: options.includePremium === true ? false : section.premium ? true : index >= freeSections,
+    premium:
+      options.includePremium === true || (detailed && section.id.startsWith("data-"))
+        ? false
+        : section.premium
+          ? true
+          : index >= freeSections,
   }));
 
   const center = chart.byKey.center!;
@@ -127,6 +257,10 @@ export function fullInterpretationText(chart: MatrixChart, interpretation: Inter
     if (section.positive?.length) lines.push(`Сильные проявления: ${section.positive.join("; ")}.`);
     if (section.shadow?.length) lines.push(`Тени: ${section.shadow.join("; ")}.`);
     if (section.recommendations?.length) lines.push(`Рекомендации: ${section.recommendations.join(" ")}`);
+    if (section.table?.rows.length) {
+      if (section.table.caption) lines.push(`${section.table.caption}:`);
+      for (const row of section.table.rows) lines.push(`  ${row.label}: ${row.value}`);
+    }
   }
   lines.push("");
   lines.push("ОГРАНИЧЕНИЯ МЕТОДИКИ");

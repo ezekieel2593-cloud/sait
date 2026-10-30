@@ -20,6 +20,24 @@ function signIndexByName(name: string): number {
   return SIGN_BY_NAME[name] ?? 0;
 }
 
+/** Родительный падеж названий планет: «Тема Солнца», «аспекты Луны». */
+const PLANET_GENITIVE: Record<string, string> = {
+  sun: "Солнца",
+  moon: "Луны",
+  mercury: "Меркурия",
+  venus: "Венеры",
+  mars: "Марса",
+  jupiter: "Юпитера",
+  saturn: "Сатурна",
+  uranus: "Урана",
+  neptune: "Нептуна",
+  pluto: "Плутона",
+};
+
+function planetGenitive(position: PlanetPosition): string {
+  return PLANET_GENITIVE[position.key] ?? position.name;
+}
+
 function houseNote(house: number | null): string {
   if (!house) return "";
   const entry = getEntry("house", `house${house}`);
@@ -31,14 +49,14 @@ function retrogradeNote(position: PlanetPosition): string {
   return `${position.name} в ретроградном движении: качество чаще проявляется внутренне — через размышления и пересмотр, а не через внешнюю активность.`;
 }
 
-function planetSection(position: PlanetPosition): InterpretationSection {
+function planetSection(position: PlanetPosition, chart: NatalChart, detailed = false): InterpretationSection {
   const planetEntry = getEntry("planet", position.key);
   const signEntry = getSignEntry(signIndexByName(position.sign));
   const sign = SIGNS[signIndexByName(position.sign)]!;
 
   const paragraphs: string[] = [];
   if (planetEntry) {
-    paragraphs.push(`Тема ${position.name} — ${planetEntry.details.theme ?? "ключевая тема карты"}.`);
+    paragraphs.push(`Тема ${planetGenitive(position)} — ${planetEntry.details.theme ?? "ключевая тема карты"}.`);
   }
   if (signEntry) {
     paragraphs.push(`${position.name} в знаке ${sign.name} (${position.formatted}): ${signEntry.summary}`);
@@ -53,6 +71,24 @@ function planetSection(position: PlanetPosition): InterpretationSection {
     paragraphs.push(`Реализация: ${signEntry.details.work}`);
   }
 
+  // Расширенный разбор для владельца: стихия и крест знака, любовь и зона роста,
+  // все аспекты этой планеты и точные числа расчёта.
+  if (detailed) {
+    paragraphs.push(
+      `Стихия знака — ${ELEMENT_LABELS[sign.element]}, крест — ${MODALITY_LABELS[sign.modality]}, управитель знака — ${sign.ruler}.`
+    );
+    if (signEntry?.details.love) paragraphs.push(`В близких отношениях: ${signEntry.details.love}`);
+    if (signEntry?.details.growth) paragraphs.push(`Зона роста: ${signEntry.details.growth}`);
+    const aspects = chart.aspects.filter((aspect) => aspect.a === position.key || aspect.b === position.key);
+    paragraphs.push(
+      aspects.length
+        ? `Аспекты ${planetGenitive(position)}: ${aspects
+            .map((aspect) => `${aspect.name} с ${aspect.a === position.key ? aspect.bName : aspect.aName} (орб ${aspect.orb.toFixed(2)}°)`)
+            .join("; ")}.`
+        : `Точных аспектов к ${planetGenitive(position)} нет — планета действует самостоятельно, без связей с другими точками.`
+    );
+  }
+
   return {
     id: `planet-${position.key}`,
     title: `${planetEntry?.title ?? position.name} в ${position.sign}`,
@@ -63,6 +99,24 @@ function planetSection(position: PlanetPosition): InterpretationSection {
     recommendations: signEntry?.recommendations,
     premium: !["sun", "moon"].includes(position.key),
     sourceNote: signEntry?.source?.title,
+    table: detailed
+      ? {
+          caption: "Точные данные",
+          rows: [
+            { label: "Долгота на эклиптике", value: `${position.longitude.toFixed(4)}°` },
+            { label: "Градус в знаке", value: position.formatted },
+            { label: "Знак", value: `${sign.name} (${ELEMENT_LABELS[sign.element]}, ${MODALITY_LABELS[sign.modality]})` },
+            {
+              label: "Дом",
+              value: position.house
+                ? `${position.house} — ${getEntry("house", `house${position.house}`)?.details.sphere ?? "сфера дома"}`
+                : "не определяется без времени рождения",
+            },
+            { label: "Движение", value: position.retrograde ? "ретроградное (R)" : "прямое" },
+            { label: "Категория", value: position.kind },
+          ],
+        }
+      : undefined,
   };
 }
 
@@ -240,9 +294,141 @@ function houseSections(chart: NatalChart): InterpretationSection[] {
   });
 }
 
+const TIME_ACCURACY_LABELS = {
+  exact: "точное",
+  approx: "приблизительное",
+  unknown: "неизвестно",
+} as const;
+
+const ASPECT_NATURE_LABELS = {
+  harmonious: "гармоничный",
+  tense: "напряжённый",
+  neutral: "нейтральный",
+} as const;
+
+/**
+ * Технические разделы — расширение только для владельца.
+ * Показывают, из каких чисел собран разбор: параметры расчёта, положения,
+ * куспиды и все аспекты без обрезки.
+ */
+function calculationSections(chart: NatalChart): InterpretationSection[] {
+  const sections: InterpretationSection[] = [];
+
+  const timeAssumed = chart.birth.timeAssumed ? " (подставлен полдень)" : "";
+  sections.push({
+    id: "data-birth",
+    title: "Параметры расчёта",
+    subtitle: `${chart.birth.date} · ${chart.birth.placeName}`,
+    paragraphs: [],
+    table: {
+      caption: "Исходные данные и версия методики",
+      rows: [
+        { label: "Дата рождения", value: chart.birth.date },
+        { label: "Время рождения", value: `${chart.birth.time ?? "не указано"}${timeAssumed}` },
+        { label: "Точность времени", value: TIME_ACCURACY_LABELS[chart.birth.timeAccuracy] },
+        { label: "Место", value: chart.birth.placeName },
+        {
+          label: "Координаты",
+          value: `${chart.birth.latitude.toFixed(4)}°, ${chart.birth.longitude.toFixed(4)}°`,
+        },
+        { label: "Часовой пояс", value: `${chart.birth.timezone} (UTC${chart.birth.utcOffset})` },
+        { label: "Всемирное время", value: chart.birth.utcIso },
+        { label: "Юлианская дата", value: chart.birth.julianDay.toFixed(5) },
+        { label: "Зодиак", value: chart.meta.zodiac },
+        { label: "Система домов", value: chart.meta.houseSystemLabel },
+        { label: "Эфемериды", value: chart.meta.ephemeris },
+        { label: "Версия алгоритма", value: chart.meta.algorithmVersion },
+        { label: "Рассчитано", value: chart.meta.computedAt },
+        { label: "Асцендент", value: chart.ascendant?.formatted ?? "не рассчитывался: время неизвестно" },
+        { label: "Середина неба (MC)", value: chart.midheaven.formatted },
+        {
+          label: "Фаза Луны",
+          value: `${chart.moonPhase.name}, освещено ${Math.round(chart.moonPhase.illumination * 100)}%`,
+        },
+        {
+          label: "Баланс стихий",
+          value: Object.entries(chart.distribution.elements)
+            .map(([key, value]) => `${ELEMENT_LABELS[key as keyof typeof ELEMENT_LABELS] ?? key} ${value}`)
+            .join(" · "),
+        },
+        {
+          label: "Баланс крестов",
+          value: Object.entries(chart.distribution.modalities)
+            .map(([key, value]) => `${MODALITY_LABELS[key as keyof typeof MODALITY_LABELS] ?? key} ${value}`)
+            .join(" · "),
+        },
+      ],
+    },
+    premium: false,
+  });
+
+  sections.push({
+    id: "data-positions",
+    title: "Точные положения планет",
+    subtitle: `${chart.positions.length} показателей`,
+    paragraphs: [],
+    table: {
+      caption: "Долгота, знак, дом и движение",
+      rows: chart.positions.map((position) => ({
+        label: `${position.symbol} ${position.name}`,
+        value: `${position.formatted}${position.house ? ` · ${position.house} дом` : ""}${
+          position.retrograde ? " · R" : ""
+        } · ${position.longitude.toFixed(3)}°`,
+      })),
+    },
+    premium: false,
+  });
+
+  if (chart.houses?.length) {
+    sections.push({
+      id: "data-houses",
+      title: "Куспиды домов",
+      subtitle: `${chart.meta.houseSystemLabel} · ${chart.houses.length} домов`,
+      paragraphs: [],
+      table: {
+        caption: "Начало дома, знак и управитель",
+        rows: chart.houses.map((house) => {
+          const sign = SIGNS.find((item) => item.name === house.sign);
+          return {
+            label: `${house.title} — ${house.sphere}`,
+            value: `${house.formatted} · ${sign?.ruler ?? "—"}`,
+          };
+        }),
+      },
+      premium: false,
+    });
+  }
+
+  sections.push({
+    id: "data-aspects",
+    title: "Аспекты: полный список",
+    subtitle: `${chart.aspects.length} аспектов в допустимых орбисах`,
+    paragraphs: [],
+    table: chart.aspects.length
+      ? {
+          caption: "Тип, пара планет, орбис и точный угол",
+          rows: chart.aspects.map((aspect) => ({
+            label: `${aspect.symbol} ${aspect.name} ${aspect.aName}–${aspect.bName}`,
+            value: `орб ${aspect.orb.toFixed(2)}° · точный ${aspect.exactAngle.toFixed(2)}° · ${
+              ASPECT_NATURE_LABELS[aspect.nature]
+            }`,
+          })),
+        }
+      : undefined,
+    premium: false,
+  });
+
+  return sections;
+}
+
 export interface AstrologyInterpretationOptions {
   freeSections?: number;
   maxAspects?: number;
+  /**
+   * true — расширенный разбор для владельца: технические таблицы, все аспекты
+   * каждой планеты, полный список положений и куспидов. Гостю не передаётся.
+   */
+  detailed?: boolean;
   includeHouses?: boolean;
   /** true — открыть все разделы (владелец в кабинете). */
   includePremium?: boolean;
@@ -254,6 +440,7 @@ export function buildAstrologyInterpretation(
 ): Interpretation {
   const freeSections = Math.max(3, options.freeSections ?? 4);
   const maxAspects = options.maxAspects ?? 24;
+  const detailed = options.detailed === true;
 
   const sun = chart.positions.find((position) => position.key === "sun")!;
   const moon = chart.positions.find((position) => position.key === "moon")!;
@@ -261,21 +448,27 @@ export function buildAstrologyInterpretation(
   const moonEntry = getSignEntry(signIndexByName(moon.sign));
 
   const sections: InterpretationSection[] = [
-    planetSection(sun),
-    planetSection(moon),
+    planetSection(sun, chart, detailed),
+    planetSection(moon, chart, detailed),
     ascendantSection(chart),
     elementSection(chart),
     ...aspectSections(chart, maxAspects),
     ...chart.positions
       .filter((position) => !["sun", "moon"].includes(position.key))
-      .map(planetSection),
+      .map((position) => planetSection(position, chart, detailed)),
     ...(options.includeHouses === false ? [] : houseSections(chart)),
+    ...(detailed ? calculationSections(chart) : []),
   ];
 
   // Проставляем премиум-флаг: первые N разделов открыты
   const prepared = sections.map((section, index) => ({
     ...section,
-    premium: options.includePremium === true ? false : section.premium ? true : index >= freeSections,
+    premium:
+      options.includePremium === true || (detailed && section.id.startsWith("data-"))
+        ? false
+        : section.premium
+          ? true
+          : index >= freeSections,
   }));
 
   const openedCount = prepared.filter((section) => !section.premium).length;

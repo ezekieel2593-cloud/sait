@@ -122,6 +122,9 @@ function MatrixResult({ result }: { result: { chart: MatrixChart; date: string }
   const interpretation = buildMatrixInterpretation(chart, {
     freeSections: admin ? 999 : config.freeResult.matrixPointCount,
     includePremium: admin,
+    // Владелец получает расширенный вариант: формула и «сырое» число у каждой
+    // энергии, трактовки по всем сферам и полная схема расчёта.
+    detailed: admin,
   });
   const free = interpretation.sections.filter((section) => !section.premium);
   const locked = interpretation.sections.filter((section) => section.premium);

@@ -1,3 +1,13 @@
+export interface InterpretationRow {
+  label: string;
+  value: string;
+}
+
+export interface InterpretationTable {
+  caption?: string;
+  rows: InterpretationRow[];
+}
+
 export interface InterpretationSection {
   id: string;
   title: string;
@@ -11,6 +21,8 @@ export interface InterpretationSection {
   premium: boolean;
   /** Пометка о методике/источнике. */
   sourceNote?: string;
+  /** Техническая таблица — только в расширенном разборе для владельца. */
+  table?: InterpretationTable;
   arcana?: number;
 }
 

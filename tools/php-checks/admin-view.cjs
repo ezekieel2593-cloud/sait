@@ -179,6 +179,37 @@ async function calculateMatrix(page) {
   const guestHouses = (guestAstroText.match(/Управитель дома — /g) || []).length;
   check("гостю дома закрыты", guestHouses === 0, String(guestHouses));
 
+  /* --------------------- расширенный разбор владельца --------------------- */
+
+  console.log("\n6. Расширенный вариант только для владельца");
+  for (const title of [
+    "Параметры расчёта",
+    "Точные положения планет",
+    "Куспиды домов",
+    "Аспекты: полный список",
+  ]) {
+    check(`астрология: раздел «${title}»`, astroText.includes(title));
+  }
+  check("астрология: у планет есть точные данные", /Долгота на эклиптике/.test(astroText));
+  check("астрология: стихия и крест знака", /крест — /.test(astroText));
+  check("астрология: все аспекты каждой планеты", /Аспекты Солнца: /.test(astroText));
+  check("астрология: юлианская дата в параметрах", /Юлианская дата/.test(astroText));
+  check("гость не получает технические таблицы", !/Долгота на эклиптике|Юлианская дата|Куспиды домов/.test(guestAstroText));
+
+  const adminMatrix = openPage("matrix.html", { admin: true });
+  check("матрица считается", await calculateMatrix(adminMatrix));
+  const adminMatrixText = adminMatrix.window.document.body.textContent || "";
+  check("матрица: схема всех позиций", adminMatrixText.includes("Схема расчёта: все позиции"));
+  check("матрица: каналы денег и отношений", adminMatrixText.includes("Каналы денег и отношений"));
+  check("матрица: параметры методики", adminMatrixText.includes("Параметры расчёта"));
+  check("матрица: формула и число у точки", /До редукции/.test(adminMatrixText));
+  check("матрица: место точки в схеме", /Где стоит: /.test(adminMatrixText));
+
+  const guestMatrix = openPage("matrix.html", { admin: false });
+  check("матрица считается", await calculateMatrix(guestMatrix));
+  const guestMatrixText = guestMatrix.window.document.body.textContent || "";
+  check("гость не видит схему расчёта", !/Схема расчёта: все позиции|До редукции|Каналы денег и отношений/.test(guestMatrixText));
+
   console.log(`\nИтого: ${pass} ok, ${fail} fail`);
   process.exit(fail === 0 ? 0 : 1);
 })();

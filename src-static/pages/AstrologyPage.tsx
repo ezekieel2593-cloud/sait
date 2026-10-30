@@ -274,6 +274,9 @@ function AstroResult({ result }: { result: { chart: NatalChart; label: string } 
     freeSections: admin ? 999 : config.freeResult.astrologyCardCount,
     includeHouses: true,
     includePremium: admin,
+    // Владелец получает расширенный вариант: технические таблицы, все аспекты
+    // каждой планеты, точные положения и куспиды. Гость видит прежний разбор.
+    detailed: admin,
   });
   const free = interpretation.sections.filter((section) => !section.premium);
   const locked = interpretation.sections.filter((section) => section.premium);
