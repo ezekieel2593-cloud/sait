@@ -127,8 +127,19 @@ async function run() {
 
   /* --------------------- схема и «простыми словами» ------------------------ */
 
-  check("схема стала подробной", (doc.querySelector("figure svg")?.querySelectorAll("circle").length ?? 0) >= 20);
-  check("в схеме есть подписи ролей", /таланты/.test(doc.querySelector("figure svg")?.textContent || ""));
+  check("схема стала подробной", (doc.querySelector("figure svg")?.querySelectorAll("circle").length ?? 0) >= 40);
+  const schemeText = doc.querySelector("figure svg")?.textContent || "";
+  check("в схеме есть подписи ролей", /таланты/.test(schemeText));
+  check("по кругу подписан возраст", schemeText.includes("0 лет") && schemeText.includes("75 лет"));
+  const noserverZoom = [...doc.querySelectorAll("button")].find((node) =>
+    (node.textContent || "").includes("Открыть схему крупно")
+  );
+  check("кнопка увеличения схемы работает без сервера", Boolean(noserverZoom));
+  if (noserverZoom) {
+    noserverZoom.click();
+    await wait(150);
+    check("схема раскрывается на весь экран", Boolean(doc.querySelector('[role="dialog"][aria-label="Схема матрицы крупно"]')));
+  }
   check("блока «простыми словами» на матрице нет", !/Матрица простыми словами/.test(resultText));
 
   /* ------------------------------ гайды по энергиям ------------------------ */

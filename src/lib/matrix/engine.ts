@@ -45,6 +45,18 @@ export interface MatrixPoint {
   role: string;
 }
 
+/** Точка «линии жизни»: возраст человека и энергия этого периода. */
+export interface LifeLinePoint {
+  /** Возраст в годах; шаг 2,5 года. */
+  age: number;
+  /** Какой это возраст: вершина квадрата, середина десятилетия или четверть. */
+  kind: "vertex" | "middle" | "quarter";
+  /** Ключ вершины, от которой считается отрезок. */
+  corner: string;
+  arcanum: number;
+  formula: string;
+}
+
 export interface MatrixChart {
   meta: {
     methodology: string;
@@ -59,6 +71,10 @@ export interface MatrixChart {
   byKey: Record<string, MatrixPoint>;
   layout: { key: string; x: number; y: number; label: string }[];
   yearEnergy: MatrixPoint & { year: number };
+  /** Линия жизни: от 0 до 80 лет по 2,5 года, считается по углам квадратов. */
+  lifeLine: LifeLinePoint[];
+  /** Порядок углов по часовой стрелке — от него зависит линия жизни. */
+  lifeOrder: string[];
   summary: {
     center: string;
     personality: string;
@@ -144,6 +160,10 @@ const POINT_META: Record<
   "love-entry": { title: "Вход в канал отношений", formula: "D + центр, редукция до 22", sphere: "отношения", role: "близость" },
   "love-middle": { title: "Середина канала отношений", formula: "вход в канал + общая точка, редукция до 22", sphere: "устойчивость отношений", role: "близость" },
   shared: { title: "Общая точка каналов", formula: "вход денег + вход отношений, редукция до 22", sphere: "деньги и отношения", role: "пересечение" },
+  "talent-line": { title: "Личные таланты", formula: "B + центр, редукция до 22", sphere: "способности", role: "талант" },
+  "talent-second": { title: "Развитие таланта", formula: "B + точка таланта, редукция до 22", sphere: "способности", role: "талант" },
+  "person-support": { title: "Личная опора", formula: "A + центр, редукция до 22", sphere: "опора и характер", role: "опора" },
+  "person-experience": { title: "Опыт личности", formula: "A + точка опоры, редукция до 22", sphere: "жизненный опыт", role: "опыт" },
 };
 
 /** Координаты для отрисовки схемы (0..100, 0 — верх). */
@@ -162,7 +182,11 @@ const LAYOUT_COORDS: Record<string, { x: number; y: number }> = {
   "money-middle": { x: 62, y: 50 },
   "love-entry": { x: 50, y: 74 },
   "love-middle": { x: 50, y: 62 },
-  shared: { x: 38, y: 38 },
+  shared: { x: 40, y: 38 },
+  "talent-line": { x: 50, y: 38 },
+  "talent-second": { x: 50, y: 28 },
+  "person-support": { x: 38, y: 50 },
+  "person-experience": { x: 28, y: 50 },
 };
 
 export function computeMatrix(input: MatrixInput): MatrixChart {
@@ -210,6 +234,11 @@ export function computeMatrix(input: MatrixInput): MatrixChart {
   values["shared"] = reduce22(values["money-entry"]! + values["love-entry"]!);
   values["money-middle"] = reduce22(values["money-entry"]! + values["shared"]!);
   values["love-middle"] = reduce22(values["love-entry"]! + values["shared"]!);
+  // Второе кольцо точек: «угол + центр» и «угол + найденная точка» (правило соседних точек).
+  values["talent-line"] = reduce22(B + center);
+  values["talent-second"] = reduce22(B + values["talent-line"]!);
+  values["person-support"] = reduce22(A + center);
+  values["person-experience"] = reduce22(A + values["person-support"]!);
 
   const points: MatrixPoint[] = Object.keys(POINT_META).map((key) => {
     const meta = POINT_META[key]!;
@@ -245,6 +274,22 @@ export function computeMatrix(input: MatrixInput): MatrixChart {
     year: currentYear,
   };
 
+  // Линия жизни: углы квадратов идут по кругу шагом 10 лет (A — 0, F — 10, B — 20 …),
+  // середина десятилетия — сумма соседних углов, точки 2,5 и 7,5 года — сумма угла и середины.
+  const lifeOrder = ["A", "family-top-left", "B", "family-top-right", "C", "family-bottom-right", "D", "family-bottom-left"];
+  const lifeLine: LifeLinePoint[] = [];
+  lifeOrder.forEach((key, index) => {
+    const next = lifeOrder[(index + 1) % lifeOrder.length]!;
+    const corner = values[key]!;
+    const following = values[next]!;
+    const middle = reduce22(corner + following);
+    const base = index * 10;
+    lifeLine.push({ age: base, kind: "vertex", corner: key, arcanum: corner, formula: "угол квадрата" });
+    lifeLine.push({ age: base + 2.5, kind: "quarter", corner: key, arcanum: reduce22(corner + middle), formula: `${key} + середина 5 лет` });
+    lifeLine.push({ age: base + 5, kind: "middle", corner: key, arcanum: middle, formula: `${key} + ${next}` });
+    lifeLine.push({ age: base + 7.5, kind: "quarter", corner: key, arcanum: reduce22(middle + following), formula: `середина + ${next}` });
+  });
+
   if (values["money-entry"] === center && values["love-entry"] === center) {
     warnings.push("Несколько каналов совпали с центральной энергией — трактовка требует внимания специалиста.");
   }
@@ -268,6 +313,8 @@ export function computeMatrix(input: MatrixInput): MatrixChart {
       label: POINT_META[key]?.title ?? key,
     })),
     yearEnergy,
+    lifeLine,
+    lifeOrder,
     summary: {
       center: `${center} · ${energyLabel(center)}`,
       personality: `${A} · ${energyLabel(A)}`,

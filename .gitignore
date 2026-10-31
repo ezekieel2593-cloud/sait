@@ -41,3 +41,6 @@ release/
 download/*.zip
 download/*.tar.gz
 !download/astra-pearl-php.zip
+
+# Временные файлы локальных проверок и рендера
+tmp-render/

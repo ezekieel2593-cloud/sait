@@ -283,11 +283,37 @@ async function calculateMatrix(page) {
   const matrixSvg = guestMatrixDoc.querySelector("figure svg");
   const svgText = matrixSvg?.textContent || "";
   const circles = matrixSvg ? matrixSvg.querySelectorAll("circle").length : 0;
-  check("схема подробная", circles >= 20, String(circles));
-  for (const label of ["таланты", "кармическая задача", "как тебя видят", "зона комфорта", "кем работать", "отношения"]) {
+  check("схема подробная", circles >= 40, String(circles));
+  for (const label of ["таланты", "кармическая задача", "как тебя видят", "зона комфорта", "вход в деньги", "отношения", "сила рода"]) {
     check(`на схеме подписано «${label}»`, svgText.includes(label));
   }
   check("на схеме есть легенда", svgText.includes("комфорт"));
+  check("по кругу подписан возраст", svgText.includes("0 лет") && svgText.includes("75 лет"));
+  check("на схеме больше сорока чисел", (matrixSvg?.querySelectorAll("text").length ?? 0) >= 60,
+    String(matrixSvg?.querySelectorAll("text").length ?? 0));
+
+  console.log("\n9б. Схема крупно");
+  const zoomButton = [...guestMatrixDoc.querySelectorAll("button")].find((node) =>
+    (node.textContent || "").includes("Открыть схему крупно")
+  );
+  check("есть кнопка «Открыть схему крупно»", Boolean(zoomButton));
+  if (zoomButton) {
+    zoomButton.click();
+    await wait(150);
+    const dialog = guestMatrixDoc.querySelector('[role="dialog"][aria-label="Схема матрицы крупно"]');
+    check("схема открывается на весь экран", Boolean(dialog));
+    check("в окне своя схема", Boolean(dialog?.querySelector("svg")));
+    const zoomIn = [...(dialog?.querySelectorAll("button") ?? [])].find((node) => node.getAttribute("aria-label") === "Увеличить схему");
+    const before = dialog?.textContent || "";
+    zoomIn?.click();
+    await wait(100);
+    const after = guestMatrixDoc.querySelector('[role="dialog"][aria-label="Схема матрицы крупно"]')?.textContent || "";
+    check("кнопка «+» увеличивает схему", before !== after, `${before.slice(0, 40)} → ${after.slice(0, 40)}`);
+    const close = [...(guestMatrixDoc.querySelectorAll('[role="dialog"] button'))].find((node) => (node.textContent || "").includes("Закрыть"));
+    close?.click();
+    await wait(100);
+    check("окно закрывается", !guestMatrixDoc.querySelector('[role="dialog"][aria-label="Схема матрицы крупно"]'));
+  }
 
   /* ------------------------ отдельная страница гайда ----------------------- */
 

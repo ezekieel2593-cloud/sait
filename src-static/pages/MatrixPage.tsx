@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { computeMatrix, type MatrixChart } from "@/lib/matrix/engine";
+import { computeMatrix, energyLabel, type MatrixChart } from "@/lib/matrix/engine";
 import { buildMatrixInterpretation } from "@/lib/interpretation/matrix";
 import { buildMatrixGuides, guideToText } from "@/lib/interpretation/guides";
 import { buildSimpleGuide } from "@/lib/interpretation/simple";
-import { MATRIX_DIAGRAM_KEYS, MatrixDiagram } from "@/components/charts/MatrixDiagram";
+import { MatrixFigure } from "../components/MatrixFigure";
 import { InterpretationCard, LockedCard } from "@/components/result/InterpretationCard";
 import { getConfig } from "../config";
 import { useAdmin } from "../admin";
@@ -171,17 +171,21 @@ function MatrixResult({
         <p className="mt-2 text-[0.92rem] leading-relaxed text-[var(--ink)]">{interpretation.lead}</p>
 
         <div className="mt-4 grid gap-4 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
-          <figure className="m-0 rounded-[var(--radius-md)] border border-[var(--line)] bg-[linear-gradient(180deg,#fffdfa,#fbf3ec)] p-2">
-            <MatrixDiagram chart={chart} />
-            <figcaption className="px-2 pb-1 pt-1 text-[0.78rem] leading-relaxed text-[var(--ink-soft)]">
-              Полная схема: {MATRIX_DIAGRAM_KEYS.length} точек — центр, личный квадрат, родовые углы, каналы денег
-              и отношений, энергия года. Что означает каждая энергия, разобрано в{" "}
-              <a href="guide.html" className="underline decoration-dotted underline-offset-2">
-                гайде по 22 энергиям
-              </a>
-              .
-            </figcaption>
-          </figure>
+          <MatrixFigure
+            chart={chart}
+            caption={
+              <>
+                Полная схема: личный и родовой квадраты, центр, каналы денег и отношений, талант и опора. По кругу —
+                линия жизни: возраст от 0 до 80 лет и энергия каждого периода. Номера 1–10 внутри восьмиугольника
+                расшифрованы внизу схемы. Схему можно открыть крупно — кнопка под ней. Что означает каждая энергия,
+                разобрано в{" "}
+                <a href="guide.html" className="underline decoration-dotted underline-offset-2">
+                  гайде по 22 энергиям
+                </a>
+                .
+              </>
+            }
+          />
           <div className="grid gap-2">
             <div className="grid grid-cols-2 gap-2">
               <Metric label="Центр" value={`${chart.byKey.center.arcanum}`} note="зона комфорта" />
@@ -205,6 +209,25 @@ function MatrixResult({
               <EnergyChip value={chart.byKey.shared.arcanum} label="общая точка каналов" />
               <EnergyChip value={chart.yearEnergy.arcanum} label={`энергия ${chart.yearEnergy.year} года`} />
             </div>
+            <details className="rounded-[0.75rem] border border-[var(--line)] bg-white p-3 text-[0.84rem]">
+              <summary className="cursor-pointer text-[var(--turquoise-deep)]">Линия жизни: возраст и энергия периода</summary>
+              <ul className="mt-2 grid gap-1 sm:grid-cols-2">
+                {chart.lifeLine
+                  .filter((point) => point.kind !== "quarter")
+                  .map((point) => (
+                    <li
+                      key={`life-${point.age}`}
+                      className="flex items-baseline justify-between gap-2 border-b border-[var(--line)] py-1"
+                    >
+                      <span className="text-[var(--ink-soft)]">{point.age} лет</span>
+                      <span className="text-[var(--ocean)]">{energyLabel(point.arcanum)}</span>
+                    </li>
+                  ))}
+              </ul>
+              <p className="mt-2 text-[0.74rem] leading-relaxed text-[var(--ink-faint)]">
+                Промежуточные точки 2,5 и 7,5 года — суммы угла и середины десятилетия; они подписаны на схеме.
+              </p>
+            </details>
             <details className="rounded-[0.75rem] border border-[var(--line)] bg-white p-3 text-[0.84rem]">
               <summary className="cursor-pointer text-[var(--turquoise-deep)]">Все расчётные позиции и формулы</summary>
               <ul className="mt-2 grid gap-1">

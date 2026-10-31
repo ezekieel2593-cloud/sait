@@ -2,7 +2,7 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { computeMatrix } from "@/lib/matrix/engine";
+import { computeMatrix, reduce22 } from "@/lib/matrix/engine";
 import { ENERGY_PRACTICAL } from "@/lib/knowledge/practical";
 import { buildSimpleGuide } from "@/lib/interpretation/simple";
 import { MatrixDiagram, MATRIX_DIAGRAM_KEYS } from "@/components/charts/MatrixDiagram";
@@ -135,14 +135,37 @@ describe("Схема матрицы", () => {
       "кармическая задача",
       "как тебя видят",
       "зона комфорта",
-      "кем работать",
+      "вход в деньги",
       "отношения",
-      "опора рода",
+      "сила рода",
+      "род: линия отца",
     ]) {
       expect(html).toContain(caption);
     }
     expect(html).toMatch(/энергия \d{4} года/);
-    expect(html).toContain("0–22 года");
+  });
+
+  it("по кругу идёт линия жизни: возраст от 0 до 75 лет", () => {
+    for (const age of ["0 лет", "5 лет", "15 лет", "25 лет", "45 лет", "65 лет", "75 лет"]) {
+      expect(html).toContain(age);
+    }
+    expect(chart.lifeLine).toHaveLength(32);
+    expect(chart.lifeLine[0]).toMatchObject({ age: 0, kind: "vertex", arcanum: chart.byKey.A.arcanum });
+    // Четверть десятилетия — сумма угла и середины.
+    const a = chart.byKey.A.arcanum;
+    const f = chart.byKey["family-top-left"].arcanum;
+    const middle = chart.lifeLine.find((point) => point.age === 5)!;
+    const quarterStart = chart.lifeLine.find((point) => point.age === 2.5)!;
+    const quarterEnd = chart.lifeLine.find((point) => point.age === 7.5)!;
+    expect(middle.arcanum).toBe(reduce22(a + f));
+    expect(quarterStart.arcanum).toBe(reduce22(a + middle.arcanum));
+    expect(quarterEnd.arcanum).toBe(reduce22(middle.arcanum + f));
+  });
+
+  it("внутри восьмиугольника подписаны точки каналов и опоры", () => {
+    for (const label of ["личные таланты", "развитие таланта", "удержание денег", "личная опора", "опыт личности"]) {
+      expect(html).toContain(label);
+    }
   });
 
   it("подсветка выделяет только нужную точку", () => {
