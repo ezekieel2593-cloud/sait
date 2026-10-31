@@ -6,6 +6,7 @@ import { computeMatrix } from "@/lib/matrix/engine";
 import { ENERGY_PRACTICAL } from "@/lib/knowledge/practical";
 import { buildSimpleGuide } from "@/lib/interpretation/simple";
 import { MatrixDiagram, MATRIX_DIAGRAM_KEYS } from "@/components/charts/MatrixDiagram";
+import { buildGeneralGuide, generalEnergyToText } from "@/lib/interpretation/general-guide";
 
 const chart = computeMatrix({ date: "1992-06-23", currentYear: 2026 });
 
@@ -55,6 +56,42 @@ describe("Матрица простыми словами", () => {
     expect(guest.filter((item) => !item.premium)).toHaveLength(4);
     const owner = buildSimpleGuide(chart, { freeCount: 4, includePremium: true });
     expect(owner.every((item) => !item.premium)).toBe(true);
+  });
+});
+
+describe("Страница гайда по 22 энергиям", () => {
+  const guide = buildGeneralGuide();
+
+  it("на странице все 22 энергии", () => {
+    expect(guide).toHaveLength(22);
+    expect(guide.map((item) => item.arcanum)).toEqual(Array.from({ length: 22 }, (_, index) => index + 1));
+  });
+
+  it("у каждой энергии все аспекты простыми словами", () => {
+    for (const energy of guide) {
+      const titles = energy.aspects.map((aspect) => aspect.title);
+      for (const title of [
+        "Каким тебя видят другие",
+        "Таланты",
+        "Главная кармическая задача души",
+        "Каким спортом заниматься",
+        "Как начинать утро",
+        "Что даёт ресурс",
+        "Что расслабляет",
+        "Кем и где работать",
+      ]) {
+        expect(titles, `${energy.arcanum}: ${title}`).toContain(title);
+      }
+      for (const aspect of energy.aspects) {
+        expect(aspect.text.length, `${energy.arcanum}.${aspect.id}`).toBeGreaterThan(12);
+      }
+      expect(energy.plain.length).toBeGreaterThan(10);
+    }
+  });
+
+  it("гайд не выдаёт трактовку за персональный расчёт", () => {
+    const text = guide.map(generalEnergyToText).join("\n");
+    expect(text).not.toMatch(/ваша карта|ваш асцендент/i);
   });
 });
 

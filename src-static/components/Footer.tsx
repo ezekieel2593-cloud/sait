@@ -27,6 +27,7 @@ export function Footer() {
             <a href="index.html" className="text-[var(--ink)] hover:text-[var(--ocean)]">Главная</a>
             <a href="astrology.html" className="text-[var(--ink)] hover:text-[var(--ocean)]">Натальная карта</a>
             <a href="matrix.html" className="text-[var(--ink)] hover:text-[var(--ocean)]">Матрица судьбы</a>
+            <a href="guide.html" className="text-[var(--ink)] hover:text-[var(--ocean)]">Гайд по энергиям</a>
             <a href="full-reading.html" className="text-[var(--ink)] hover:text-[var(--ocean)]">Полный разбор</a>
           </div>
         </nav>

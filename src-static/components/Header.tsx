@@ -18,6 +18,7 @@ export function Header({ active }: { active?: string }) {
   const links = [
     { href: "astrology.html", label: "Астрология" },
     { href: "matrix.html", label: "Матрица судьбы" },
+    { href: "guide.html", label: "Гайд по энергиям" },
     { href: "full-reading.html", label: "Полный разбор" },
     { href: "index.html#faq", label: "Вопросы" },
   ];

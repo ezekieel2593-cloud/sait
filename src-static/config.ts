@@ -24,7 +24,6 @@ export interface StaticConfig {
     astrologyCardCount: number;
     matrixPointCount: number;
     matrixGuideCount?: number;
-    matrixSimpleCount?: number;
   };
   methodology: { astrologyHouseSystem: "placidus" | "equal" | "whole"; astrologyHouseSystemLabel: string };
   legal: { privacyUpdatedAt: string; dataRetentionDays: number; responsiblePerson: string };
@@ -80,7 +79,7 @@ export const DEFAULT_CONFIG: StaticConfig = {
       "Срок подготовки и стоимость — по договорённости со специалистом",
     ],
   },
-  freeResult: { astrologyCardCount: 4, matrixPointCount: 5, matrixGuideCount: 2, matrixSimpleCount: 4 },
+  freeResult: { astrologyCardCount: 4, matrixPointCount: 5, matrixGuideCount: 2 },
   methodology: { astrologyHouseSystem: "placidus", astrologyHouseSystemLabel: "Плацидус (Placidus)" },
   legal: { privacyUpdatedAt: "2026-01-01", dataRetentionDays: 365, responsiblePerson: "Владелец проекта" },
   api: { enabled: false, base: "api" },

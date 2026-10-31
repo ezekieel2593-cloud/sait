@@ -209,6 +209,14 @@ const pages: PageMeta[] = [
     indexable: true,
   },
   {
+    file: "guide.html",
+    page: "guide",
+    title: "Гайд по 22 энергиям: спорт, таланты, задача души и работа",
+    description:
+      "Гайд по всем 22 энергиям Матрицы судьбы простыми словами: каким тебя видят другие, таланты, кармическая задача, спорт, утро, ресурс, расслабление, работа, деньги и отношения.",
+    indexable: true,
+  },
+  {
     file: "full-reading.html",
     page: "full-reading",
     title: "Полный разбор: что входит и как проходит работа",
@@ -371,8 +379,6 @@ window.ASTRA_CONFIG = {
     matrixPointCount: ${DEFAULT_CONFIG.freeResult.matrixPointCount},
     // Сколько гайдов по энергиям открыто без заявки (остальные — после запроса)
     matrixGuideCount: ${DEFAULT_CONFIG.freeResult.matrixGuideCount ?? 2},
-    // Сколько пунктов «Матрица простыми словами» открыто без заявки
-    matrixSimpleCount: ${DEFAULT_CONFIG.freeResult.matrixSimpleCount ?? 4},
   },
 
   legal: {

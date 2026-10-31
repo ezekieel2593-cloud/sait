@@ -275,52 +275,82 @@ async function calculateMatrix(page) {
   }
   check("после сборки показано подтверждение", /Файл готов/.test(pdfText));
 
-  /* ------------------- матрица простыми словами и схема ------------------- */
+  /* --------------------------- схема матрицы ----------------------------- */
 
-  console.log("\n9. Матрица простыми словами");
+  console.log("\n9. Схема матрицы");
   const guestMatrixDoc = guestMatrix.window.document;
-  check("блок «простыми словами» есть", guestMatrixText.includes("Матрица простыми словами"));
-  for (const topic of [
-    "Каким тебя видят другие",
-    "Твои таланты",
-    "Каким спортом заниматься",
-    "Главная кармическая задача души",
-  ]) {
-    check(`тема «${topic}»`, guestMatrixText.includes(topic));
-  }
-  check("гостю открыта часть ответов", (guestMatrixText.match(/Показать в схеме/g) || []).length >= 3);
-  check("часть ответов закрыта", (guestMatrixText.match(/открывается в полном гайде/g) || []).length >= 1);
-
-  const simpleButton = [...guestMatrixDoc.querySelectorAll("#simple button")].find((node) =>
-    (node.textContent || "").includes("Показать в схеме")
-  );
-  check("пункты — кнопки с подсветкой", Boolean(simpleButton));
-  if (simpleButton) {
-    simpleButton.click();
-    await wait(150);
-    const ring = guestMatrixDoc.querySelector("#simple button[aria-pressed=\"true\"]");
-    check("нажатие подсвечивает ответ", Boolean(ring));
-    check("в схеме появился маркер подсветки", Boolean(guestMatrixDoc.querySelector("svg circle[stroke-dasharray=\"5 4\"]")));
-    check("подпись «Показано в схеме»", /Показано в схеме/.test(guestMatrixDoc.body.textContent || ""));
-    ring?.click();
-    await wait(150);
-    check("повторное нажатие снимает подсветку", !guestMatrixDoc.querySelector("#simple button[aria-pressed=\"true\"]"));
-  }
-
+  check("блока «простыми словами» на странице матрицы нет", !/Матрица простыми словами/.test(guestMatrixText));
   const matrixSvg = guestMatrixDoc.querySelector("figure svg");
   const svgText = matrixSvg?.textContent || "";
   const circles = matrixSvg ? matrixSvg.querySelectorAll("circle").length : 0;
-  check("схема стала подробной", circles >= 20, String(circles));
+  check("схема подробная", circles >= 20, String(circles));
   for (const label of ["таланты", "кармическая задача", "как тебя видят", "зона комфорта", "кем работать", "отношения"]) {
     check(`на схеме подписано «${label}»`, svgText.includes(label));
   }
-  check("на схеме есть энергия года", /энергия \d{4} года/.test(svgText));
   check("на схеме есть легенда", svgText.includes("комфорт"));
 
-  const adminSimpleText = adminMatrixText;
-  check("владелец видит все ответы", !/открывается в полном гайде/.test(adminSimpleText));
-  check("владельцу открыто больше ответов", (adminSimpleText.match(/Показать в схеме/g) || []).length >= 8,
-    String((adminSimpleText.match(/Показать в схеме/g) || []).length));
+  /* ------------------------ отдельная страница гайда ----------------------- */
+
+  console.log("\n10. Страница «Гайд по 22 энергиям»");
+  const guidePage = openPage("guide.html", { admin: false });
+  await wait(500);
+  const guideDoc = guidePage.window.document;
+  const guideText = guideDoc.body.textContent || "";
+  check("страница открывается", /22 энергии/.test(guideText));
+  check("все 22 энергии на странице", guideDoc.querySelectorAll("article[id^=\"energy-\"]").length === 22,
+    String(guideDoc.querySelectorAll("article[id^=\"energy-\"]").length));
+  for (const aspect of [
+    "Каким тебя видят другие",
+    "Таланты",
+    "Главная кармическая задача души",
+    "Каким спортом заниматься",
+    "Как начинать утро",
+    "Что даёт ресурс",
+    "Что расслабляет",
+    "Кем и где работать",
+    "Как приходят деньги",
+    "Что важно в отношениях",
+  ]) {
+    check(`аспект «${aspect}»`, guideText.includes(aspect));
+  }
+  check("аспекты раскрыты для каждой энергии", (guideText.match(/Каким спортом заниматься/g) || []).length === 22);
+  check("есть навигация по номерам", guideDoc.querySelectorAll("nav a[href^=\"#energy-\"]").length === 22);
+  check("нет названий карт таро", !/Колесо Фортуны|Иерофант|Императрица|Жрица/.test(guideText));
+  check("гостю предложен персональный гайд", /Получить персональный гайд/.test(guideText));
+  const personalButton = [...guideDoc.querySelectorAll("button")].find((node) =>
+    (node.textContent || "").includes("Получить персональный гайд")
+  );
+  if (personalButton) {
+    personalButton.click();
+    await wait(150);
+    check("открывается форма с контактами", Boolean(guideDoc.querySelector("#guide-name")));
+  }
+
+  const guideAdmin = openPage("guide.html", { admin: true });
+  await wait(500);
+  const guideAdminDoc = guideAdmin.window.document;
+  const guideAdminText = guideAdminDoc.body.textContent || "";
+  check("владельцу доступна сборка PDF по дате", /гайд в PDF по дате рождения/.test(guideAdminText));
+  check("у владельца есть поле даты", Boolean(guideAdminDoc.querySelector("#guide-pdf-date")));
+  check("у владельца нет формы запроса", !guideAdminDoc.querySelector("#guide-name"));
+  if (guideAdminDoc.querySelector("#guide-pdf-date")) {
+    setValue(guideAdmin.window, guideAdminDoc.querySelector("#guide-pdf-date"), "1992-06-23");
+    const pdfButton = [...guideAdminDoc.querySelectorAll("button")].find((node) =>
+      (node.textContent || "").includes("Создать гайд (PDF)")
+    );
+    pdfButton?.click();
+    await wait(1500);
+    check("PDF собирается по введённой дате", guideAdmin.downloads.length > 0, String(guideAdmin.downloads.length));
+    if (guideAdmin.downloads.length > 0) {
+      const bytes = new Uint8Array(await guideAdmin.downloads[0].arrayBuffer());
+      const head = Buffer.from(bytes.slice(0, 8)).toString("latin1");
+      check("это корректный PDF", head.startsWith("%PDF-1.4"), head);
+    }
+  }
+
+  const headerLinks = [...guestMatrixDoc.querySelectorAll("header a")].map((node) => node.getAttribute("href"));
+  check("ссылка на гайд есть в шапке сайта", headerLinks.includes("guide.html"), headerLinks.join(","));
+  check("со страницы матрицы есть переход в гайд", Boolean(guestMatrixDoc.querySelector('a[href="guide.html"]')));
 
   console.log(`\nИтого: ${pass} ok, ${fail} fail`);
   process.exit(fail === 0 ? 0 : 1);

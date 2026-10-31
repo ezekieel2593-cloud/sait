@@ -129,8 +129,7 @@ async function run() {
 
   check("схема стала подробной", (doc.querySelector("figure svg")?.querySelectorAll("circle").length ?? 0) >= 20);
   check("в схеме есть подписи ролей", /таланты/.test(doc.querySelector("figure svg")?.textContent || ""));
-  check("блок «простыми словами» на месте", /Матрица простыми словами/.test(resultText));
-  check("в блоке есть спортивные рекомендации", /Каким спортом заниматься/.test(resultText));
+  check("блока «простыми словами» на матрице нет", !/Матрица простыми словами/.test(resultText));
 
   /* ------------------------------ гайды по энергиям ------------------------ */
 
@@ -263,6 +262,25 @@ async function run() {
   // Один раз за визит больше не навязываем: в коде нет sessionStorage-защёлки.
   const inviteSource = fs.readFileSync(path.join(dir, "app.js"), "utf8");
   check("окно повторяется, а не показывается один раз", !/invite-shown/.test(inviteSource));
+
+  /* --------------------- отдельная страница гайда ---------------------- */
+
+  const guideDom = new JSDOM(fs.readFileSync(path.join(dir, "guide.html"), "utf8"), {
+    url: "https://example.com/guide.html",
+    runScripts: "dangerously",
+    pretendToBeVisual: true,
+  });
+  for (const script of guideDom.window.document.querySelectorAll("script[src]")) {
+    const src = script.getAttribute("src").replace(/^\//, "").split("?")[0];
+    guideDom.window.eval(fs.readFileSync(path.join(dir, src), "utf8"));
+  }
+  await wait(400);
+  const guideDoc = guideDom.window.document;
+  const guidePageText = guideDoc.body.textContent || "";
+  check("страница гайда собирается", /22 энергии/.test(guidePageText));
+  check("на странице гайда 22 энергии", guideDoc.querySelectorAll("article[id^=\"energy-\"]").length === 22);
+  check("аспекты раскрыты", (guidePageText.match(/Каким спортом заниматься/g) || []).length === 22);
+  check("в версии без сервера предложен персональный гайд", /Получить персональный гайд/.test(guidePageText));
 
   const privacyDom = new JSDOM(fs.readFileSync(path.join(dir, "privacy.html"), "utf8"), {
     url: "https://example.com/privacy.html",
