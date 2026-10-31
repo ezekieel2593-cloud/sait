@@ -314,6 +314,12 @@ async function calculateMatrix(page) {
     check(`аспект «${aspect}»`, guideText.includes(aspect));
   }
   check("аспекты раскрыты для каждой энергии", (guideText.match(/Каким спортом заниматься/g) || []).length === 22);
+  check("под каждым советом есть объяснение «почему так»",
+    (guideText.match(/Почему так:/g) || []).length === 220,
+    String((guideText.match(/Почему так:/g) || []).length));
+  check("у каждой энергии раскрыта её логика",
+    (guideText.match(/Логика энергии/g) || []).length === 22,
+    String((guideText.match(/Логика энергии/g) || []).length));
   check("есть навигация по номерам", guideDoc.querySelectorAll("nav a[href^=\"#energy-\"]").length === 22);
   check("нет названий карт таро", !/Колесо Фортуны|Иерофант|Императрица|Жрица/.test(guideText));
   check("гостю предложен персональный гайд", /Получить персональный гайд/.test(guideText));

@@ -1,6 +1,7 @@
 import { energyLabel, type MatrixChart } from "../matrix/engine";
 import { getArcanumEntry } from "../knowledge/queries";
 import { getEnergyGuideText } from "../knowledge/guides";
+import { getPracticalText } from "../knowledge/practical";
 
 /**
  * Гайды по энергиям: собираем практическую инструкцию для каждой энергии,
@@ -21,6 +22,8 @@ export interface MatrixGuide {
   where: string;
   places: string[];
   essence: string;
+  /** Логика энергии: почему советы именно такие. */
+  logic: string;
   signs: string[];
   steps: string[];
   practice: string;
@@ -73,6 +76,7 @@ export function buildMatrixGuides(
       where: places.join(" · "),
       places,
       essence: text?.essence ?? arcana?.summary ?? "",
+      logic: getPracticalText(arcanum)?.logic ?? "",
       signs: text?.signs ?? [],
       steps: text?.steps ?? [],
       practice: text?.practice ?? "",
@@ -89,6 +93,7 @@ export function buildMatrixGuides(
 export function guideToText(guide: MatrixGuide): string {
   const lines: string[] = [];
   lines.push(`${guide.label}: ${guide.essence}`);
+  if (guide.logic) lines.push(`Почему советы такие: ${guide.logic}`);
   lines.push(`Где в вашей схеме: ${guide.where}.`);
   if (guide.signs.length) lines.push(`Как проявляется: ${guide.signs.join(" ")}`);
   if (guide.steps.length) {

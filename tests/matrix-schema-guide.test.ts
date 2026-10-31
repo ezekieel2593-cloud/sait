@@ -16,8 +16,22 @@ describe("Матрица простыми словами", () => {
       const entry = ENERGY_PRACTICAL[arcanum];
       expect(entry, `нет текстов для энергии ${arcanum}`).toBeTruthy();
       for (const [field, value] of Object.entries(entry)) {
+        if (field === "why") continue;
         expect(typeof value, `${arcanum}.${field}`).toBe("string");
         expect(value.length, `${arcanum}.${field}`).toBeGreaterThan(12);
+      }
+    }
+  });
+
+  it("у каждой энергии объяснено, почему совет именно такой", () => {
+    const reasons = ["others", "talent", "karma", "sport", "morning", "resource", "relax", "work", "money", "love"];
+    for (let arcanum = 1; arcanum <= 22; arcanum += 1) {
+      const entry = ENERGY_PRACTICAL[arcanum];
+      expect(entry.logic.length, `${arcanum}.logic`).toBeGreaterThan(60);
+      for (const key of reasons) {
+        const value = entry.why[key as keyof typeof entry.why];
+        expect(typeof value, `${arcanum}.why.${key}`).toBe("string");
+        expect(value.length, `${arcanum}.why.${key}`).toBeGreaterThan(40);
       }
     }
   });
@@ -84,9 +98,17 @@ describe("Страница гайда по 22 энергиям", () => {
       }
       for (const aspect of energy.aspects) {
         expect(aspect.text.length, `${energy.arcanum}.${aspect.id}`).toBeGreaterThan(12);
+        expect(aspect.why?.length ?? 0, `${energy.arcanum}.${aspect.id}.why`).toBeGreaterThan(40);
       }
       expect(energy.plain.length).toBeGreaterThan(10);
+      expect(energy.logic.length, `${energy.arcanum}.logic`).toBeGreaterThan(60);
     }
+  });
+
+  it("в тексте гайда видно объяснение «почему так»", () => {
+    const text = generalEnergyToText(guide[9]);
+    expect(text).toContain("Почему советы такие");
+    expect(text).toContain("Почему так:");
   });
 
   it("гайд не выдаёт трактовку за персональный расчёт", () => {

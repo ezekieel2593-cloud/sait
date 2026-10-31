@@ -35,10 +35,14 @@ export interface SimpleGuideItem {
   arcanum: number;
   label: string;
   text: string;
+  /** Почему ответ именно такой — короткое объяснение. */
+  why?: string;
   premium: boolean;
 }
 
-const TOPICS: { topic: SimpleTopic; title: string; pointKey: string; field: keyof PracticalText }[] = [
+type PracticalField = "others" | "talent" | "karma" | "sport" | "morning" | "resource" | "relax" | "work";
+
+const TOPICS: { topic: SimpleTopic; title: string; pointKey: string; field: PracticalField }[] = [
   { topic: "others", title: "Каким тебя видят другие", pointKey: "A", field: "others" },
   { topic: "talent", title: "Твои таланты", pointKey: "B", field: "talent" },
   { topic: "sport", title: "Каким спортом заниматься", pointKey: "center", field: "sport" },
@@ -81,6 +85,7 @@ export function buildSimpleGuide(
       arcanum: point.arcanum,
       label: energyLabel(point.arcanum),
       text: practical[topic.field],
+      why: practical.why[topic.field],
       premium: false,
     });
   }

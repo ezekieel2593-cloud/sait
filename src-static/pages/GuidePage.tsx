@@ -41,6 +41,8 @@ export function GuidePage() {
           Справочник по всем энергиям Матрицы судьбы простыми словами. Для каждой энергии — каким тебя видят
           другие, в чём талант, главная задача души, каким спортом заниматься, как начинать утро, что даёт
           ресурс и расслабляет, кем и где работать, как приходят деньги и что важно в отношениях.
+          Под каждым пунктом — короткое объяснение «почему так»: из какой черты характера это следует и на что
+          опирается традиция.
         </p>
         <p className="mt-3 text-[0.88rem] leading-relaxed text-[var(--ink-soft)]">
           Это общие трактовки традиции, а не персональный расчёт. Свои энергии — те, что стоят в вашей схеме, —
@@ -77,6 +79,14 @@ export function GuidePage() {
                     {energy.label}
                   </h2>
                   <p className="mt-1 text-[0.94rem] leading-relaxed text-[var(--ink)]">{energy.plain}</p>
+                  <div className="mt-3 max-w-[64ch] rounded-[var(--radius-sm)] border-l-2 border-[rgba(184,221,224,0.95)] bg-[rgba(246,240,236,0.7)] px-3.5 py-2.5">
+                    <p className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[#3b7b83]">
+                      Логика энергии
+                    </p>
+                    <p className="mt-1 font-[family-name:var(--font-display)] text-[0.96rem] italic leading-relaxed text-[var(--turquoise-deep)]">
+                      {energy.logic}
+                    </p>
+                  </div>
                 </div>
               </div>
               <span className="mt-1 shrink-0 text-[#c9a777]" aria-hidden="true">
@@ -91,6 +101,12 @@ export function GuidePage() {
                     {aspect.title}
                   </dt>
                   <dd className="mt-1 text-[0.9rem] leading-relaxed text-[var(--ink)]">{aspect.text}</dd>
+                  {aspect.why ? (
+                    <dd className="mt-2 border-l-2 border-[rgba(184,221,224,0.9)] pl-2.5 text-[0.82rem] leading-relaxed text-[var(--ink-soft)]">
+                      <span className="font-semibold text-[#3b7b83]">Почему так: </span>
+                      {aspect.why}
+                    </dd>
+                  ) : null}
                 </div>
               ))}
             </dl>

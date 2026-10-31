@@ -15,6 +15,8 @@ export interface GuideAspect {
   id: string;
   title: string;
   text: string;
+  /** Почему рекомендация именно такая — короткое объяснение. */
+  why?: string;
 }
 
 export interface GeneralEnergyGuide {
@@ -23,12 +25,18 @@ export interface GeneralEnergyGuide {
   label: string;
   /** Суть одной фразой. */
   plain: string;
+  /** Логика энергии: из неё вырастают все рекомендации. */
+  logic: string;
   aspects: GuideAspect[];
   strength: string[];
   risk: string[];
 }
 
-const ASPECTS: { id: string; title: string; field: "others" | "talent" | "karma" | "sport" | "morning" | "resource" | "relax" | "work" }[] = [
+const ASPECTS: {
+  id: string;
+  title: string;
+  field: "others" | "talent" | "karma" | "sport" | "morning" | "resource" | "relax" | "work";
+}[] = [
   { id: "others", title: "Каким тебя видят другие", field: "others" },
   { id: "talent", title: "Таланты", field: "talent" },
   { id: "karma", title: "Главная кармическая задача души", field: "karma" },
@@ -51,19 +59,31 @@ export function buildGeneralGuide(): GeneralEnergyGuide[] {
       id: aspect.id,
       title: aspect.title,
       text: practical[aspect.field],
+      why: practical.why[aspect.field],
     }));
 
     if (arcana?.details.money) {
-      aspects.push({ id: "money", title: "Как приходят деньги", text: arcana.details.money });
+      aspects.push({
+        id: "money",
+        title: "Как приходят деньги",
+        text: arcana.details.money,
+        why: practical.why.money,
+      });
     }
     if (arcana?.details.love) {
-      aspects.push({ id: "love", title: "Что важно в отношениях", text: arcana.details.love });
+      aspects.push({
+        id: "love",
+        title: "Что важно в отношениях",
+        text: arcana.details.love,
+        why: practical.why.love,
+      });
     }
 
     result.push({
       arcanum,
       label: energyLabel(arcanum),
       plain: practical.plain,
+      logic: practical.logic,
       aspects,
       strength: arcana?.positive ?? [],
       risk: arcana?.shadow ?? [],
@@ -75,7 +95,11 @@ export function buildGeneralGuide(): GeneralEnergyGuide[] {
 /** Короткий текст гайда по одной энергии — для копирования и письма. */
 export function generalEnergyToText(energy: GeneralEnergyGuide): string {
   const lines = [`${energy.label}: ${energy.plain}`];
-  for (const aspect of energy.aspects) lines.push(`${aspect.title}: ${aspect.text}`);
+  if (energy.logic) lines.push(`Почему советы такие: ${energy.logic}`);
+  for (const aspect of energy.aspects) {
+    lines.push(`${aspect.title}: ${aspect.text}`);
+    if (aspect.why) lines.push(`  Почему так: ${aspect.why}`);
+  }
   if (energy.strength.length) lines.push(`Сильные проявления: ${energy.strength.join("; ")}.`);
   if (energy.risk.length) lines.push(`Зоны внимания: ${energy.risk.join("; ")}.`);
   return lines.join("\n");

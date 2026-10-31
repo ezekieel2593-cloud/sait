@@ -280,6 +280,9 @@ async function run() {
   check("страница гайда собирается", /22 энергии/.test(guidePageText));
   check("на странице гайда 22 энергии", guideDoc.querySelectorAll("article[id^=\"energy-\"]").length === 22);
   check("аспекты раскрыты", (guidePageText.match(/Каким спортом заниматься/g) || []).length === 22);
+  check("объяснения «почему так» есть и без сервера",
+    (guidePageText.match(/Почему так:/g) || []).length === 220,
+    String((guidePageText.match(/Почему так:/g) || []).length));
   check("в версии без сервера предложен персональный гайд", /Получить персональный гайд/.test(guidePageText));
 
   const privacyDom = new JSDOM(fs.readFileSync(path.join(dir, "privacy.html"), "utf8"), {

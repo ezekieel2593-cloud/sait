@@ -33,6 +33,12 @@ export function EnergyGuideCard({ guide, index }: { guide: MatrixGuide; index: n
         <p className="mt-3 text-[0.94rem] leading-relaxed text-[var(--ink)]">{guide.essence}</p>
       ) : null}
 
+      {guide.logic ? (
+        <p className="mt-2.5 rounded-[var(--radius-sm)] bg-[rgba(246,240,236,0.75)] px-3 py-2.5 font-[family-name:var(--font-display)] text-[0.92rem] italic leading-relaxed text-[var(--turquoise-deep)]">
+          {guide.logic}
+        </p>
+      ) : null}
+
       {guide.signs.length ? (
         <div className="mt-3">
           <p className="text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-[var(--ink-faint)]">

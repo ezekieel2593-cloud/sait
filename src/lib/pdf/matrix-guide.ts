@@ -95,6 +95,7 @@ export function renderMatrixGuidePdf(font: TrueTypeFont, input: MatrixGuidePdfIn
       doc.heading(item.title, 2);
       doc.muted(`${item.where} · ${item.label}`);
       doc.text(item.text);
+      if (item.why) doc.muted(`Почему так: ${item.why}`);
     }
   }
 
@@ -106,6 +107,10 @@ export function renderMatrixGuidePdf(font: TrueTypeFont, input: MatrixGuidePdfIn
     if (guide.essence) {
       doc.heading("Суть энергии", 2);
       doc.text(guide.essence);
+    }
+    if (guide.logic) {
+      doc.heading("Почему советы именно такие", 2);
+      doc.text(guide.logic);
     }
     if (guide.signs.length) {
       doc.heading("Как это проявляется в жизни", 2);
