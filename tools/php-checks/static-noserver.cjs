@@ -296,6 +296,23 @@ async function run() {
     String((guidePageText.match(/Почему так:/g) || []).length));
   check("в версии без сервера предложен персональный гайд", /Получить персональный гайд/.test(guidePageText));
 
+  const chakraDom = new JSDOM(fs.readFileSync(path.join(dir, "chakras.html"), "utf8"), {
+    url: "https://example.com/chakras.html",
+    runScripts: "dangerously",
+    pretendToBeVisual: true,
+  });
+  for (const script of chakraDom.window.document.querySelectorAll("script[src]")) {
+    const src = script.getAttribute("src").replace(/^\//, "").split("?")[0];
+    chakraDom.window.eval(fs.readFileSync(path.join(dir, src), "utf8"));
+  }
+  await wait(400);
+  const chakraDoc = chakraDom.window.document;
+  const chakraPageText = chakraDoc.body.textContent || "";
+  check("страница чакр собирается без сервера", /Семь чакр/.test(chakraPageText));
+  check("на странице чакр семь карточек", chakraDoc.querySelectorAll('article[id^="chakra-"]').length === 7);
+  check("чакры описаны в версии без сервера", chakraPageText.includes("Сахасрара") && chakraPageText.includes("Муладхара"));
+  check("связь чакр и матрицы объяснена", /Как чакры связаны с Матрицей судьбы/.test(chakraPageText));
+
   const privacyDom = new JSDOM(fs.readFileSync(path.join(dir, "privacy.html"), "utf8"), {
     url: "https://example.com/privacy.html",
     runScripts: "dangerously",

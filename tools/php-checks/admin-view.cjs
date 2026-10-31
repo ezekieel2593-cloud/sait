@@ -380,8 +380,28 @@ async function calculateMatrix(page) {
     }
   }
 
+  console.log("\n11. Страница «Чакры»");
+  const chakraPage = openPage("chakras.html", { admin: false });
+  await wait(500);
+  const chakraDoc = chakraPage.window.document;
+  const chakraText = chakraDoc.body.textContent || "";
+  check("страница открывается", /Семь чакр/.test(chakraText));
+  const chakraArticles = chakraDoc.querySelectorAll('article[id^="chakra-"]');
+  check("семь карточек чакр", chakraArticles.length === 7, String(chakraArticles.length));
+  for (const name of ["Муладхара", "Свадхистана", "Манипура", "Анахата", "Вишудха", "Аджна", "Сахасрара"]) {
+    check(`описана ${name}`, chakraText.includes(name));
+  }
+  for (const block of ["Где в теле", "Сфера жизни", "Стихия", "Цвет традиции", "В балансе", "Признаки дисбаланса", "Что помогает", "Связь с матрицей"]) {
+    check(`у чакр есть блок «${block}»`, chakraText.includes(block));
+  }
+  check("навигация по чакрам", chakraDoc.querySelectorAll('nav[aria-label="Чакры"] a[href^="#chakra-"]').length === 7);
+  check("объяснена связь с матрицей", /Как чакры связаны с Матрицей судьбы/.test(chakraText));
+  check("есть оговорка про медицину", /не являются симптомами болезни/.test(chakraText));
+  check("есть переход к расчёту матрицы", Boolean(chakraDoc.querySelector('a[href="matrix.html"]')));
+
   const headerLinks = [...guestMatrixDoc.querySelectorAll("header a")].map((node) => node.getAttribute("href"));
   check("ссылка на гайд есть в шапке сайта", headerLinks.includes("guide.html"), headerLinks.join(","));
+  check("ссылка на чакры есть в шапке сайта", headerLinks.includes("chakras.html"), headerLinks.join(","));
   check("со страницы матрицы есть переход в гайд", Boolean(guestMatrixDoc.querySelector('a[href="guide.html"]')));
 
   console.log(`\nИтого: ${pass} ok, ${fail} fail`);

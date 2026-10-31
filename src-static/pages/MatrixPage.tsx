@@ -182,6 +182,10 @@ function MatrixResult({
                 <a href="guide.html" className="underline decoration-dotted underline-offset-2">
                   гайде по 22 энергиям
                 </a>
+                , а темы чакр — на странице{" "}
+                <a href="chakras.html" className="underline decoration-dotted underline-offset-2">
+                  «Чакры»
+                </a>
                 .
               </>
             }

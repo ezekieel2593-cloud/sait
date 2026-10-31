@@ -7,6 +7,7 @@ import { HomePage } from "./pages/HomePage";
 import { AstrologyPage } from "./pages/AstrologyPage";
 import { MatrixPage } from "./pages/MatrixPage";
 import { GuidePage } from "./pages/GuidePage";
+import { ChakrasPage } from "./pages/ChakrasPage";
 import { FullReadingPage, PrivacyPage, TermsPage } from "./pages/OtherPages";
 import { getConfig } from "./config";
 import { AdminProvider } from "./admin";
@@ -21,6 +22,7 @@ const PAGES: Record<string, () => React.ReactElement> = {
   astrology: AstrologyPage,
   matrix: MatrixPage,
   guide: GuidePage,
+  chakras: ChakrasPage,
   "full-reading": FullReadingPage,
   privacy: PrivacyPage,
   terms: TermsPage,
