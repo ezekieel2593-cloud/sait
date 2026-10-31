@@ -9,12 +9,15 @@
 
 import { energyLabel, type MatrixChart } from "../matrix/engine";
 import type { MatrixGuide } from "../interpretation/guides";
+import type { SimpleGuideItem } from "../interpretation/simple";
 import { PdfDocument } from "./document";
 import { parseTrueType, type TrueTypeFont } from "./truetype";
 
 export interface MatrixGuidePdfInput {
   chart: MatrixChart;
   guides: MatrixGuide[];
+  /** Ответы «простыми словами» — в PDF попадают все, даже закрытые на сайте. */
+  simple?: SimpleGuideItem[];
   /** Имя клиента, если известно. */
   name?: string;
   /** Дата рождения в формате 23.06.1992. */
@@ -84,6 +87,16 @@ export function renderMatrixGuidePdf(font: TrueTypeFont, input: MatrixGuidePdfIn
   doc.muted(
     `Методика: ${chart.meta.methodology}; редукция: ${chart.meta.reductionLabel}; версия ${chart.meta.version}.`
   );
+
+  if (input.simple?.length) {
+    doc.rule();
+    doc.heading("Матрица простыми словами");
+    for (const item of input.simple) {
+      doc.heading(item.title, 2);
+      doc.muted(`${item.where} · ${item.label}`);
+      doc.text(item.text);
+    }
+  }
 
   guides.forEach((guide) => {
     doc.rule();

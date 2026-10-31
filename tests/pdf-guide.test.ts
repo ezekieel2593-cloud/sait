@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { computeMatrix } from "@/lib/matrix/engine";
 import { buildMatrixGuides, guideToText } from "@/lib/interpretation/guides";
+import { buildSimpleGuide } from "@/lib/interpretation/simple";
 import { ENERGY_GUIDES } from "@/lib/knowledge/guides";
 import { parseTrueType } from "@/lib/pdf/truetype";
 import { renderMatrixGuidePdf } from "@/lib/pdf/matrix-guide";
@@ -54,9 +55,11 @@ describe("PDF-гайд", () => {
   const font = parseTrueType(new Uint8Array(fs.readFileSync(fontPath)));
   const chart = computeMatrix({ date: "1992-06-23", currentYear: 2026 });
   const guides = buildMatrixGuides(chart, { freeCount: 99, includePremium: true });
+  const simple = buildSimpleGuide(chart, { freeCount: 999, includePremium: true });
   const bytes = renderMatrixGuidePdf(font, {
     chart,
     guides,
+    simple,
     name: "Анна",
     birthDate: "1992-06-23",
     generatedAt: new Date("2026-10-31T10:00:00Z"),

@@ -371,6 +371,8 @@ window.ASTRA_CONFIG = {
     matrixPointCount: ${DEFAULT_CONFIG.freeResult.matrixPointCount},
     // Сколько гайдов по энергиям открыто без заявки (остальные — после запроса)
     matrixGuideCount: ${DEFAULT_CONFIG.freeResult.matrixGuideCount ?? 2},
+    // Сколько пунктов «Матрица простыми словами» открыто без заявки
+    matrixSimpleCount: ${DEFAULT_CONFIG.freeResult.matrixSimpleCount ?? 4},
   },
 
   legal: {

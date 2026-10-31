@@ -1,246 +1,358 @@
 import type { MatrixChart } from "@/lib/matrix/engine";
 
 /**
- * Схема Матрицы судьбы в «жемчужной» подаче: объёмные сферы, тонкие золотые
- * линии, подписи «7-я энергия» рядом с каждой точкой. Никаких названий карт
- * таро — только номер и слово «энергия».
+ * Полная схема Матрицы судьбы: восьмиугольник из двух квадратов, все 16 точек
+ * расчёта, возрастные периоды по краям и подписи «что где читать».
  *
- * На схеме девять ключевых сфер (центр, личный квадрат и родовые углы),
- * чтобы она читалась с телефона. Остальные энергии — рядом, в виде жемчужных
- * плашек (см. MatrixPage).
+ * Дизайн — по образцу классической схемы: пастельные круги с номером энергии,
+ * тонкие линии, подписи роли под каждым кругом. Названий карт таро нет:
+ * только номер и слово «энергия».
+ *
+ * `highlight` — ключи точек, которые нужно подсветить (например, из блока
+ * «Матрица простыми словами»): остальные круги при этом приглушаются.
  */
 
-const SIZE = 520;
-/** Поля под подписи по краям схемы. */
-const PAD = 78;
+const SIZE = 720;
+const HEIGHT = 842;
+const CX = SIZE / 2;
+const CY = 372;
+/** Радиус восьмиугольника: на нём стоят восемь основных точек. */
+const R = 252;
+const R_INNER = 176;
+const R_MIDDLE = 92;
 
-const RADIUS: Record<string, number> = {
-  center: 46,
-  A: 30,
-  B: 30,
-  C: 30,
-  D: 30,
-  "family-top-left": 23,
-  "family-top-right": 23,
-  "family-bottom-left": 23,
-  "family-bottom-right": 23,
+type NodeShape = {
+  key: string;
+  /** Угол от «верх» по часовой стрелке. */
+  angle?: number;
+  radius?: number;
+  /** Абсолютные координаты — для точек, которые не на луче. */
+  x?: number;
+  y?: number;
+  r: number;
+  caption: string;
+  /** Куда ставить подпись относительно круга. */
+  side: "above" | "below" | "left" | "right";
 };
 
-type Variant = "center" | "main" | "family";
-
-const VARIANTS: Record<string, Variant> = {
-  center: "center",
-  A: "main",
-  B: "main",
-  C: "main",
-  D: "main",
-  "family-top-left": "family",
-  "family-top-right": "family",
-  "family-bottom-left": "family",
-  "family-bottom-right": "family",
-};
-
-/** Куда ставить подпись относительно сферы. */
-const CAPTION_SIDE: Record<string, "top" | "bottom" | "left" | "right" | "corner"> = {
-  A: "top",
-  B: "top",
-  C: "top",
-  D: "bottom",
-  center: "bottom",
-  "family-top-left": "corner",
-  "family-top-right": "corner",
-  "family-bottom-left": "corner",
-  "family-bottom-right": "corner",
-};
-
-export const MATRIX_DIAGRAM_KEYS = [
-  "A",
-  "B",
-  "C",
-  "D",
-  "center",
-  "family-top-left",
-  "family-top-right",
-  "family-bottom-left",
-  "family-bottom-right",
+const NODES: NodeShape[] = [
+  // Восемь вершин восьмиугольника: четыре главные точки и четыре родовых угла.
+  { key: "B", angle: 0, radius: R, r: 38, caption: "таланты", side: "above" },
+  { key: "family-top-right", angle: 45, radius: R, r: 30, caption: "род: линия матери", side: "below" },
+  { key: "C", angle: 90, radius: R, r: 38, caption: "родовая программа", side: "below" },
+  { key: "family-bottom-right", angle: 135, radius: R, r: 30, caption: "род: реализация", side: "below" },
+  { key: "D", angle: 180, radius: R, r: 38, caption: "кармическая задача", side: "below" },
+  { key: "family-bottom-left", angle: 225, radius: R, r: 30, caption: "род: унаследованное", side: "below" },
+  { key: "A", angle: 270, radius: R, r: 38, caption: "как тебя видят", side: "below" },
+  { key: "family-top-left", angle: 315, radius: R, r: 30, caption: "род: линия отца", side: "below" },
+  // Внутреннее кольцо: опора рода и входы в каналы.
+  { key: "family-force", angle: 0, radius: R_INNER, r: 26, caption: "опора рода", side: "below" },
+  { key: "money-entry", angle: 90, radius: R_INNER, r: 26, caption: "кем работать", side: "above" },
+  { key: "love-entry", angle: 180, radius: R_INNER, r: 26, caption: "отношения", side: "below" },
+  { key: "shared", angle: 270, radius: R_INNER, r: 26, caption: "общая точка", side: "above" },
+  // Ближе к центру — середины каналов.
+  { key: "money-middle", angle: 90, radius: R_MIDDLE, r: 21, caption: "как удержать", side: "below" },
+  { key: "love-middle", angle: 180, radius: R_MIDDLE, r: 21, caption: "устойчивость", side: "right" },
 ];
 
-export function MatrixDiagram({ chart, compact = false }: { chart: MatrixChart; compact?: boolean }) {
-  const inner = SIZE - PAD * 2;
-  const scale = (value: number) => PAD + (value / 100) * inner;
-  const get = (key: string) => chart.layout.find((item) => item.key === key);
-  const point = (key: string) => chart.byKey[key];
+/** Цвета кругов: спокойная пастель, у каждой роли свой оттенок. */
+const COLORS: Record<string, { fill: string; ring: string; text: string }> = {
+  A: { fill: "#d9c8ef", ring: "#b79fdb", text: "#3d2f52" },
+  B: { fill: "#c9b4ea", ring: "#a98fd3", text: "#362a4a" },
+  C: { fill: "#f6c3d2", ring: "#e39cb3", text: "#56293a" },
+  D: { fill: "#f0a9c0", ring: "#d98aa5", text: "#4f2333" },
+  "family-top-left": { fill: "#cfe3ee", ring: "#a8c6d6", text: "#2f4450" },
+  "family-top-right": { fill: "#d6e7f0", ring: "#aecbd9", text: "#2f4450" },
+  "family-bottom-right": { fill: "#d3efe2", ring: "#a8d3c1", text: "#2b4a3d" },
+  "family-bottom-left": { fill: "#dbeaf3", ring: "#b3ccda", text: "#2f4450" },
+  center: { fill: "#f7d98a", ring: "#dfb85f", text: "#4a3a12" },
+  "family-force": { fill: "#c6e3bb", ring: "#9ec794", text: "#2f4529" },
+  "money-entry": { fill: "#bfe4c9", ring: "#94c7a3", text: "#254434" },
+  "money-middle": { fill: "#cdeada", ring: "#a3cfb9", text: "#254434" },
+  "love-entry": { fill: "#f8cbdc", ring: "#e0a5bd", text: "#4f2333" },
+  "love-middle": { fill: "#fadbe6", ring: "#e5b6c9", text: "#4f2333" },
+  shared: { fill: "#c3e6e6", ring: "#97c9c9", text: "#234a4a" },
+  year: { fill: "#efe6da", ring: "#cfbca6", text: "#463a2b" },
+};
 
-  const node = (key: string) => {
-    const position = get(key);
+/** Возрастные периоды: в методике жизнь делится на отрезки по 22 года. */
+const AGE_LABELS: { angle: number; text: string }[] = [
+  { angle: 45, text: "0–22 года" },
+  { angle: 135, text: "22–44 года" },
+  { angle: 225, text: "44–66 лет" },
+  { angle: 315, text: "66–88 лет" },
+];
+
+const RAD = Math.PI / 180;
+
+function polar(angle: number, radius: number) {
+  return {
+    x: CX + Math.sin(angle * RAD) * radius,
+    y: CY - Math.cos(angle * RAD) * radius,
+  };
+}
+
+export const MATRIX_DIAGRAM_KEYS = [
+  ...NODES.map((node) => node.key),
+  "center",
+  "year",
+];
+
+export function MatrixDiagram({
+  chart,
+  compact = false,
+  highlight,
+}: {
+  chart: MatrixChart;
+  compact?: boolean;
+  /** Ключи точек для подсветки; пусто — показываем все одинаково. */
+  highlight?: string[] | null;
+}) {
+  const active = highlight && highlight.length > 0 ? new Set(highlight) : null;
+  const dim = (key: string) => (active && !active.has(key) ? 0.32 : 1);
+
+  const point = (key: string) =>
+    key === "year" ? chart.yearEnergy : chart.byKey[key] ?? null;
+
+  const filled = (key: string) => {
     const value = point(key);
-    if (!position || !value) return null;
+    return value ? String(value.arcanum) : "—";
+  };
 
-    const variant = VARIANTS[key] ?? "family";
-    const radius = RADIUS[key] ?? 24;
-    const x = scale(position.x);
-    const y = scale(position.y);
-    const fill =
-      variant === "center" ? "url(#pearl-center)" : variant === "main" ? "url(#pearl-main)" : "url(#pearl-family)";
-    const side = CAPTION_SIDE[key] ?? "bottom";
+  const nodeEls = NODES.map((node) => {
+    const value = point(node.key);
+    if (!value) return null;
+    const center =
+      node.x !== undefined && node.y !== undefined
+        ? { x: node.x, y: node.y }
+        : polar(node.angle ?? 0, node.radius ?? R);
+    const colors = COLORS[node.key] ?? COLORS.center!;
+    const isActive = active?.has(node.key) ?? false;
 
-    // Подписи: номер энергии + короткая роль точки.
-    const caption = value.arcanumTitle;
-    const role = value.role;
-    const captionFont = compact ? 8 : 11;
-    const roleFont = compact ? 7 : 8.6;
-
-    let captionX = x;
-    let captionY = y + radius + 15;
+    // Подпись — рядом с кругом, с той стороны, где нет соседей.
+    let captionX = center.x;
+    let captionY = center.y + node.r + 15;
     let anchor: "middle" | "start" | "end" = "middle";
-    if (side === "top") {
-      captionY = y - radius - 18;
-    } else if (side === "bottom") {
-      captionY = y + radius + 15;
-    } else if (side === "left") {
-      captionX = x - radius - 10;
-      captionY = y - 3;
+    if (node.side === "above") {
+      captionY = center.y - node.r - 9;
+    } else if (node.side === "below") {
+      captionY = center.y + node.r + 15;
+    } else if (node.side === "left") {
+      captionX = center.x - node.r - 8;
+      captionY = center.y + 4;
       anchor = "end";
-    } else if (side === "right") {
-      captionX = x + radius + 10;
-      captionY = y - 3;
+    } else {
+      captionX = center.x + node.r + 8;
+      captionY = center.y + 4;
       anchor = "start";
-    } else if (side === "corner") {
-      const toLeft = position.x < 50;
-      const toTop = position.y < 50;
-      captionX = x + (toLeft ? -radius - 8 : radius + 8);
-      captionY = toTop ? y - 2 : y + 4;
-      anchor = toLeft ? "end" : "start";
     }
 
     return (
-      <g key={key}>
-        <ellipse cx={x} cy={y + radius * 0.86} rx={radius * 0.82} ry={radius * 0.22} fill="rgba(96,72,66,0.13)" />
-        <circle cx={x} cy={y} r={radius} fill={fill} stroke="url(#gold-ring)" strokeWidth={variant === "center" ? 1.7 : 1.1} />
-        <circle cx={x} cy={y} r={radius - 3.5} fill="none" stroke="rgba(255,255,255,0.72)" strokeWidth="0.8" />
-        <ellipse
-          cx={x - radius * 0.3}
-          cy={y - radius * 0.36}
-          rx={radius * 0.46}
-          ry={radius * 0.3}
-          fill="rgba(255,255,255,0.62)"
-        />
+      <g key={node.key} opacity={dim(node.key)}>
+        {isActive ? (
+          <circle cx={center.x} cy={center.y} r={node.r + 9} fill="none" stroke="#3b7b83" strokeWidth="2" strokeDasharray="5 4" />
+        ) : null}
+        <circle cx={center.x} cy={center.y + 3} r={node.r} fill="rgba(70,52,60,0.10)" />
+        <circle cx={center.x} cy={center.y} r={node.r} fill={colors.fill} stroke={colors.ring} strokeWidth="1.4" />
+        <circle cx={center.x - node.r * 0.3} cy={center.y - node.r * 0.34} r={node.r * 0.52} fill="rgba(255,255,255,0.45)" />
         <text
-          x={x}
-          y={y + 1}
+          x={center.x}
+          y={center.y + 1}
           textAnchor="middle"
           dominantBaseline="central"
           fontFamily="'Cormorant Garamond', Georgia, serif"
           fontWeight="600"
-          fontSize={variant === "center" ? (compact ? 26 : 36) : compact ? 18 : 24}
-          fill="#3a2f36"
+          fontSize={compact ? node.r * 0.78 : node.r * 0.92}
+          fill={colors.text}
         >
           {value.arcanum}
         </text>
-
-        {!compact ? (
-          <g>
-            <text x={captionX} y={captionY} textAnchor={anchor} fontSize={captionFont} letterSpacing="0.04em" fill="#463b41">
-              {caption}
-            </text>
-            <text x={captionX} y={captionY + captionFont + 1} textAnchor={anchor} fontSize={roleFont} fill="#8b7d83">
-              {role}
-            </text>
-          </g>
-        ) : null}
-
+        {compact ? null : (
+          <text
+            x={captionX}
+            y={captionY}
+            textAnchor={anchor}
+            fontSize="11.5"
+            letterSpacing="0.02em"
+            fill="#6a5b62"
+          >
+            {node.caption}
+          </text>
+        )}
         <title>{`${value.title}: ${value.arcanumTitle}`}</title>
       </g>
     );
-  };
+  });
 
-  const line = (fromKey: string, toKey: string, gold = true) => {
-    const from = get(fromKey);
-    const to = get(toKey);
-    if (!from || !to) return null;
-    return (
-      <line
-        key={`${fromKey}-${toKey}-${gold ? "g" : "s"}`}
-        x1={scale(from.x)}
-        y1={scale(from.y)}
-        x2={scale(to.x)}
-        y2={scale(to.y)}
-        stroke={gold ? "url(#gold-line)" : "rgba(120,104,108,0.3)"}
-        strokeWidth={gold ? 1.2 : 0.9}
-        strokeDasharray={gold ? undefined : "2 6"}
-      />
-    );
-  };
+  // Центр рисуем последним, чтобы он был поверх линий.
+  const centerValue = chart.byKey.center;
+  const centerColors = COLORS.center!;
+  const centerActive = active?.has("center") ?? false;
+
+  const vertex = (angle: number) => polar(angle, R);
+  const inner = (angle: number) => polar(angle, R_INNER);
+
+  const line = (a: { x: number; y: number }, b: { x: number; y: number }, style: string, width = 1, dash?: string) => (
+    <line
+      x1={a.x}
+      y1={a.y}
+      x2={b.x}
+      y2={b.y}
+      stroke={style}
+      strokeWidth={width}
+      strokeDasharray={dash}
+      strokeLinecap="round"
+    />
+  );
+
+  const octagon = [0, 45, 90, 135, 180, 225, 270, 315].map((angle) => vertex(angle));
+  const squares = [
+    [0, 90, 180, 270],
+    [45, 135, 225, 315],
+  ];
 
   return (
     <svg
-      viewBox={`0 0 ${SIZE} ${SIZE}`}
+      viewBox={`0 0 ${SIZE} ${HEIGHT}`}
       className="h-auto w-full"
       role="img"
-      aria-label={`Матрица судьбы: центр ${chart.byKey.center.arcanumTitle}, личность ${chart.byKey.A.arcanumTitle}, талант ${chart.byKey.B.arcanumTitle}, задача ${chart.byKey.D.arcanumTitle}`}
+      aria-label={`Схема Матрицы судьбы: центр ${chart.byKey.center.arcanumTitle}, личность ${chart.byKey.A.arcanumTitle}, талант ${chart.byKey.B.arcanumTitle}, кармическая задача ${chart.byKey.D.arcanumTitle}`}
     >
       <defs>
-        <radialGradient id="mx-bg" cx="0.5" cy="0.42" r="0.72">
-          <stop offset="0" stopColor="#fffdfa" />
-          <stop offset="0.55" stopColor="#fbf3ec" />
-          <stop offset="1" stopColor="#f1e3dc" />
+        <radialGradient id="mx2-bg" cx="0.5" cy="0.45" r="0.7">
+          <stop offset="0" stopColor="#fffefc" />
+          <stop offset="1" stopColor="#f7f1ec" />
         </radialGradient>
-        <radialGradient id="mx-glow" cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0" stopColor="#ffffff" stopOpacity="0.95" />
-          <stop offset="1" stopColor="#ffffff" stopOpacity="0" />
-        </radialGradient>
-        <radialGradient id="pearl-main" cx="0.36" cy="0.3" r="0.78">
-          <stop offset="0" stopColor="#ffffff" />
-          <stop offset="0.5" stopColor="#fbeee7" />
-          <stop offset="1" stopColor="#e6d2c9" />
-        </radialGradient>
-        <radialGradient id="pearl-family" cx="0.4" cy="0.32" r="0.8">
-          <stop offset="0" stopColor="#fffdfb" />
-          <stop offset="0.6" stopColor="#f7ece6" />
-          <stop offset="1" stopColor="#e9d8d1" />
-        </radialGradient>
-        <radialGradient id="pearl-center" cx="0.34" cy="0.28" r="0.8">
-          <stop offset="0" stopColor="#ffffff" />
-          <stop offset="0.45" stopColor="#fdf0e6" />
-          <stop offset="0.85" stopColor="#edd6ca" />
-          <stop offset="1" stopColor="#dcc0b4" />
-        </radialGradient>
-        <linearGradient id="gold-ring" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#e3c79b" />
-          <stop offset="0.5" stopColor="#c9a777" />
-          <stop offset="1" stopColor="#e8d3ae" />
-        </linearGradient>
-        <linearGradient id="gold-line" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="rgba(201,167,119,0.75)" />
-          <stop offset="1" stopColor="rgba(214,186,146,0.45)" />
-        </linearGradient>
       </defs>
 
-      <rect x="2" y="2" width={SIZE - 4} height={SIZE - 4} rx="32" fill="url(#mx-bg)" stroke="rgba(201,167,119,0.34)" />
-      <ellipse cx={SIZE * 0.5} cy={SIZE * 0.48} rx={SIZE * 0.36} ry={SIZE * 0.33} fill="url(#mx-glow)" opacity="0.75" />
+      <rect x="0" y="0" width={SIZE} height={HEIGHT} rx="26" fill="url(#mx2-bg)" />
 
-      {/* Ромб личного квадрата */}
-      {line("A", "B")}
-      {line("B", "D")}
-      {line("D", "C")}
-      {line("C", "A")}
+      {/* Восьмиугольник и два квадрата — каркас схемы. */}
+      <polygon
+        points={octagon.map((p) => `${p.x},${p.y}`).join(" ")}
+        fill="none"
+        stroke="rgba(122,108,112,0.35)"
+        strokeWidth="1.2"
+      />
+      {squares.map((set, index) => (
+        <polygon
+          key={index}
+          points={set
+            .map((angle) => vertex(angle))
+            .map((p) => `${p.x},${p.y}`)
+            .join(" ")}
+          fill="none"
+          stroke="rgba(122,108,112,0.22)"
+          strokeWidth="1"
+        />
+      ))}
 
-      {/* Родовой квадрат */}
-      {line("family-top-left", "family-top-right", false)}
-      {line("family-top-right", "family-bottom-right", false)}
-      {line("family-bottom-right", "family-bottom-left", false)}
-      {line("family-bottom-left", "family-top-left", false)}
+      {/* Оси от вершин к центру. */}
+      {[0, 45, 90, 135, 180, 225, 270, 315].map((angle) => {
+        const from = vertex(angle);
+        return (
+          <g key={`axis-${angle}`}>{line(from, { x: CX, y: CY }, "rgba(122,108,112,0.16)", 0.9, "3 6")}</g>
+        );
+      })}
 
-      {/* Лучи от центра к углам */}
-      {line("center", "A", false)}
-      {line("center", "B", false)}
-      {line("center", "C", false)}
-      {line("center", "D", false)}
+      {/* Каналы: деньги — вправо, отношения — вниз. */}
+      {line(inner(90), { x: CX, y: CY }, "rgba(74,140,102,0.55)", 1.8)}
+      {line(inner(180), { x: CX, y: CY }, "rgba(196,110,140,0.5)", 1.8)}
 
-      {/* Сферы поверх линий */}
-      {["A", "B", "C", "D"].map((key) => node(key))}
-      {["family-top-left", "family-top-right", "family-bottom-left", "family-bottom-right"].map((key) => node(key))}
-      {node("center")}
+      {/* Возрастные периоды по краям. */}
+      {AGE_LABELS.map((age) => {
+        const position = polar(age.angle, R + 120);
+        return (
+          <g key={age.text}>
+            <text
+              x={position.x}
+              y={position.y}
+              textAnchor="middle"
+              fontSize="11"
+              fill="#8b7d83"
+              letterSpacing="0.04em"
+            >
+              {age.text}
+            </text>
+          </g>
+        );
+      })}
+
+      {nodeEls}
+
+      {/* Центр — зона комфорта. */}
+      <g opacity={centerActive ? 1 : active ? 0.32 : 1}>
+        {centerActive ? (
+          <circle cx={CX} cy={CY} r={44 + 10} fill="none" stroke="#3b7b83" strokeWidth="2" strokeDasharray="5 4" />
+        ) : null}
+        <circle cx={CX} cy={CY + 3} r="46" fill="rgba(70,52,60,0.10)" />
+        <circle cx={CX} cy={CY} r="46" fill={centerColors.fill} stroke={centerColors.ring} strokeWidth="1.6" />
+        <circle cx={CX - 14} cy={CY - 16} r="24" fill="rgba(255,255,255,0.5)" />
+        <text
+          x={CX}
+          y={CY + 1}
+          textAnchor="middle"
+          dominantBaseline="central"
+          fontFamily="'Cormorant Garamond', Georgia, serif"
+          fontWeight="600"
+          fontSize={compact ? 34 : 44}
+          fill={centerColors.text}
+        >
+          {centerValue.arcanum}
+        </text>
+        {compact ? null : (
+          <text x={CX} y={CY + 68} textAnchor="middle" fontSize="12.5" fill="#6a5b62">
+            зона комфорта
+          </text>
+        )}
+        <title>{`${centerValue.title}: ${centerValue.arcanumTitle}`}</title>
+      </g>
+
+      {/* Энергия года и подсказка по цветам — внизу, вне восьмиугольника. */}
+      {!compact ? (
+        <>
+          <g opacity={active && !active.has("year") ? 0.32 : 1}>
+            <rect x={CX - 118} y={HEIGHT - 126} width="236" height="42" rx="21" fill="#fffaf4" stroke="rgba(207,188,166,0.9)" />
+            <circle cx={CX - 88} cy={HEIGHT - 105} r="16" fill={COLORS.year!.fill} stroke={COLORS.year!.ring} strokeWidth="1.2" />
+            <text
+              x={CX - 88}
+              y={HEIGHT - 104}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fontSize="15"
+              fontFamily="'Cormorant Garamond', Georgia, serif"
+              fontWeight="600"
+              fill={COLORS.year!.text}
+            >
+              {chart.yearEnergy.arcanum}
+            </text>
+            <text x={CX - 64} y={HEIGHT - 100} fontSize="12" fill="#6a5b62">
+              энергия {chart.yearEnergy.year} года
+            </text>
+          </g>
+          <g transform={`translate(${CX - 252} ${HEIGHT - 46})`}>
+            {(
+              [
+                ["#c9b4ea", "личность"],
+                ["#cfe3ee", "род"],
+                ["#bfe4c9", "деньги"],
+                ["#f8cbdc", "отношения"],
+                ["#f7d98a", "комфорт"],
+              ] as const
+            ).map(([color, label], index) => {
+              const x = index * 101;
+              return (
+                <g key={label} transform={`translate(${x} 0)`}>
+                  <circle cx="0" cy="-4" r="6" fill={color} stroke="rgba(90,70,80,0.18)" />
+                  <text x="11" y="0" fontSize="10.5" fill="#7b6c73">
+                    {label}
+                  </text>
+                </g>
+              );
+            })}
+          </g>
+        </>
+      ) : null}
     </svg>
   );
 }

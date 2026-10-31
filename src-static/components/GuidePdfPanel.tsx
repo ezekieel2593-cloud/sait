@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { MatrixChart } from "@/lib/matrix/engine";
 import type { MatrixGuide } from "@/lib/interpretation/guides";
+import type { SimpleGuideItem } from "@/lib/interpretation/simple";
 import { downloadMatrixGuidePdf } from "@/lib/pdf/matrix-guide";
 import { DocumentIcon } from "./icons-extra";
 
@@ -13,12 +14,14 @@ import { DocumentIcon } from "./icons-extra";
 export function GuidePdfPanel({
   chart,
   guides,
+  simple,
   birthDate,
   defaultName = "",
   auto = false,
 }: {
   chart: MatrixChart;
   guides: MatrixGuide[];
+  simple?: SimpleGuideItem[];
   birthDate: string;
   defaultName?: string;
   auto?: boolean;
@@ -35,6 +38,7 @@ export function GuidePdfPanel({
       await downloadMatrixGuidePdf({
         chart,
         guides,
+        simple,
         name: name.trim() || undefined,
         birthDate,
       });

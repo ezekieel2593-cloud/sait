@@ -125,6 +125,13 @@ async function run() {
   check("блок закрытых разделов заинтригован", /Что скрыто в вашей схеме/.test(resultText));
   check("схема в жемчужной подаче", Boolean(doc.querySelector("figure svg")), doc.querySelector("figure")?.className);
 
+  /* --------------------- схема и «простыми словами» ------------------------ */
+
+  check("схема стала подробной", (doc.querySelector("figure svg")?.querySelectorAll("circle").length ?? 0) >= 20);
+  check("в схеме есть подписи ролей", /таланты/.test(doc.querySelector("figure svg")?.textContent || ""));
+  check("блок «простыми словами» на месте", /Матрица простыми словами/.test(resultText));
+  check("в блоке есть спортивные рекомендации", /Каким спортом заниматься/.test(resultText));
+
   /* ------------------------------ гайды по энергиям ------------------------ */
 
   check("раздел гайдов есть и без сервера", /Гайды: что делать с вашими энергиями/.test(resultText));

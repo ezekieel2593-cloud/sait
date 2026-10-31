@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { computeMatrix, type MatrixChart } from "@/lib/matrix/engine";
 import { buildMatrixInterpretation } from "@/lib/interpretation/matrix";
 import { buildMatrixGuides, guideToText } from "@/lib/interpretation/guides";
-import { MatrixDiagram } from "@/components/charts/MatrixDiagram";
+import { buildSimpleGuide } from "@/lib/interpretation/simple";
+import { MATRIX_DIAGRAM_KEYS, MatrixDiagram } from "@/components/charts/MatrixDiagram";
 import { InterpretationCard, LockedCard } from "@/components/result/InterpretationCard";
 import { getConfig } from "../config";
 import { useAdmin } from "../admin";
@@ -11,6 +12,7 @@ import { matrixDetails } from "../details";
 import { AdminNote } from "../components/AdminNote";
 import { EnergyGuideCard, LockedGuideCard } from "../components/EnergyGuideCard";
 import { GuidePdfPanel } from "../components/GuidePdfPanel";
+import { SimpleGuideGrid } from "../components/SimpleGuideGrid";
 import { CalendarIcon } from "../components/icons-extra";
 
 function today(): string {
@@ -150,6 +152,9 @@ function MatrixResult({
   });
   const free = interpretation.sections.filter((section) => !section.premium);
   const locked = interpretation.sections.filter((section) => section.premium);
+  // Подсветка в схеме: нажали пункт «простыми словами» — эта точка загорается.
+  const [highlight, setHighlight] = useState<string[] | null>(null);
+  const [askGuide, setAskGuide] = useState(false);
 
   const summary = [
     `Матрица судьбы, дата рождения ${date}`,
@@ -170,9 +175,10 @@ function MatrixResult({
 
         <div className="mt-4 grid gap-4 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
           <figure className="m-0 rounded-[var(--radius-md)] border border-[var(--line)] bg-[linear-gradient(180deg,#fffdfa,#fbf3ec)] p-2">
-            <MatrixDiagram chart={chart} />
+            <MatrixDiagram chart={chart} highlight={highlight} />
             <figcaption className="px-2 pb-1 pt-1 text-[0.78rem] leading-relaxed text-[var(--ink-soft)]">
-              Девять ключевых энергий: центр, личный квадрат и родовые углы. Остальные — плашками ниже.
+              Полная схема: {MATRIX_DIAGRAM_KEYS.length} точек — центр, личный квадрат, родовые углы, каналы денег
+              и отношений, энергия года. Нажмите пункт в блоке «Простыми словами» — точка подсветится.
             </figcaption>
           </figure>
           <div className="grid gap-2">
@@ -240,6 +246,14 @@ function MatrixResult({
         </section>
       ) : null}
 
+      <SimpleSection
+        chart={chart}
+        admin={admin}
+        highlight={highlight}
+        onHighlight={setHighlight}
+        onRequest={() => setAskGuide(true)}
+      />
+
       <GuidesSection
         chart={chart}
         date={date}
@@ -247,6 +261,8 @@ function MatrixResult({
         details={matrixDetails(chart, date, interpretation)}
         admin={admin}
         guideRequest={guideRequest}
+        askGuide={askGuide}
+        setAskGuide={setAskGuide}
       />
 
       {admin ? null : (
@@ -258,6 +274,42 @@ function MatrixResult({
         />
       )}
     </div>
+  );
+}
+
+/**
+ * «Матрица простыми словами»: короткие бытовые ответы по точкам схемы.
+ *
+ * Гостю открыто несколько пунктов (`matrixSimpleCount` в config.js), остальные
+ * видны темой и открываются вместе с гайдом. Владелец видит все.
+ */
+function SimpleSection({
+  chart,
+  admin,
+  highlight,
+  onHighlight,
+  onRequest,
+}: {
+  chart: MatrixChart;
+  admin: boolean;
+  highlight: string[] | null;
+  onHighlight: (keys: string[] | null) => void;
+  onRequest: () => void;
+}) {
+  const config = getConfig();
+  const freeCount = admin ? 999 : Number(config.freeResult.matrixSimpleCount ?? 4);
+  const items = buildSimpleGuide(chart, { freeCount, includePremium: admin });
+
+  return (
+    <section className="grid gap-3" id="simple">
+      <h2 className="h-section">Матрица простыми словами</h2>
+      <p className="max-w-[62ch] text-[0.94rem] leading-relaxed text-[var(--ink)]">
+        Короткие ответы на бытовые вопросы: каким спортом заниматься, каким тебя видят другие, в чём талант,
+        в чём главная задача души, как начинать утро и что даёт ресурс. Каждый ответ взят из конкретной точки
+        схемы — нажмите на пункт, и она подсветится.
+      </p>
+      <SimpleGuideGrid items={items} active={highlight} onHighlight={onHighlight} onRequest={onRequest} />
+    </section>
   );
 }
 
@@ -281,6 +333,8 @@ function GuidesSection({
   details,
   admin,
   guideRequest,
+  askGuide,
+  setAskGuide,
 }: {
   chart: MatrixChart;
   date: string;
@@ -288,9 +342,10 @@ function GuidesSection({
   details: string;
   admin: boolean;
   guideRequest: { auto: boolean; name: string };
+  askGuide: boolean;
+  setAskGuide: (value: boolean) => void;
 }) {
   const config = getConfig();
-  const [askGuide, setAskGuide] = useState(false);
   const guides = buildMatrixGuides(chart, {
     freeCount: admin ? 999 : guideFreeCount(config),
     includePremium: admin,
@@ -310,7 +365,14 @@ function GuidesSection({
       </p>
 
       {admin ? (
-        <GuidePdfPanel chart={chart} guides={guides} birthDate={date} defaultName={name} auto={autoPdf} />
+        <GuidePdfPanel
+          chart={chart}
+          guides={guides}
+          simple={buildSimpleGuide(chart, { freeCount: 999, includePremium: true })}
+          birthDate={date}
+          defaultName={name}
+          auto={autoPdf}
+        />
       ) : (
         <div className="card grid gap-3 p-4 sm:p-5">
           <div>

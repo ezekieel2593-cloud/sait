@@ -275,6 +275,53 @@ async function calculateMatrix(page) {
   }
   check("после сборки показано подтверждение", /Файл готов/.test(pdfText));
 
+  /* ------------------- матрица простыми словами и схема ------------------- */
+
+  console.log("\n9. Матрица простыми словами");
+  const guestMatrixDoc = guestMatrix.window.document;
+  check("блок «простыми словами» есть", guestMatrixText.includes("Матрица простыми словами"));
+  for (const topic of [
+    "Каким тебя видят другие",
+    "Твои таланты",
+    "Каким спортом заниматься",
+    "Главная кармическая задача души",
+  ]) {
+    check(`тема «${topic}»`, guestMatrixText.includes(topic));
+  }
+  check("гостю открыта часть ответов", (guestMatrixText.match(/Показать в схеме/g) || []).length >= 3);
+  check("часть ответов закрыта", (guestMatrixText.match(/открывается в полном гайде/g) || []).length >= 1);
+
+  const simpleButton = [...guestMatrixDoc.querySelectorAll("#simple button")].find((node) =>
+    (node.textContent || "").includes("Показать в схеме")
+  );
+  check("пункты — кнопки с подсветкой", Boolean(simpleButton));
+  if (simpleButton) {
+    simpleButton.click();
+    await wait(150);
+    const ring = guestMatrixDoc.querySelector("#simple button[aria-pressed=\"true\"]");
+    check("нажатие подсвечивает ответ", Boolean(ring));
+    check("в схеме появился маркер подсветки", Boolean(guestMatrixDoc.querySelector("svg circle[stroke-dasharray=\"5 4\"]")));
+    check("подпись «Показано в схеме»", /Показано в схеме/.test(guestMatrixDoc.body.textContent || ""));
+    ring?.click();
+    await wait(150);
+    check("повторное нажатие снимает подсветку", !guestMatrixDoc.querySelector("#simple button[aria-pressed=\"true\"]"));
+  }
+
+  const matrixSvg = guestMatrixDoc.querySelector("figure svg");
+  const svgText = matrixSvg?.textContent || "";
+  const circles = matrixSvg ? matrixSvg.querySelectorAll("circle").length : 0;
+  check("схема стала подробной", circles >= 20, String(circles));
+  for (const label of ["таланты", "кармическая задача", "как тебя видят", "зона комфорта", "кем работать", "отношения"]) {
+    check(`на схеме подписано «${label}»`, svgText.includes(label));
+  }
+  check("на схеме есть энергия года", /энергия \d{4} года/.test(svgText));
+  check("на схеме есть легенда", svgText.includes("комфорт"));
+
+  const adminSimpleText = adminMatrixText;
+  check("владелец видит все ответы", !/открывается в полном гайде/.test(adminSimpleText));
+  check("владельцу открыто больше ответов", (adminSimpleText.match(/Показать в схеме/g) || []).length >= 8,
+    String((adminSimpleText.match(/Показать в схеме/g) || []).length));
+
   console.log(`\nИтого: ${pass} ok, ${fail} fail`);
   process.exit(fail === 0 ? 0 : 1);
 })();
