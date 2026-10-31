@@ -51,6 +51,11 @@ $calc = trim((string) ($body['calc'] ?? ''));
 $details = trim((string) ($body['details'] ?? ''));
 $birth = trim((string) ($body['birth'] ?? ''));
 $place = trim((string) ($body['place'] ?? ''));
+// Тип запроса: обычная заявка на разбор или запрос гайда по энергиям.
+$purpose = (string) ($body['purpose'] ?? 'reading');
+if (!in_array($purpose, ['reading', 'guide'], true)) {
+    $purpose = 'reading';
+}
 
 if (str_len($name) < 2 || str_len($name) > 80) {
     $fields['name'] = 'Укажите имя (от 2 до 80 символов)';
@@ -93,6 +98,7 @@ try {
         'question' => $question,
         'calc' => $calc,
         'details' => $details,
+        'purpose' => $purpose,
         'birth' => str_cut($birth, 300),
         'place' => str_cut($place, 200),
     ]);

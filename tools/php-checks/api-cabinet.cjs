@@ -369,6 +369,9 @@ echo "loaded:$n";
   check("полный расчёт свёрнут", /Показать полный расчёт/.test(card.payload));
   check("в карточке есть контакт", /maria_test/.test(card.payload));
   check("csrf-токен в формах карточки", card.payload.includes(`value="${CSRF}"`), String(CSRF));
+  check("в карточке есть кнопка гайда в PDF", /Создать гайд \(PDF\)/.test(card.payload));
+  check("ссылка на гайд ведёт в расчёт с датой", /matrix\.html\?d=1992-06-23&amp;guide=1/.test(card.payload));
+  check("тип запроса показан как полный разбор", /Полный разбор/.test(card.payload));
 
   const action = await request(php, {
     script: "/cabinet/action.php",
@@ -699,6 +702,40 @@ return [
   console.log("\n12. Выход");
   const out = await request(php, { script: "/cabinet/logout.php", session });
   check("logout отдаёт редирект", out.status === 303, String(out.status));
+
+  /* ------------------------- запрос гайда по энергиям ---------------------- */
+
+  console.log("\n13. Запрос гайда по энергиям");
+  const guideLead = {
+    ...lead,
+    name: "Ольга",
+    contact: "@olga_guide",
+    purpose: "guide",
+    question: "Хочу гайд по энергиям",
+  };
+  const guideRes = await request(php, {
+    script: "/api/lead.php",
+    method: "POST",
+    server: { HTTP_ORIGIN: "https://astra-test.ru", CONTENT_TYPE: "application/json", REMOTE_ADDR: "203.0.113.201" },
+    body: guideLead,
+  });
+  check("гайд-запрос принимается", guideRes.status === 200 && guideRes.json?.ok === true, JSON.stringify(guideRes.json));
+  const storedGuide = await readAppFile(php, "/data/leads.php");
+  check("тип запроса сохранён", /"purpose":\s*"guide"/.test(storedGuide), "purpose не записан");
+  const guideCard = await request(php, { script: "/cabinet/lead.php", get: { id: guideRes.json?.id }, owner });
+  check("в карточке видно «Гайд по энергиям»", /Гайд по энергиям/.test(guideCard.payload));
+  const guideList = await request(php, { script: "/cabinet/index.php", owner });
+  check("в списке заявок есть пометка гайда", /гайд по энергиям/.test(guideList.payload));
+
+  const weirdPurpose = await request(php, {
+    script: "/api/lead.php",
+    method: "POST",
+    server: { HTTP_ORIGIN: "https://astra-test.ru", CONTENT_TYPE: "application/json", REMOTE_ADDR: "203.0.113.202" },
+    body: { ...lead, name: "Пётр", contact: "@petr_x", purpose: "hack" },
+  });
+  check("неизвестный тип запроса приводится к обычному", weirdPurpose.status === 200, String(weirdPurpose.status));
+  const storedAfter = await readAppFile(php, "/data/leads.php");
+  check("в файле нет произвольного purpose", !storedAfter.includes("hack"), "значение не отфильтровано");
 
   console.log(`\nИтого: ${pass} ok, ${fail} fail`);
   process.exit(fail === 0 ? 0 : 1);

@@ -42,14 +42,29 @@ function openPage(file, { admin }) {
   vc.on("jsdomError", (error) => console.log("jsdomError:", error.message));
   const requests = [];
 
+  const downloads = [];
   const dom = new JSDOM(fs.readFileSync(path.join(dir, diskName), "utf8"), {
     url: `https://astra-test.ru/${file}`,
     runScripts: "dangerously",
     pretendToBeVisual: true,
     virtualConsole: vc,
     beforeParse(window) {
+      const fontPath = path.join(dir, "fonts/guide-sans.ttf");
+      // PDF-гайд подгружает шрифт тем же fetch — отдаём настоящий файл.
+      window.URL.createObjectURL = (blob) => {
+        downloads.push(blob);
+        return "blob:guide";
+      };
+      window.URL.revokeObjectURL = () => {};
       window.fetch = (url) => {
         requests.push(String(url));
+        if (String(url).includes("guide-sans.ttf")) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            arrayBuffer: () => Promise.resolve(fs.readFileSync(fontPath).buffer.slice(0)),
+          });
+        }
         if (String(url).includes("session.php")) {
           return Promise.resolve({
             ok: true,
@@ -79,7 +94,7 @@ function openPage(file, { admin }) {
     const src = script.getAttribute("src").split("?")[0].replace(/^\//, "");
     window.eval(fs.readFileSync(path.join(dir, src), "utf8"));
   }
-  return { window, requests };
+  return { window, requests, downloads };
 }
 
 function setValue(window, el, value) {
@@ -209,6 +224,56 @@ async function calculateMatrix(page) {
   check("матрица считается", await calculateMatrix(guestMatrix));
   const guestMatrixText = guestMatrix.window.document.body.textContent || "";
   check("гость не видит схему расчёта", !/Схема расчёта: все позиции|До редукции|Каналы денег и отношений/.test(guestMatrixText));
+
+  /* ----------------------- гайды по энергиям и PDF ------------------------ */
+
+  console.log("\n7. Гайды по энергиям");
+  const guestGuides = guestMatrix.window.document;
+  const guestGuidesText = guestMatrixText;
+  check("гость видит раздел гайдов", guestGuidesText.includes("Гайды: что делать с вашими энергиями"));
+  check("гостю открыты несколько гайдов", (guestGuidesText.match(/Что делать/g) || []).length >= 2);
+  check("шаги гайда видны", /Практика на неделю/.test(guestGuidesText));
+  check("часть гайдов закрыта", /закрыто/.test(guestGuidesText));
+  check("закрытые гайды без шагов", (guestGuidesText.match(/Что делать/g) || []).length < 16);
+  const guideButton = [...guestGuides.querySelectorAll("button")].find((node) =>
+    (node.textContent || "").includes("Получить гайд")
+  );
+  check("есть кнопка «Получить гайд»", Boolean(guideButton));
+  if (guideButton) {
+    guideButton.click();
+    await wait(120);
+    check("кнопка открывает форму с контактами", Boolean(guestGuides.querySelector("#guide-name")));
+    check("форма гайда просит канал связи", Boolean(guestGuides.querySelector("#guide-contact")));
+  }
+
+  const adminGuidesDoc = adminMatrix.window.document;
+  const adminGuidesText = adminMatrixText;
+  check("владелец видит гайды без закрытых", !/закрыто/.test(adminGuidesText));
+  check("у владельца есть кнопка PDF", /Создать гайд \(PDF\)/.test(adminGuidesText));
+  check("у владельца нет формы запроса гайда", !adminGuidesDoc.querySelector("#guide-name"));
+  check("владельцу открыты все энергии схемы", (adminGuidesText.match(/Что делать/g) || []).length >= 10,
+    String((adminGuidesText.match(/Что делать/g) || []).length));
+
+  /* --------------------------- сборка PDF в браузере ---------------------- */
+
+  console.log("\n8. Владелец: гайд в PDF");
+  const pdfPage = openPage(`matrix.html?d=1992-06-23&guide=1&name=${encodeURIComponent("Анна")}`, { admin: true });
+  await wait(1600);
+  const pdfDoc = pdfPage.window.document;
+  const pdfText = pdfDoc.body.textContent || "";
+  check("панель PDF видна владельцу", /Создать гайд \(PDF\)/.test(pdfText));
+  check("имя из ссылки подставлено", pdfDoc.querySelector("#guide-pdf-name")?.value === "Анна");
+  check("файл сформирован автоматически", pdfPage.downloads.length > 0, String(pdfPage.downloads.length));
+  if (pdfPage.downloads.length > 0) {
+    const bytes = new Uint8Array(await pdfPage.downloads[0].arrayBuffer());
+    const head = Buffer.from(bytes.slice(0, 8)).toString("latin1");
+    const tail = Buffer.from(bytes.slice(-1024)).toString("latin1");
+    check("это PDF по сигнатуре", head.startsWith("%PDF-1.4"), head);
+    check("PDF завершён корректно", tail.includes("%%EOF"));
+    check("в PDF встроен шрифт с кириллицей", Buffer.from(bytes).toString("latin1").includes("/FontFile2"));
+    check("PDF весит разумно", bytes.byteLength > 40000 && bytes.byteLength < 1500000, String(bytes.byteLength));
+  }
+  check("после сборки показано подтверждение", /Файл готов/.test(pdfText));
 
   console.log(`\nИтого: ${pass} ok, ${fail} fail`);
   process.exit(fail === 0 ? 0 : 1);

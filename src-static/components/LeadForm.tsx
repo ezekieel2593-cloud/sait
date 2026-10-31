@@ -14,6 +14,7 @@ import { DocumentIcon, ShieldIcon } from "./icons-extra";
  */
 export function LeadForm({
   direction,
+  variant = "reading",
   summary,
   details = "",
   birth = "",
@@ -22,6 +23,12 @@ export function LeadForm({
   onSent,
 }: {
   direction: Direction;
+  /**
+   * reading — заявка на полный разбор (по умолчанию).
+   * guide   — запрос PDF-гайда по энергиям: та же форма, другой заголовок
+   *           и пометка в заявке, чтобы специалист видел тип запроса.
+   */
+  variant?: "reading" | "guide";
   summary: string;
   /**
    * Полный расчёт для кабинета специалиста (все планеты, дома, аспекты,
@@ -36,6 +43,8 @@ export function LeadForm({
   onSent?: () => void;
 }) {
   const config = getConfig();
+  const isGuide = variant === "guide";
+  const idPrefix = isGuide ? "guide" : "lead";
   const [form, setForm] = useState({
     name: "",
     channel: (config.contacts.telegram ? "telegram" : config.contacts.email ? "email" : "telegram") as ContactChannel,
@@ -82,6 +91,7 @@ export function LeadForm({
             contact: form.contact.trim(),
             question: form.question.trim(),
             consent: true,
+            purpose: variant,
             calc: summary,
             details,
             birth,
@@ -115,7 +125,9 @@ export function LeadForm({
     const channelLabel =
       form.channel === "telegram" ? "Telegram" : form.channel === "max" ? "MAX" : "Email";
     const text = [
-      `Заявка на полный разбор (${direction === "astrology" ? "Астрология" : "Матрица судьбы"})`,
+      `${isGuide ? "Запрос гайда по энергиям" : "Заявка на полный разбор"} (${
+        direction === "astrology" ? "Астрология" : "Матрица судьбы"
+      })`,
       "",
       `Имя: ${form.name.trim()}`,
       `Связь: ${channelLabel} — ${form.contact.trim()}`,
@@ -145,7 +157,9 @@ export function LeadForm({
   };
 
   const tg = message ? telegramLink(config, message) : null;
-  const mail = message ? mailtoLink(config, message, "Заявка на полный разбор") : null;
+  const mail = message
+    ? mailtoLink(config, message, isGuide ? "Запрос гайда по энергиям" : "Заявка на полный разбор")
+    : null;
 
   if (saved) {
     return (
@@ -153,7 +167,9 @@ export function LeadForm({
         <span className="grid h-12 w-12 place-items-center rounded-full border border-[rgba(184,221,224,0.9)] bg-[rgba(244,251,251,0.95)] text-[var(--turquoise-deep)]">
           <CheckIcon className="h-6 w-6" />
         </span>
-        <h2 className="mt-4 font-[family-name:var(--font-display)] text-[1.55rem] text-[var(--ocean)]">Заявка принята</h2>
+        <h2 className="mt-4 font-[family-name:var(--font-display)] text-[1.55rem] text-[var(--ocean)]">
+          {isGuide ? "Запрос гайда принят" : "Заявка принята"}
+        </h2>
         <p className="mt-2 text-[0.92rem] leading-relaxed text-[var(--ink)]">
           Номер вашей заявки — <strong className="text-[var(--ocean)]">{saved.reference}</strong>. Специалист свяжется
           с вами по выбранному каналу связи.
@@ -175,7 +191,9 @@ export function LeadForm({
         <span className="grid h-12 w-12 place-items-center rounded-full border border-[rgba(184,221,224,0.9)] bg-[rgba(244,251,251,0.95)] text-[var(--turquoise-deep)]">
           <CheckIcon className="h-6 w-6" />
         </span>
-        <h2 className="mt-4 font-[family-name:var(--font-display)] text-[1.55rem] text-[var(--ocean)]">Заявка готова к отправке</h2>
+        <h2 className="mt-4 font-[family-name:var(--font-display)] text-[1.55rem] text-[var(--ocean)]">
+          {isGuide ? "Запрос гайда готов к отправке" : "Заявка готова к отправке"}
+        </h2>
         <p className="mt-2 text-[0.92rem] leading-relaxed text-[var(--ink)]">
           Текст сформирован. Отправьте его специалисту в Telegram или письмом — переписка и будет вашей заявкой.
           После отправки специалист подтвердит получение.
@@ -221,18 +239,20 @@ export function LeadForm({
         <div>
           <h2 className="flex items-center gap-2 font-[family-name:var(--font-display)] text-[1.45rem] text-[var(--ocean)]">
             <DocumentIcon className="h-5 w-5 text-[var(--turquoise-deep)]" />
-            Заявка на полный разбор
+            {isGuide ? "Получить гайд по энергиям" : "Заявка на полный разбор"}
           </h2>
           <p className="mt-1 text-[0.9rem] text-[var(--ink-soft)]">
-            Специалист получит ваши данные рождения и вопрос. Ответ — в выбранном вами канале.
+            {isGuide
+              ? "Оставьте контакты — специалист подготовит гайд по вашим энергиям с шагами и практиками и свяжется с вами по выбранному каналу."
+              : "Специалист получит ваши данные рождения и вопрос. Ответ — в выбранном вами канале."}
           </p>
         </div>
       ) : null}
 
       <div className="field">
-        <label htmlFor="lead-name">Как к вам обращаться</label>
+        <label htmlFor={`${idPrefix}-name`}>Как к вам обращаться</label>
         <input
-          id="lead-name"
+          id={`${idPrefix}-name`}
           className="input"
           value={form.name}
           aria-invalid={Boolean(errors.name)}
@@ -275,11 +295,11 @@ export function LeadForm({
       </fieldset>
 
       <div className="field">
-        <label htmlFor="lead-contact">
+        <label htmlFor={`${idPrefix}-contact`}>
           {form.channel === "email" ? "Адрес почты" : "Ник или телефон в мессенджере"}
         </label>
         <input
-          id="lead-contact"
+          id={`${idPrefix}-contact`}
           className="input"
           value={form.contact}
           aria-invalid={Boolean(errors.contact)}
@@ -297,15 +317,19 @@ export function LeadForm({
       ) : null}
 
       <div className="field">
-        <label htmlFor="lead-question">Вопрос или тема разбора</label>
+        <label htmlFor={`${idPrefix}-question`}>{isGuide ? "Что важнее всего разобрать" : "Вопрос или тема разбора"}</label>
         <textarea
-          id="lead-question"
+          id={`${idPrefix}-question`}
           className="textarea"
           rows={4}
           maxLength={1000}
           value={form.question}
           onChange={(event) => update("question", event.target.value)}
-          placeholder="Например: хочу разобрать тему отношений и смены профессии"
+          placeholder={
+            isGuide
+              ? "Например: сейчас важнее деньги или отношения"
+              : "Например: хочу разобрать тему отношений и смены профессии"
+          }
         />
         <span className="field__hint">{form.question.length}/1000</span>
       </div>
@@ -346,7 +370,15 @@ export function LeadForm({
       )}
 
       <button type="submit" className="btn btn--primary btn--lg btn--block" disabled={sending} data-state={sending ? "loading" : undefined}>
-        {sending ? "Отправляем" : apiEnabled ? "Отправить заявку" : "Сформировать заявку"}
+        {sending
+          ? "Отправляем"
+          : apiEnabled
+            ? isGuide
+              ? "Получить гайд"
+              : "Отправить заявку"
+            : isGuide
+              ? "Сформировать запрос"
+              : "Сформировать заявку"}
       </button>
     </form>
   );

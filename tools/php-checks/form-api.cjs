@@ -150,7 +150,8 @@ async function run() {
     check("полный расчёт приложен к заявке", (body.details || "").length > 200, String((body.details || "").length));
     check("в полном расчёте есть все позиции матрицы", /ВСЕ ПОЗИЦИИ/.test(body.details || ""), (body.details || "").slice(0, 120));
     check("в полном расчёте есть формулы", /формула:/.test(body.details || ""));
-    check("в теле нет лишних полей", Object.keys(body).length === 11, Object.keys(body).join(","));
+    check("в теле нет лишних полей", Object.keys(body).length === 12, Object.keys(body).join(","));
+    check("тип запроса — полный разбор", body.purpose === "reading", String(body.purpose));
   }
 
   const text = doc.body.textContent;

@@ -65,6 +65,7 @@ cabinet_head('Заявка ' . ($lead['ref'] ?? ''));
       <dt>Направление</dt><dd><?= e(DIRECTION_LABELS[$lead['direction'] ?? ''] ?? '—') ?></dd>
       <dt>Способ связи</dt><dd><?= e(CHANNEL_LABELS[$lead['channel'] ?? ''] ?? '—') ?></dd>
       <dt>Контакт</dt><dd><?= $lead['contact'] !== '' ? e((string) $lead['contact']) : '<span class="muted">удалён</span>' ?></dd>
+      <dt>Тип запроса</dt><dd><?= ($lead['purpose'] ?? 'reading') === 'guide' ? 'Гайд по энергиям' : 'Полный разбор' ?></dd>
       <dt>Вопрос</dt><dd><?= $lead['question'] !== '' ? nl2br(e((string) $lead['question'])) : '<span class="muted">—</span>' ?></dd>
       <dt>Данные рождения</dt><dd><?= $lead['birth'] !== '' ? e((string) $lead['birth']) : '<span class="muted">—</span>' ?></dd>
       <dt>Получена</dt><dd><?= e(format_dt($lead['createdAt'] ?? null)) ?></dd>
@@ -102,6 +103,30 @@ cabinet_head('Заявка ' . ($lead['ref'] ?? ''));
       <p class="muted">
         Заявка пришла без подробного расчёта: клиент оставил её со страницы, где расчёт не выполнялся,
         либо заявка старая. Данные рождения — в карточке выше.
+      </p>
+    <?php endif; ?>
+
+    <h2>Гайд в PDF</h2>
+    <?php
+      // Дата рождения приходит строкой «1992-06-23» (или с временем и городом для карты).
+      $birthRaw = (string) ($lead['birth'] ?? '');
+      $birthDate = preg_match('/(\d{4})-(\d{2})-(\d{2})/', $birthRaw, $m) ? "{$m[1]}-{$m[2]}-{$m[3]}" : '';
+      $guideLink = $birthDate === ''
+        ? ''
+        : '../matrix.html?d=' . rawurlencode($birthDate) . '&guide=1&name=' . rawurlencode((string) ($lead['name'] ?? ''));
+    ?>
+    <?php if ($guideLink !== ''): ?>
+      <p class="muted">
+        Откроется расчёт Матрицы для этого человека и сразу соберётся PDF: схема, гайд по каждой энергии
+        с шагами и практиками, методика. Файл сохраняется в загрузки браузера — дальше его можно отправить клиенту.
+      </p>
+      <div class="actions">
+        <a class="btn" href="<?= e($guideLink) ?>" target="_blank" rel="noopener">Создать гайд (PDF)</a>
+      </div>
+    <?php else: ?>
+      <p class="muted">
+        В заявке нет даты рождения в формате ГГГГ-ММ-ДД — соберите гайд вручную: откройте
+        <a href="../matrix.html">расчёт Матрицы</a> и подставьте дату клиента.
       </p>
     <?php endif; ?>
 

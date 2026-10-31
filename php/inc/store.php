@@ -70,6 +70,7 @@ function create_lead(array $input): array
             'ref' => next_reference($items),
             'name' => $input['name'],
             'direction' => $input['direction'],
+            'purpose' => $input['purpose'] ?? 'reading',
             'channel' => $input['channel'],
             'contact' => $input['contact'],
             'question' => $input['question'],

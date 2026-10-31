@@ -125,6 +125,26 @@ async function run() {
   check("блок закрытых разделов заинтригован", /Что скрыто в вашей схеме/.test(resultText));
   check("схема в жемчужной подаче", Boolean(doc.querySelector("figure svg")), doc.querySelector("figure")?.className);
 
+  /* ------------------------------ гайды по энергиям ------------------------ */
+
+  check("раздел гайдов есть и без сервера", /Гайды: что делать с вашими энергиями/.test(resultText));
+  check("часть гайдов открыта", (resultText.match(/Что делать/g) || []).length >= 2);
+  check("часть гайдов закрыта", /закрыто/.test(resultText));
+  const guideButton = [...doc.querySelectorAll("button")].find((node) =>
+    (node.textContent || "").includes("Получить гайд")
+  );
+  check("кнопка «Получить гайд» на месте", Boolean(guideButton));
+  if (guideButton) {
+    guideButton.click();
+    await wait(150);
+    const guideForm = [...doc.querySelectorAll("form")].find((f) => f.querySelector("#guide-name"));
+    check("форма гайда открывается", Boolean(guideForm));
+    check(
+      "в версии без сервера гайд-запрос формируется как сообщение",
+      /Сформировать запрос/.test(guideForm?.textContent || "")
+    );
+  }
+
   const takeForm = [...doc.querySelectorAll("form")].find((f) => f.querySelector("#lead-name"));
   check("форма заявки отрисована", Boolean(takeForm));
   if (!takeForm) return;

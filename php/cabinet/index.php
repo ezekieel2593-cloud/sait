@@ -152,7 +152,10 @@ cabinet_head('Заявки');
             <strong><?= e((string) ($lead['name'] ?? '')) ?></strong><br>
             <span class="muted"><?= e(CHANNEL_LABELS[$lead['channel'] ?? ''] ?? '') ?>: <?= e((string) ($lead['contact'] ?? '')) ?></span>
           </td>
-          <td><?= e(DIRECTION_LABELS[$lead['direction'] ?? ''] ?? '—') ?></td>
+          <td>
+            <?= e(DIRECTION_LABELS[$lead['direction'] ?? ''] ?? '—') ?>
+            <?php if (($lead['purpose'] ?? 'reading') === 'guide'): ?><br><span class="muted">гайд по энергиям</span><?php endif; ?>
+          </td>
           <td><?= status_badge((string) ($lead['status'] ?? 'new')) ?></td>
           <td class="muted"><?= e(format_dt($lead['createdAt'] ?? null)) ?></td>
         </tr>

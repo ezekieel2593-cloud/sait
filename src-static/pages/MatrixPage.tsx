@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { computeMatrix, type MatrixChart } from "@/lib/matrix/engine";
 import { buildMatrixInterpretation } from "@/lib/interpretation/matrix";
+import { buildMatrixGuides, guideToText } from "@/lib/interpretation/guides";
 import { MatrixDiagram } from "@/components/charts/MatrixDiagram";
 import { InterpretationCard, LockedCard } from "@/components/result/InterpretationCard";
 import { getConfig } from "../config";
@@ -8,6 +9,8 @@ import { useAdmin } from "../admin";
 import { LeadForm } from "../components/LeadForm";
 import { matrixDetails } from "../details";
 import { AdminNote } from "../components/AdminNote";
+import { EnergyGuideCard, LockedGuideCard } from "../components/EnergyGuideCard";
+import { GuidePdfPanel } from "../components/GuidePdfPanel";
 import { CalendarIcon } from "../components/icons-extra";
 
 function today(): string {
@@ -22,6 +25,14 @@ export function MatrixPage() {
   const [date, setDate] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{ chart: MatrixChart; date: string } | null>(null);
+  /**
+   * Параметры «гайд по человеку» (?guide=1&name=Имя) считываем до первого
+   * обновления адреса: дальше в адресе остаётся только дата рождения.
+   */
+  const [guideRequest] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return { auto: params.get("guide") === "1", name: params.get("name") ?? "" };
+  });
 
   // Дата из ссылки (?d=1992-06-23) — чтобы результатом можно было поделиться.
   useEffect(() => {
@@ -52,7 +63,12 @@ export function MatrixPage() {
     setError(null);
     const chart = computeMatrix({ date: value });
     setResult({ chart, date: value });
-    window.history.replaceState(null, "", `?d=${value}`);
+    const share = new URLSearchParams({ d: value });
+    if (guideRequest.auto) {
+      share.set("guide", "1");
+      if (guideRequest.name) share.set("name", guideRequest.name);
+    }
+    window.history.replaceState(null, "", `?${share.toString()}`);
   }
 
   return (
@@ -107,14 +123,20 @@ export function MatrixPage() {
         </div>
 
         <div className="grid gap-4">
-          {result ? <MatrixResult result={result} /> : null}
+          {result ? <MatrixResult result={result} guideRequest={guideRequest} /> : null}
         </div>
       </div>
     </div>
   );
 }
 
-function MatrixResult({ result }: { result: { chart: MatrixChart; date: string } }) {
+function MatrixResult({
+  result,
+  guideRequest,
+}: {
+  result: { chart: MatrixChart; date: string };
+  guideRequest: { auto: boolean; name: string };
+}) {
   const config = getConfig();
   const admin = useAdmin();
   const { chart, date } = result;
@@ -218,6 +240,15 @@ function MatrixResult({ result }: { result: { chart: MatrixChart; date: string }
         </section>
       ) : null}
 
+      <GuidesSection
+        chart={chart}
+        date={date}
+        summary={summary}
+        details={matrixDetails(chart, date, interpretation)}
+        admin={admin}
+        guideRequest={guideRequest}
+      />
+
       {admin ? null : (
         <LeadForm
           direction="matrix"
@@ -227,6 +258,122 @@ function MatrixResult({ result }: { result: { chart: MatrixChart; date: string }
         />
       )}
     </div>
+  );
+}
+
+/** Сколько гайдов открыто без заявки. */
+function guideFreeCount(config: ReturnType<typeof getConfig>): number {
+  const value = (config.freeResult as { matrixGuideCount?: number }).matrixGuideCount;
+  return typeof value === "number" && value >= 0 ? value : 2;
+}
+
+/**
+ * Гайды по энергиям: практическая часть к каждой энергии схемы.
+ *
+ * Гостю открыто несколько гайдов — остальные видны заголовками и темой, шаги
+ * и практики закрыты. Кнопка «Получить гайд» открывает форму с контактами.
+ * Владелец видит все гайды и кнопку сборки PDF.
+ */
+function GuidesSection({
+  chart,
+  date,
+  summary,
+  details,
+  admin,
+  guideRequest,
+}: {
+  chart: MatrixChart;
+  date: string;
+  summary: string;
+  details: string;
+  admin: boolean;
+  guideRequest: { auto: boolean; name: string };
+}) {
+  const config = getConfig();
+  const [askGuide, setAskGuide] = useState(false);
+  const guides = buildMatrixGuides(chart, {
+    freeCount: admin ? 999 : guideFreeCount(config),
+    includePremium: admin,
+  });
+  const open = guides.filter((guide) => !guide.premium);
+  const closed = guides.filter((guide) => guide.premium);
+  const name = guideRequest.name;
+  const autoPdf = admin && guideRequest.auto;
+
+  return (
+    <section className="grid gap-3" id="guides">
+      <h2 className="h-section">{admin ? "Гайды по энергиям" : "Гайды: что делать с вашими энергиями"}</h2>
+      <p className="max-w-[62ch] text-[0.94rem] leading-relaxed text-[var(--ink)]">
+        У каждой энергии есть практическая часть: как она выглядит в обычной жизни, что делать по шагам,
+        практика на неделю и признак того, что энергия работает в плюсе. Делать всё сразу не нужно —
+        выберите энергию, которая сейчас отзывается сильнее.
+      </p>
+
+      {admin ? (
+        <GuidePdfPanel chart={chart} guides={guides} birthDate={date} defaultName={name} auto={autoPdf} />
+      ) : (
+        <div className="card grid gap-3 p-4 sm:p-5">
+          <div>
+            <h3 className="font-[family-name:var(--font-display)] text-[1.2rem] text-[var(--ocean)]">
+              Гайд по вашим энергиям
+            </h3>
+            <p className="mt-1 text-[0.9rem] leading-relaxed text-[var(--ink)]">
+              {closed.length > 0
+                ? `Открыто ${open.length} из ${guides.length} гайдов. В полном гайде — шаги и практики по всем вашим энергиям.`
+                : "Все гайды по вашим энергиям открыты."}
+            </p>
+          </div>
+          {askGuide ? (
+            <LeadForm
+              direction="matrix"
+              variant="guide"
+              summary={`Запрос гайда по энергиям Матрицы. ${summary}`}
+              details={details}
+              birth={date}
+              compact
+            />
+          ) : (
+            <div className="flex flex-wrap items-center gap-2">
+              <button type="button" className="btn btn--primary btn--sm" onClick={() => setAskGuide(true)}>
+                Получить гайд
+              </button>
+              <button
+                type="button"
+                className="btn btn--secondary btn--sm"
+                onClick={() => {
+                  const text = guides
+                    .filter((guide) => !guide.premium)
+                    .map((guide) => guideToText(guide))
+                    .join("\n\n");
+                  void navigator.clipboard?.writeText(text);
+                }}
+              >
+                Скопировать открытые гайды
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        {open.map((guide, index) => (
+          <EnergyGuideCard key={guide.id} guide={guide} index={index} />
+        ))}
+      </div>
+
+      {closed.length > 0 ? (
+        <div className="grid gap-3">
+          <h3 className="mt-2 font-[family-name:var(--font-display)] text-[1.15rem] text-[var(--ocean)]">
+            Гайды, которые открываются после запроса
+          </h3>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {closed.map((guide, index) => (
+              <LockedGuideCard key={guide.id} guide={guide} index={index} />
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </section>
   );
 }
 

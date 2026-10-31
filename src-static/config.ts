@@ -20,7 +20,7 @@ export interface StaticConfig {
   specialist: { name: string; title: string; bio: string; photoUrl: string; note: string };
   contacts: { telegram: string; max: string; email: string; phone: string; location: string };
   services: { priceNote: string; turnaround: string; fullReadingIncludes: string[]; fullReadingFormat: string[] };
-  freeResult: { astrologyCardCount: number; matrixPointCount: number };
+  freeResult: { astrologyCardCount: number; matrixPointCount: number; matrixGuideCount?: number };
   methodology: { astrologyHouseSystem: "placidus" | "equal" | "whole"; astrologyHouseSystemLabel: string };
   legal: { privacyUpdatedAt: string; dataRetentionDays: number; responsiblePerson: string };
   /** Серверный приём заявок (PHP на хостинге). Если выключено — заявка формируется как сообщение. */
@@ -75,7 +75,7 @@ export const DEFAULT_CONFIG: StaticConfig = {
       "Срок подготовки и стоимость — по договорённости со специалистом",
     ],
   },
-  freeResult: { astrologyCardCount: 4, matrixPointCount: 5 },
+  freeResult: { astrologyCardCount: 4, matrixPointCount: 5, matrixGuideCount: 2 },
   methodology: { astrologyHouseSystem: "placidus", astrologyHouseSystemLabel: "Плацидус (Placidus)" },
   legal: { privacyUpdatedAt: "2026-01-01", dataRetentionDays: 365, responsiblePerson: "Владелец проекта" },
   api: { enabled: false, base: "api" },

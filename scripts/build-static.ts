@@ -118,6 +118,22 @@ for (const [from, to] of fontSources) {
   fs.copyFileSync(source, path.join(fontDir, to));
 }
 
+/**
+ * Шрифт для PDF-гайда: подмножество DejaVu Sans с кириллицей (~32 КБ).
+ * Лежит отдельным файлом и подгружается только в момент сборки PDF,
+ * поэтому вес основного бандла не растёт.
+ */
+const guideFontSource = path.join(root, "assets", "fonts", "guide-sans.ttf");
+const guideFontLicense = path.join(root, "assets", "fonts", "LICENSE-DejaVu.txt");
+if (fs.existsSync(guideFontSource)) {
+  fs.copyFileSync(guideFontSource, path.join(fontDir, "guide-sans.ttf"));
+  if (fs.existsSync(guideFontLicense)) {
+    fs.copyFileSync(guideFontLicense, path.join(fontDir, "LICENSE-DejaVu.txt"));
+  }
+} else {
+  console.warn("  ! нет assets/fonts/guide-sans.ttf — PDF-гайд не соберётся");
+}
+
 const imageDir = path.join(out, "images");
 fs.mkdirSync(imageDir, { recursive: true });
 // Копируем все картинки из public/images: фон сайта, обложку, иконку, плейсхолдер.
@@ -353,6 +369,8 @@ window.ASTRA_CONFIG = {
   freeResult: {
     astrologyCardCount: ${DEFAULT_CONFIG.freeResult.astrologyCardCount},
     matrixPointCount: ${DEFAULT_CONFIG.freeResult.matrixPointCount},
+    // Сколько гайдов по энергиям открыто без заявки (остальные — после запроса)
+    matrixGuideCount: ${DEFAULT_CONFIG.freeResult.matrixGuideCount ?? 2},
   },
 
   legal: {

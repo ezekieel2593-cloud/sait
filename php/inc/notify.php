@@ -141,7 +141,8 @@ function lead_notification_text(array $lead): string
 {
     $lines = [
         'Новая заявка ' . ($lead['ref'] ?? ''),
-        'Направление: ' . (DIRECTION_LABELS[$lead['direction'] ?? ''] ?? '—'),
+        'Направление: ' . (DIRECTION_LABELS[$lead['direction'] ?? ''] ?? '—')
+            . (($lead['purpose'] ?? 'reading') === 'guide' ? ' · запрос гайда по энергиям' : ''),
         'Имя: ' . ($lead['name'] ?? ''),
         'Связь: ' . (CHANNEL_LABELS[$lead['channel'] ?? ''] ?? '—') . ' — ' . ($lead['contact'] ?? ''),
     ];
