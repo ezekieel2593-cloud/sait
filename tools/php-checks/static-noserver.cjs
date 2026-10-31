@@ -312,6 +312,15 @@ async function run() {
   check("на странице чакр семь карточек", chakraDoc.querySelectorAll('article[id^="chakra-"]').length === 7);
   check("чакры описаны в версии без сервера", chakraPageText.includes("Сахасрара") && chakraPageText.includes("Муладхара"));
   check("связь чакр и матрицы объяснена", /Как чакры связаны с Матрицей судьбы/.test(chakraPageText));
+  const chakraDate = chakraDoc.querySelector("#chakra-date");
+  check("без сервера считается по дате", Boolean(chakraDate));
+  if (chakraDate) {
+    setValue(chakraDate, "1992-06-23");
+    await wait(400);
+    const calcText = chakraDoc.body.textContent || "";
+    check("калькулятор чакр выдал значения", /6-я энергия/.test(calcText) && /22-я энергия/.test(calcText));
+    check("показана версия расчёта чакр", /chakra-22-v1/.test(calcText));
+  }
 
   const privacyDom = new JSDOM(fs.readFileSync(path.join(dir, "privacy.html"), "utf8"), {
     url: "https://example.com/privacy.html",

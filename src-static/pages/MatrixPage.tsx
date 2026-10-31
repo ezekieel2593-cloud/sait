@@ -10,6 +10,7 @@ import { useAdmin } from "../admin";
 import { LeadForm } from "../components/LeadForm";
 import { matrixDetails } from "../details";
 import { AdminNote } from "../components/AdminNote";
+import { ChakraResult } from "../components/ChakraResult";
 import { EnergyGuideCard, LockedGuideCard } from "../components/EnergyGuideCard";
 import { GuidePdfPanel } from "../components/GuidePdfPanel";
 import { CalendarIcon } from "../components/icons-extra";
@@ -249,6 +250,22 @@ function MatrixResult({
       </section>
 
       {admin ? <AdminNote locked={locked.length} /> : null}
+
+      <section className="card p-4 sm:p-6">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="h-section">Чакры по вашей дате</h2>
+          <a href="chakras.html" className="text-[0.82rem] text-[var(--turquoise-deep)] underline decoration-dotted underline-offset-2">
+            Что такое чакры
+          </a>
+        </div>
+        <p className="mt-2 text-[0.9rem] leading-relaxed text-[var(--ink-soft)]">
+          Каждая чакра — это энергия из вашей схемы: видно, какая сила стоит за опорой, желаниями, волей, сердцем,
+          голосом, ясностью и смыслом.
+        </p>
+        <div className="mt-3">
+          <ChakraResult chart={chart} />
+        </div>
+      </section>
 
       <section className="grid gap-3">
         <h2 className="h-section">{admin ? "Полная расшифровка" : "Ваша расшифровка"}</h2>

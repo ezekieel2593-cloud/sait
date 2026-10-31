@@ -12,6 +12,7 @@ import type { MatrixGuide } from "../interpretation/guides";
 import type { SimpleGuideItem } from "../interpretation/simple";
 import { PdfDocument } from "./document";
 import { parseTrueType, type TrueTypeFont } from "./truetype";
+import { CHAKRA_VERSION, computeChakras } from "../matrix/chakras";
 
 export interface MatrixGuidePdfInput {
   chart: MatrixChart;
@@ -140,6 +141,21 @@ export function renderMatrixGuidePdf(font: TrueTypeFont, input: MatrixGuidePdfIn
       doc.text(guide.check);
     }
   });
+
+  doc.rule();
+  doc.heading("Чакры по дате рождения");
+  doc.text(
+    "Семь чакр — это те же энергии схемы, прочитанные по центральной линии: опора, желания, воля, сердце, голос, видение и смысл. Ниже — значения для этой даты."
+  );
+  for (const chakra of computeChakras(chart)) {
+    doc.numbered(
+      chakra.number,
+      `${chakra.sanskrit} (${chakra.sphere}) — ${chakra.label}. Как считали: ${chakra.formula}.`
+    );
+  }
+  doc.muted(
+    `Версия расчёта чакр — ${CHAKRA_VERSION}. В школе есть и другие формулы чакр: здесь зафиксирован один вариант, и значения — ориентир для самонаблюдения, а не медицинский показатель.`
+  );
 
   doc.rule();
   doc.heading("Что дальше");

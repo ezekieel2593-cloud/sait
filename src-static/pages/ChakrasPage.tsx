@@ -1,5 +1,9 @@
+import { useState } from "react";
+
 import { CHAKRAS, CHAKRAS_INTRO, CHAKRAS_MATRIX_NOTE } from "@/lib/knowledge/chakras";
+import { computeMatrix, type MatrixChart } from "@/lib/matrix/engine";
 import { CheckIcon, SparkleIcon } from "@/components/icons";
+import { ChakraResult } from "../components/ChakraResult";
 
 /**
  * Отдельная страница «Чакры».
@@ -82,6 +86,11 @@ export function ChakrasPage() {
         <p className="eyebrow">Справочник</p>
         <h1 className="h-display mt-3">Семь чакр: опора, желания, воля, сердце, голос, ясность и смысл</h1>
         <p className="lead mt-4">{CHAKRAS_INTRO}</p>
+        <p className="mt-3">
+          <a href="#calc" className="btn btn--primary btn--sm">
+            Рассчитать чакры по дате рождения
+          </a>
+        </p>
         <p className="mt-3 text-[0.88rem] leading-relaxed text-[var(--ink-soft)]">
           В классической системе семь основных чакр. Кроме них в традициях упоминают восьмую точку над макушкой и
           малые чакры — на ладонях и стопах; в этой школе работают с семью, поэтому здесь описаны именно они.
@@ -99,6 +108,8 @@ export function ChakrasPage() {
           ))}
         </nav>
       </div>
+
+      <ChakraCalculator />
 
       <section className="container--measure mx-auto mt-8 rounded-[var(--radius-md)] border border-[var(--line)] bg-white/70 p-4 sm:p-5">
         <div className="grid gap-5 md:grid-cols-[auto_1fr] md:items-center">
@@ -231,6 +242,7 @@ export function ChakrasPage() {
               <span className="font-semibold text-[#3b7b83]">Связь с матрицей: </span>
               {chakra.matrix}
             </p>
+            <p className="mt-1.5 text-[0.76rem] text-[var(--ink-faint)]">Как считаем: {chakra.formula}</p>
           </article>
         ))}
       </div>
@@ -239,14 +251,95 @@ export function ChakrasPage() {
         <p>
           <span className="font-semibold text-[var(--ocean)]">Важно.</span> Описания чакр — символическая модель
           традиции, а не медицинская информация. Признаки дисбаланса не являются симптомами болезни: со здоровьем
-          работает врач. Чакровая карта в Матрице судьбы у разных авторов считается по разным формулам, поэтому мы
-          не выдаём её за расчёт — на странице{" "}
-          <a href="matrix.html" className="underline decoration-dotted underline-offset-2">
-            Матрицы судьбы
-          </a>{" "}
-          показаны сами точки схемы, а эта страница объясняет, как их читают.
+          работает врач. Значения чакр считаются по одной зафиксированной версии формул (в школе есть и другие),
+          поэтому это ориентир для самонаблюдения, а не измерение и не диагноз.
         </p>
       </div>
     </div>
+  );
+}
+
+/** Минимальная дата — как в остальных расчётах сайта. */
+const MIN_DATE = "1900-01-01";
+
+function today(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+/**
+ * Расчёт чакр по дате рождения прямо на странице.
+ *
+ * Считается тем же движком, что и Матрица (matrix-22-v1), а чакры — по
+ * зафиксированной версии chakra-22-v1. Ничего не отправляется на сервер.
+ */
+function ChakraCalculator() {
+  const [date, setDate] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [chart, setChart] = useState<MatrixChart | null>(null);
+
+  function run(value: string) {
+    setDate(value);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      setError(value ? "Введите дату в формате день.месяц.год" : null);
+      setChart(null);
+      return;
+    }
+    try {
+      setChart(computeMatrix({ date: value }));
+      setError(null);
+    } catch {
+      setError("Не получилось посчитать: проверьте дату");
+      setChart(null);
+    }
+  }
+
+  return (
+    <section id="calc" className="container--measure mx-auto mt-6 rounded-[var(--radius-md)] border border-[var(--line)] bg-white/75 p-4 sm:p-5">
+      <h2 className="font-[family-name:var(--font-display)] text-[1.35rem] leading-snug text-[var(--ocean)]">
+        Чакры по вашей дате рождения
+      </h2>
+      <p className="mt-2 text-[0.9rem] leading-relaxed text-[var(--ink-soft)]">
+        Введите дату — значения семи чакр посчитаются в браузере. Время и место рождения не нужны.
+      </p>
+      <form
+        className="mt-3 flex flex-wrap items-end gap-3"
+        onSubmit={(event) => {
+          event.preventDefault();
+          run(date);
+        }}
+      >
+        <label className="grid gap-1 text-[0.86rem] text-[var(--ink)]">
+          <span className="font-medium">Дата рождения</span>
+          <input
+            id="chakra-date"
+            className="input input--date"
+            type="date"
+            min={MIN_DATE}
+            max={today()}
+            value={date}
+            aria-invalid={Boolean(error)}
+            onChange={(event) => run(event.target.value)}
+          />
+        </label>
+        <button type="submit" className="btn btn--primary">
+          Рассчитать чакры
+        </button>
+        <a href="matrix.html" className="btn btn--secondary">
+          Полная схема матрицы
+        </a>
+      </form>
+      {error ? <p className="field__error mt-2">{error}</p> : null}
+
+      {chart ? (
+        <div className="mt-4">
+          <p className="text-[0.86rem] text-[var(--ink-soft)]">
+            Дата: {chart.birth.date.split("-").reverse().join(".")} · центр {chart.byKey.center.arcanumTitle}
+          </p>
+          <div className="mt-2">
+            <ChakraResult chart={chart} />
+          </div>
+        </div>
+      ) : null}
+    </section>
   );
 }

@@ -56,7 +56,7 @@ export function Footer() {
       <div className="border-t border-[var(--line)]">
         <div className="container flex flex-wrap items-center justify-between gap-2 py-5 text-[0.78rem] text-[var(--ink-faint)]">
           <p>© {year} {config.siteName}</p>
-          <p>Расчёты: astro-v1 · matrix-22-v1</p>
+          <p>Расчёты: astro-v1 · matrix-22-v1 · chakra-22-v1</p>
         </div>
       </div>
     </footer>

@@ -46,7 +46,11 @@ describe("Справочник по чакрам", () => {
   });
 
   it("связь с матрицей описана честно", () => {
-    expect(CHAKRAS_MATRIX_NOTE).toMatch(/по-разному/);
+    expect(CHAKRAS_MATRIX_NOTE).toMatch(/можно посчитать по дате рождения/);
+    // У каждой чакры указана формула — значения не берутся из воздуха.
+    for (const chakra of CHAKRAS) {
+      expect(chakra.formula.length, `${chakra.sanskrit}.formula`).toBeGreaterThan(5);
+    }
     // Каждая чакра ссылается на реальные точки схемы.
     const known = new Set([
       "A",

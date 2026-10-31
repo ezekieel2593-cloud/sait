@@ -399,6 +399,38 @@ async function calculateMatrix(page) {
   check("есть оговорка про медицину", /не являются симптомами болезни/.test(chakraText));
   check("есть переход к расчёту матрицы", Boolean(chakraDoc.querySelector('a[href="matrix.html"]')));
 
+  console.log("\n11б. Чакры по дате рождения");
+  // Матрица: блок чакр появляется вместе с результатом (страница открыта с ?d=).
+  const matrixForChakras = openPage("matrix.html?d=1992-06-23", { admin: false });
+  await wait(900);
+  const chakraMatrixDoc = matrixForChakras.window.document;
+  const chakraMatrixText = chakraMatrixDoc.body.textContent || "";
+  check("на странице матрицы есть блок чакр", /Чакры по вашей дате/.test(chakraMatrixText));
+  check("в блоке семь чакр", /Муладхара/.test(chakraMatrixText) && /Сахасрара/.test(chakraMatrixText));
+  // 23.06.1992: сахасрара 6, вишудха 16, аджна 22, анахата 8, манипура 10,
+  // свадхистана 15, муладхара 5.
+  const chakraSnippet = chakraMatrixText.slice(chakraMatrixText.indexOf("Чакры по вашей дате"));
+  check("значения чакр посчитаны для 23.06.1992",
+    /7 · Сахасрара/.test(chakraSnippet) && /3 · Манипура/.test(chakraSnippet) &&
+      /6-я энергия/.test(chakraSnippet) && /22-я энергия/.test(chakraSnippet),
+    chakraSnippet.slice(0, 160));
+  check("у чакр показана формула расчёта", /Как считали: сахасрара \+ вишудха/.test(chakraSnippet));
+
+  // Страница «Чакры»: калькулятор по дате.
+  const chakraCalc = openPage("chakras.html", { admin: false });
+  await wait(600);
+  const calcDoc = chakraCalc.window.document;
+  check("на странице чакр есть расчёт по дате", Boolean(calcDoc.querySelector("#chakra-date")));
+  const dateInput = calcDoc.querySelector("#chakra-date");
+  if (dateInput) {
+    setValue(chakraCalc.window, dateInput, "1992-06-23");
+    await wait(400);
+    const calcText = calcDoc.body.textContent || "";
+    check("калькулятор показывает значения чакр", /Муладхара/.test(calcText) && /22/.test(calcText));
+    check("видна формула расчёта", /Как считали: сахасрара \+ центр/.test(calcText));
+    check("указана версия расчёта чакр", /chakra-22-v1/.test(calcText));
+  }
+
   const headerLinks = [...guestMatrixDoc.querySelectorAll("header a")].map((node) => node.getAttribute("href"));
   check("ссылка на гайд есть в шапке сайта", headerLinks.includes("guide.html"), headerLinks.join(","));
   check("ссылка на чакры есть в шапке сайта", headerLinks.includes("chakras.html"), headerLinks.join(","));
