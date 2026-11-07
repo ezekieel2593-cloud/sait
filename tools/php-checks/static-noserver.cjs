@@ -135,7 +135,7 @@ async function run() {
   check("в схеме есть подписи ролей", /таланты/.test(schemeText));
   check("по кругу подписан возраст", schemeText.includes("0 лет") && schemeText.includes("75 лет"));
   const noserverZoom = [...doc.querySelectorAll("button")].find((node) =>
-    (node.textContent || "").includes("Открыть схему крупно")
+    (node.textContent || "").includes("Увеличить схему")
   );
   check("кнопка увеличения схемы работает без сервера", Boolean(noserverZoom));
   if (noserverZoom) {

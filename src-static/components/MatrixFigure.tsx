@@ -6,7 +6,7 @@ import { MatrixDiagram } from "@/components/charts/MatrixDiagram";
 import { ZoomIcon } from "./icons-extra";
 
 /**
- * Схема матрицы с кнопкой «Открыть схему крупно».
+ * Схема матрицы с кнопкой «Увеличить схему».
  *
  * В браузерной версии мелкие цифры по краю читаются плохо, поэтому схему можно
  * раскрыть на весь экран и приблизить: масштаб меняется кнопками «−» и «+»,
@@ -59,7 +59,7 @@ export function MatrixFigure({
         onClick={openLarge}
         className="block w-full cursor-zoom-in rounded-[var(--radius-sm)] p-0 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--turquoise-deep)]"
         aria-label="Открыть схему матрицы крупно"
-        title="Открыть схему крупно"
+        title="Увеличить схему"
       >
         <MatrixDiagram chart={chart} />
       </button>
@@ -67,7 +67,7 @@ export function MatrixFigure({
       <div className="flex flex-wrap items-center justify-center gap-2 px-2 pt-2">
         <button type="button" className="btn btn--secondary btn--sm" onClick={openLarge}>
           <ZoomIcon className="h-4 w-4" />
-          Открыть схему крупно
+          Увеличить схему
         </button>
       </div>
 

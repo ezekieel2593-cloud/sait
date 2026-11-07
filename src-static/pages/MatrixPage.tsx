@@ -14,6 +14,7 @@ import { ChakraResult } from "../components/ChakraResult";
 import { EnergyGuideCard, LockedGuideCard } from "../components/EnergyGuideCard";
 import { GuidePdfPanel } from "../components/GuidePdfPanel";
 import { CalendarIcon } from "../components/icons-extra";
+import { ArrowLeftIcon } from "../components/icons";
 
 function today(): string {
   return new Date().toISOString().slice(0, 10);
@@ -73,6 +74,52 @@ export function MatrixPage() {
     window.history.replaceState(null, "", `?${share.toString()}`);
   }
 
+  // После расчёта форма убирается: результат занимает всю ширину страницы.
+  function backToForm() {
+    setResult(null);
+    setError(null);
+    window.history.replaceState(null, "", window.location.pathname);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  if (result) {
+    return (
+      <div className="container py-6 sm:py-10">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <button type="button" className="btn btn--secondary btn--sm" onClick={backToForm}>
+            <ArrowLeftIcon className="h-4 w-4" />
+            Назад к форме
+          </button>
+          <p className="text-[0.82rem] text-[var(--ink-soft)]">
+            Дата рождения: <span className="text-[var(--ocean)]">{result.date}</span> ·{" "}
+            <button type="button" className="underline decoration-dotted" onClick={backToForm}>
+              изменить
+            </button>
+          </p>
+        </div>
+
+        <div className="grid gap-4">
+          <div>
+            <p className="eyebrow">Матрица судьбы</p>
+            <h1 className="h-display mt-2">Ваша матрица судьбы</h1>
+            <p className="lead mt-3 max-w-3xl">
+              Ниже — полная схема по вашей дате рождения и расшифровка каждой энергии: личный квадрат, родовые
+              программы, деньги, отношения, чакры и линия жизни. Всё читается по порядку, а схему можно открыть крупно.
+            </p>
+          </div>
+          <MatrixResult result={result} guideRequest={guideRequest} onBack={backToForm} />
+        </div>
+
+        <div className="mt-6 flex justify-center">
+          <button type="button" className="btn btn--secondary" onClick={backToForm}>
+            <ArrowLeftIcon className="h-4 w-4" />
+            Назад к форме — посчитать другую матрицу
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container py-8 sm:py-12">
       <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
@@ -125,7 +172,18 @@ export function MatrixPage() {
         </div>
 
         <div className="grid gap-4">
-          {result ? <MatrixResult result={result} guideRequest={guideRequest} /> : null}
+          <div className="card p-4 sm:p-5">
+            <p className="text-[0.72rem] uppercase tracking-[0.12em] text-[var(--ink-faint)]">Что будет в разборе</p>
+            <ul className="mt-2 grid gap-1.5 text-[0.86rem] leading-snug text-[var(--ink-soft)]">
+              <li>· Большая схема: личный и родовой квадраты, центр, каналы, линия жизни.</li>
+              <li>· Расшифровка каждой энергии простыми словами.</li>
+              <li>· Чакры по вашей дате и гайды по 22 энергиям.</li>
+            </ul>
+            <p className="mt-3 text-[0.8rem] leading-relaxed text-[var(--ink-faint)]">
+              После расчёта форма убирается, а разбор открывается на всю ширину страницы — вернуться к форме можно
+              кнопкой «Назад».
+            </p>
+          </div>
         </div>
       </div>
     </div>
@@ -135,9 +193,11 @@ export function MatrixPage() {
 function MatrixResult({
   result,
   guideRequest,
+  onBack,
 }: {
   result: { chart: MatrixChart; date: string };
   guideRequest: { auto: boolean; name: string };
+  onBack?: () => void;
 }) {
   const config = getConfig();
   const admin = useAdmin();
@@ -170,9 +230,17 @@ function MatrixResult({
           {interpretation.headline}
         </h2>
         <p className="mt-2 text-[0.92rem] leading-relaxed text-[var(--ink)]">{interpretation.lead}</p>
+        {onBack ? (
+          <button type="button" className="btn btn--secondary btn--sm mt-3" onClick={onBack}>
+            <ArrowLeftIcon className="h-4 w-4" />
+            Изменить дату рождения
+          </button>
+        ) : null}
 
-        <div className="mt-4 grid gap-4 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
-          <MatrixFigure
+        {/* Сначала — большая схема, потом всё описание под ней. */}
+        <div className="mt-4 grid gap-4">
+          <div className="mx-auto w-full max-w-[54rem]">
+            <MatrixFigure
             chart={chart}
             caption={
               <>
@@ -188,11 +256,13 @@ function MatrixResult({
                   «Чакры»
                 </a>
                 .
-              </>
-            }
-          />
-          <div className="grid gap-2">
-            <div className="grid grid-cols-2 gap-2">
+                </>
+              }
+            />
+          </div>
+
+          <div className="grid gap-3">
+            <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
               <Metric label="Центр" value={`${chart.byKey.center.arcanum}`} note="зона комфорта" />
               <Metric label="Сила рода" value={`${chart.byKey["family-force"].arcanum}`} note="опора семьи" />
               <Metric
@@ -214,6 +284,7 @@ function MatrixResult({
               <EnergyChip value={chart.byKey.shared.arcanum} label="общая точка каналов" />
               <EnergyChip value={chart.yearEnergy.arcanum} label={`энергия ${chart.yearEnergy.year} года`} />
             </div>
+            <div className="grid gap-2 lg:grid-cols-2">
             <details className="rounded-[0.75rem] border border-[var(--line)] bg-white p-3 text-[0.84rem]">
               <summary className="cursor-pointer text-[var(--turquoise-deep)]">Линия жизни: возраст и энергия периода</summary>
               <ul className="mt-2 grid gap-1 sm:grid-cols-2">
@@ -245,6 +316,7 @@ function MatrixResult({
                 ))}
               </ul>
             </details>
+            </div>
           </div>
         </div>
       </section>

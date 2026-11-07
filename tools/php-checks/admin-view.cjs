@@ -441,6 +441,12 @@ async function calculateMatrix(page) {
   console.log("\n9. Схема матрицы");
   const guestMatrixDoc = guestMatrix.window.document;
   check("блока «простыми словами» на странице матрицы нет", !/Матрица простыми словами/.test(guestMatrixText));
+  // После расчёта форма убирается, как на странице натальной карты.
+  check("матрица: форма расчёта скрыта", !guestMatrixDoc.querySelector("#matrix-date"));
+  check("матрица: есть «Назад к форме»", /Назад к форме/.test(guestMatrixText));
+  check("матрица: результат подписан", /Ваша матрица судьбы/.test(guestMatrixText));
+  check("матрица: видно дату расчёта", /Дата рождения:/.test(guestMatrixText));
+  check("матрица: результат на всю ширину, без колонки формы", !guestMatrixDoc.querySelector(".lg\\:grid-cols-\\[0\\.95fr_1\\.05fr\\]"));
   const matrixSvg = guestMatrixDoc.querySelector("figure svg");
   const svgText = matrixSvg?.textContent || "";
   const circles = matrixSvg ? matrixSvg.querySelectorAll("circle").length : 0;
@@ -455,9 +461,9 @@ async function calculateMatrix(page) {
 
   console.log("\n9б. Схема крупно");
   const zoomButton = [...guestMatrixDoc.querySelectorAll("button")].find((node) =>
-    (node.textContent || "").includes("Открыть схему крупно")
+    (node.textContent || "").includes("Увеличить схему")
   );
-  check("есть кнопка «Открыть схему крупно»", Boolean(zoomButton));
+  check("есть кнопка «Увеличить схему»", Boolean(zoomButton));
   if (zoomButton) {
     zoomButton.click();
     await wait(150);
