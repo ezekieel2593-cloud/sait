@@ -47,6 +47,27 @@ export function InterpretationCard({ section, index }: { section: Interpretation
         </div>
       ) : null}
 
+      {section.list?.items.length ? (
+        <div className="mt-3 rounded-[var(--radius-sm)] border border-[var(--line)] bg-white p-3">
+          {section.list.title ? (
+            <p className="text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-[var(--ink-faint)]">
+              {section.list.title}
+            </p>
+          ) : null}
+          <ul className="mt-1.5 grid gap-0.5 text-[0.82rem] text-[var(--ocean)]">
+            {section.list.items.map((item, itemIndex) => (
+              <li key={`${item}-${itemIndex}`} className="border-b border-[var(--line)] py-0.5 last:border-0">
+                · {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {section.note ? (
+        <p className="mt-2.5 text-[0.78rem] leading-relaxed text-[var(--ink-soft)]">{section.note}</p>
+      ) : null}
+
       {section.positive?.length || section.shadow?.length ? (
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {section.positive?.length ? (

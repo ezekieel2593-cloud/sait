@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { computeNatalChart, type NatalChart } from "@/lib/astronomy/engine";
 import { buildAstrologyInterpretation } from "@/lib/interpretation/astrology";
 import { NatalWheel } from "@/components/charts/NatalWheel";
+import { AspectGrid } from "../components/AspectGrid";
+import { SynastryPanel } from "../components/SynastryPanel";
 import { InterpretationCard, LockedCard } from "@/components/result/InterpretationCard";
 import { offsetLabelAt } from "@/lib/astronomy/timezone";
 import { getConfig } from "../config";
@@ -371,6 +373,53 @@ function AstroResult({ result }: { result: { chart: NatalChart; label: string } 
           </div>
         </div>
 
+        <details className="mt-3 rounded-[0.75rem] border border-[var(--line)] bg-white p-3" open>
+          <summary className="cursor-pointer text-[0.86rem] font-semibold text-[var(--turquoise-deep)]">
+            Аспектная сетка ({chart.aspects.length})
+          </summary>
+          <p className="mb-2 mt-1 text-[0.78rem] leading-relaxed text-[var(--ink-soft)]">
+            Планеты по вертикали и горизонтали, в клетке — символ аспекта и орб в градусах. Бирюзовый цвет —
+            гармоничные аспекты, тёплый — напряжённые.
+          </p>
+          <AspectGrid chart={chart} />
+        </details>
+
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          <details className="rounded-[0.75rem] border border-[var(--line)] bg-white p-3 text-[0.84rem]">
+            <summary className="cursor-pointer text-[var(--turquoise-deep)]">Точки карты: узлы, Лилит, Хирон, Фортуна</summary>
+            <ul className="mt-2 grid gap-1">
+              {chart.points.map((point) => (
+                <li
+                  key={point.key}
+                  className="flex flex-wrap items-baseline justify-between gap-2 border-b border-[var(--line)] py-1 last:border-0"
+                >
+                  <span className="text-[var(--ocean)]">{point.symbol} {point.name}</span>
+                  <span>{point.formatted}</span>
+                  <span className="text-[0.74rem] text-[var(--ink-faint)]">
+                    {point.house ? `${point.house} дом` : "дом —"}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </details>
+
+          <details className="rounded-[0.75rem] border border-[var(--line)] bg-white p-3 text-[0.84rem]">
+            <summary className="cursor-pointer text-[var(--turquoise-deep)]">Достоинства планет</summary>
+            <ul className="mt-2 grid gap-1">
+              {chart.dignities.map((item) => (
+                <li
+                  key={item.key}
+                  className="flex flex-wrap items-baseline justify-between gap-2 border-b border-[var(--line)] py-1 last:border-0"
+                >
+                  <span className="text-[var(--ink-soft)]">{item.name}</span>
+                  <span className="text-[var(--ocean)]">{item.label}</span>
+                  <span className="text-[0.74rem] text-[var(--ink-faint)]">{item.sign}</span>
+                </li>
+              ))}
+            </ul>
+          </details>
+        </div>
+
         {chart.warnings.length > 0 ? (
           <div className="note note--warn mt-4">
             <ul className="grid gap-1 text-[0.82rem]">
@@ -381,6 +430,8 @@ function AstroResult({ result }: { result: { chart: NatalChart; label: string } 
           </div>
         ) : null}
       </section>
+
+      <SynastryPanel chart={chart} showAll={admin} />
 
       {admin ? <AdminNote locked={locked.length} /> : null}
 

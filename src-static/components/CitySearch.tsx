@@ -20,10 +20,15 @@ export function CitySearch({
   value,
   onChange,
   error,
+  id = "place-input",
+  label = "Место рождения",
 }: {
   value: PlaceValue | null;
   onChange: (place: PlaceValue | null) => void;
   error?: string;
+  /** Свой id нужен, если на странице несколько таких полей. */
+  id?: string;
+  label?: string;
 }) {
   const [query, setQuery] = useState(value ? value.name : "");
   const [open, setOpen] = useState(false);
@@ -69,20 +74,20 @@ export function CitySearch({
 
   return (
     <div className="field">
-      <label htmlFor="place-input">Место рождения</label>
+      <label htmlFor={id}>{label}</label>
       <div className="relative">
         <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ink-faint)]">
           <PinIcon className="h-4 w-4" />
         </span>
         <input
-          id="place-input"
+          id={id}
           className="input input--icon"
           type="text"
           value={query}
           placeholder="Город, посёлок или село"
           autoComplete="off"
           aria-invalid={Boolean(error)}
-          aria-describedby={error ? "place-error" : undefined}
+          aria-describedby={error ? `${id}-error` : undefined}
           onChange={(event) => {
             setQuery(event.target.value);
             setOpen(true);
@@ -184,7 +189,7 @@ export function CitySearch({
       ) : null}
 
       {error ? (
-        <p className="field__error" id="place-error">
+        <p className="field__error" id={`${id}-error`}>
           {error}
         </p>
       ) : null}

@@ -179,6 +179,65 @@ async function calculateMatrix(page) {
   check("гостю не показывают плашку владельца", !/Вы вошли как владелец/.test(guestAstroText));
   check("гость видит форму заявки", Boolean(guestAstroDoc.querySelector("#lead-name")));
 
+  /* ---------------------- новые разделы: точки, аспекты, прогноз --------- */
+
+  console.log("\n4б. Полный разбор карты: сетка, точки, достоинства, прогноз");
+  check("аспектная сетка на странице", /Аспектная сетка \(\d+\)/.test(astroText));
+  const gridCells = astroDoc.querySelectorAll("table td").length;
+  check("в сетке есть клетки аспектов", gridCells >= 100, String(gridCells));
+  check("таблица точек карты", /узлы, Лилит, Хирон, Фортуна/.test(astroText));
+  for (const point of ["Северный узел", "Южный узел", "Лилит", "Хирон", "Парс Фортуны"]) {
+    check(`точка «${point}» показана`, astroText.includes(point));
+  }
+  check("таблица достоинств", /Достоинства планет/.test(astroText));
+  const dignityRows = astroText.match(
+    /(обитель|экзальтация|изгнание|падение|нейтральное положение) · [-+]?\d/g
+  ) || [];
+  check("у каждой из 10 планет указано достоинство", dignityRows.length >= 10, String(dignityRows.length));
+  check("в разборе объясняется, что значит достоинство", /В обители планета действует как у себя дома/.test(astroText));
+  check("доминант карты", /Доминант карты — /.test(astroText));
+  check("лунный день", /Лунный день рождения: \d+-й/.test(astroText));
+  check("транзиты на дату", /Транзиты на \d+ \S+ \d{4}/.test(astroText));
+  check("медленные транзиты разобраны", /транзитный (Юпитер|Сатурн|Уран|Нептун|Плутон)/i.test(astroText));
+  check("прогрессии", /Прогрессии: внутренние часы карты/.test(astroText));
+  check("прогрессивное Солнце описано", /Прогрессивное Солнце/.test(astroText));
+  check("соляр года разобран", /Соляр \d{4}: карта года/.test(astroText));
+  check("в соляре показан момент возврата Солнца", /Солнце вернулось в натальную долготу/.test(astroText));
+  check("предупреждение о месте постройки соляра", /Соляр построен на место рождения/.test(astroText));
+  const synPanel = astroDoc.querySelector("#synastry");
+  check("блок совместимости на странице", Boolean(synPanel));
+  check("совместимость считает в браузере", /данные второго человека/i.test(synPanel?.textContent || ""));
+  const synButton = [...astroDoc.querySelectorAll("#synastry button")].find((node) =>
+    /Добавить партнёра|Свернуть/.test(node.textContent || "")
+  );
+  check("есть кнопка добавления партнёра", Boolean(synButton));
+  synButton?.dispatchEvent(new astroPage.window.Event("click", { bubbles: true }));
+  await wait(300);
+  const synForm = astroDoc.querySelector("#synastry #syn-date");
+  check("форма партнёра раскрылась", Boolean(synForm));
+  check("у формы партнёра есть поиск города", Boolean(astroDoc.querySelector("#synastry #syn-place-input")));
+  check("id полей города не дублируются", astroDoc.querySelectorAll("#place-input").length <= 1);
+  if (synForm) {
+    setValue(astroPage.window, synForm, "1990-03-15");
+    setValue(astroPage.window, astroDoc.querySelector("#syn-time"), "08:10");
+    setValue(astroPage.window, astroDoc.querySelector("#syn-place-input"), "Москва");
+    await wait(250);
+    const synCity = astroDoc.querySelector("#synastry ul button");
+    synCity?.dispatchEvent(new astroPage.window.Event("click", { bubbles: true }));
+    await wait(200);
+    const synCalc = [...astroDoc.querySelectorAll("#synastry button")].find((node) =>
+      /Рассчитать совместимость/.test(node.textContent || "")
+    );
+    synCalc?.dispatchEvent(new astroPage.window.Event("click", { bubbles: true }));
+    await wait(400);
+    const synText = astroDoc.querySelector("#synastry")?.textContent || "";
+    check("синастрия посчиталась из формы", /Совместимость: общая картина/.test(synText));
+    check("синастрия показывает счёт связей", /Поддержка/.test(synText) && /Трение/.test(synText));
+    check("синастрия показывает дома партнёра", /Планеты партнёра в ваших домах \(\d+\)/.test(synText));
+    check("синастрия объясняет, зачем нужна", /не рейтинг пары|не оценка отношений/.test(synText));
+  }
+  check("гость не видит транзитных карточек", !/Транзит .* к (Солнцу|Луне)/.test(guestAstroText) || /Транзиты на/.test(guestAstroText));
+
   /* ------------------------- описание всех 12 домов ----------------------- */
 
   console.log("\n5. Дома в разборе карты");

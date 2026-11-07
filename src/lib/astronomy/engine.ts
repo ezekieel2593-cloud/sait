@@ -11,6 +11,8 @@ import {
   type SignInfo,
 } from "./constants";
 import { offsetLabelAt, zonedTimeToUtc } from "./timezone";
+import { chironLongitude, meanLilith, meanLunarNode, norm360 as normPoint, partOfFortune } from "./points";
+import { DIGNITY_LABELS, DIGNITY_MEANING, dignityOf, type DignityState } from "./constants";
 
 /**
  * Астрологический расчётный движок (версия astro-v1).
@@ -82,6 +84,44 @@ export interface AspectHit {
   formatted: string;
 }
 
+/** Дополнительная точка карты: узел, Лилит, Хирон, Парс Фортуны. */
+export interface ChartPoint {
+  key: string;
+  name: string;
+  symbol: string;
+  longitude: number;
+  sign: string;
+  signIndex: number;
+  degreeInSign: number;
+  formatted: string;
+  house: number | null;
+  retrograde: boolean;
+  /** Как получена точка — формула словами. */
+  formula: string;
+  /** Что читают в этой точке. */
+  note: string;
+  kind: "node" | "asteroid" | "point" | "lot";
+}
+
+export interface DignityInfo {
+  key: PlanetKey;
+  name: string;
+  sign: string;
+  state: DignityState | null;
+  label: string;
+  note: string;
+  score: number;
+}
+
+export interface DominantInfo {
+  key: PlanetKey;
+  name: string;
+  symbol: string;
+  score: number;
+  /** Из чего сложился балл: достоинство, угловой дом, аспекты. */
+  reasons: string[];
+}
+
 export interface NatalChart {
   meta: {
     algorithmVersion: string;
@@ -105,6 +145,16 @@ export interface NatalChart {
     julianDay: number;
   };
   positions: PlanetPosition[];
+  /** Узлы, Лилит, Хирон, Парс Фортуны. */
+  points: ChartPoint[];
+  /** Достоинства планет: обитель, экзальтация, изгнание, падение. */
+  dignities: DignityInfo[];
+  /** Самые «весомые» планеты карты — по фиксированной шкале. */
+  dominants: DominantInfo[];
+  /** Приблизительный лунный день (по элонгации Луны). */
+  lunarDay: number;
+  /** Дневная или ночная карта: Солнце над горизонтом. */
+  dayChart: boolean | null;
   ascendant: { longitude: number; sign: string; signIndex: number; formatted: string } | null;
   midheaven: { longitude: number; sign: string; formatted: string };
   houses: HouseCusp[] | null;
@@ -360,6 +410,10 @@ export function computeNatalChart(input: NatalInput, houseSystem: HouseSystem = 
     "Положения планет рассчитаны геоцентрически и не учитывают топоцентрическую поправку (для Луны она доходит до ~1°).",
     "Плутон в astronomy-engine вычисляется приближённо (доли градуса).",
     "Исторические часовые пояса берутся из базы IANA; для дат до 1900 года возможны расхождения с местным солнечным временем.",
+    "Лунные узлы и Лилит рассчитаны как средние точки: истинный узел колеблется вокруг среднего на ±1,5°, истинная Лилит — сильнее.",
+    "Хирон рассчитан по кеплеровской орбите: его движение возмущают Сатурн и Уран, поэтому положение может отличаться на десятые доли градуса.",
+    "Парс Фортуны, асцендент, MC и дома не определяются без времени рождения.",
+    "Лунный день указан приблизительно — по элонгации Луны, без учёта восхода Луны в конкретном месте.",
   ];
 
   // ------------------------------- дата/время -------------------------------
@@ -475,6 +529,144 @@ export function computeNatalChart(input: NatalInput, houseSystem: HouseSystem = 
   }
   aspects.sort((x, y) => x.orb - y.orb);
 
+  // ---------------------- дополнительные точки карты ----------------------
+  const nodeLon = meanLunarNode(jd);
+  const lilithLon = meanLilith(jd);
+  const chironLon = chironLongitude(jd);
+  const dayChart = cusps ? (() => {
+    const sunHouse = positions.find((position) => position.key === "sun")?.house ?? null;
+    return sunHouse === null ? null : [7, 8, 9, 10, 11, 12].includes(sunHouse);
+  })() : null;
+
+  const pointSpecs: {
+    key: string;
+    name: string;
+    symbol: string;
+    longitude: number;
+    formula: string;
+    note: string;
+    kind: ChartPoint["kind"];
+  }[] = [
+    {
+      key: "north-node",
+      name: "Северный узел",
+      symbol: "☊",
+      longitude: nodeLon,
+      formula: "средний лунный узел: 125,0445° − 1934,1363°·T (Meeus, гл. 47)",
+      note: "куда человек растёт: направление, в котором раскрывается задача",
+      kind: "node",
+    },
+    {
+      key: "south-node",
+      name: "Южный узел",
+      symbol: "☋",
+      longitude: normPoint(nodeLon + 180),
+      formula: "ровно напротив Северного узла (+180°)",
+      note: "привычный опыт и зона комфорта, из которой бывает трудно выйти",
+      kind: "node",
+    },
+    {
+      key: "lilith",
+      name: "Лилит (Чёрная Луна)",
+      symbol: "⚸",
+      longitude: lilithLon,
+      formula: "средний апогей лунной орбиты: 83,3532° + 4069,0137°·T + 180°",
+      note: "теневая сторона желаний: где легко уйти в крайность или отрицание",
+      kind: "point",
+    },
+    {
+      key: "chiron",
+      name: "Хирон",
+      symbol: "⚷",
+      longitude: chironLon,
+      formula: "кеплеровская орбита: a 13,70 а.е., e 0,382, i 6,94°, период 50,76 года",
+      note: "рана и одновременно источник мастерства: уязвимое место, которое становится силой",
+      kind: "asteroid",
+    },
+  ];
+
+  if (cusps) {
+    const sunLon = positions.find((position) => position.key === "sun")!.longitude;
+    const moonLon = positions.find((position) => position.key === "moon")!.longitude;
+    pointSpecs.push({
+      key: "fortune",
+      name: "Парс Фортуны",
+      symbol: "⊗",
+      longitude: partOfFortune(ascendantLon, sunLon, moonLon, dayChart !== false),
+      formula:
+        dayChart === false
+          ? "ночная формула: асцендент + Солнце − Луна"
+          : "дневная формула: асцендент + Луна − Солнце",
+      note: "точка удачи и естественного изобилия: где легче всего приходит ощущение «получается»",
+      kind: "lot",
+    });
+  }
+
+  const points: ChartPoint[] = pointSpecs.map((spec) => {
+    const sign = signFromLongitude(spec.longitude);
+    return {
+      ...spec,
+      longitude: Number(spec.longitude.toFixed(4)),
+      sign: sign.name,
+      signIndex: sign.index,
+      degreeInSign: Number((normPoint(spec.longitude) - sign.index * 30).toFixed(4)),
+      formatted: formatDegree(spec.longitude),
+      house: cusps ? houseOf(spec.longitude, cusps) : null,
+      retrograde: spec.key === "north-node" || spec.key === "south-node" ? true : false,
+    };
+  });
+
+  // --------------------------- достоинства планет ---------------------------
+  const dignities: DignityInfo[] = positions.map((position) => {
+    const state = dignityOf(position.key, position.signIndex);
+    const score = state === "rulership" ? 3 : state === "exaltation" ? 2 : state === "detriment" ? -2 : state === "fall" ? -1 : 0;
+    return {
+      key: position.key,
+      name: position.name,
+      sign: position.sign,
+      state,
+      label: state ? DIGNITY_LABELS[state] : "нейтральное положение",
+      note: state
+        ? `В знаке ${position.sign}: ${DIGNITY_MEANING[state]}.`
+        : `В знаке ${position.sign} планета не имеет классического достоинства — действует в смешанном ключе.`,
+      score,
+    };
+  });
+
+  // ------------------------------ доминанты ------------------------------
+  // Шкала фиксированная и открытая: достоинство (−2…3), угловой дом (+2),
+  // точные аспекты (по +1 за аспект с орбом меньше 3°), светила (+1).
+  const dominants: DominantInfo[] = positions
+    .map((position) => {
+      const dignity = dignities.find((item) => item.key === position.key)!;
+      const reasons: string[] = [];
+      let score = dignity.score;
+      if (dignity.state) reasons.push(`${dignity.label} в ${position.sign}`);
+      if (position.house && [1, 4, 7, 10].includes(position.house)) {
+        score += 2;
+        reasons.push(`в угловом ${position.house} доме`);
+      }
+      const tight = aspects.filter(
+        (aspect) => (aspect.a === position.key || aspect.b === position.key) && aspect.orb < 3
+      ).length;
+      if (tight > 0) {
+        score += tight;
+        reasons.push(`${tight} точн. аспект(а) до 3°`);
+      }
+      if (position.kind === "luminary") {
+        score += 1;
+        reasons.push("светило");
+      }
+      return {
+        key: position.key,
+        name: position.name,
+        symbol: position.symbol,
+        score,
+        reasons,
+      };
+    })
+    .sort((a, b) => b.score - a.score);
+
   // ------------------------------- распределения -------------------------------
   const elements: Record<string, number> = { fire: 0, earth: 0, air: 0, water: 0 };
   const modalities: Record<string, number> = { cardinal: 0, fixed: 0, mutable: 0 };
@@ -513,6 +705,8 @@ export function computeNatalChart(input: NatalInput, houseSystem: HouseSystem = 
     name: MOON_PHASES.find((phase) => phaseAngle < phase.limit)?.name ?? "Новолуние",
     illumination: Number(((1 - Math.cos(phaseAngle * DEG)) / 2).toFixed(3)),
   };
+
+  const lunarDay = Math.min(30, Math.floor(phaseAngle / 12) + 1);
 
   const dominantElementKey = Object.entries(elements).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "fire";
   const dominantModalityKey = Object.entries(modalities).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "cardinal";
@@ -553,6 +747,11 @@ export function computeNatalChart(input: NatalInput, houseSystem: HouseSystem = 
       julianDay: Number(jd.toFixed(5)),
     },
     positions,
+    points,
+    dignities,
+    dominants,
+    lunarDay,
+    dayChart,
     ascendant: cusps
       ? {
           longitude: Number(ascendantLon.toFixed(4)),
@@ -589,6 +788,16 @@ export function computeNatalChart(input: NatalInput, houseSystem: HouseSystem = 
       dominantModality: modalityLabels[dominantModalityKey] ?? dominantModalityKey,
     },
   };
+}
+
+/** Долготы десяти планет на произвольный момент UTC — для транзитов и прогрессий. */
+export function planetLongitudesAt(utc: Date): Record<PlanetKey, number> {
+  const time = MakeTime(utc);
+  const result = {} as Record<PlanetKey, number>;
+  for (const planet of PLANETS) {
+    result[planet.key] = Number(bodyLongitude(BODY_MAP[planet.key], time).toFixed(4));
+  }
+  return result;
 }
 
 export function describeSign(index: number): SignInfo {

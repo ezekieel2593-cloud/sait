@@ -2,6 +2,15 @@ import { ELEMENT_LABELS, MODALITY_LABELS, PLANETS, SIGNS, signInSign } from "../
 import type { NatalChart, PlanetPosition } from "../astronomy/engine";
 import { getEntry, getSignEntry } from "../knowledge/queries";
 import type { Interpretation, InterpretationSection } from "./types";
+import {
+  dignitySection,
+  dominantsSection,
+  lunarDaySection,
+  pointsSections,
+  progressionSection,
+  solarReturnSection,
+  transitSections,
+} from "./astrology-extra";
 
 /**
  * Сборка персональной интерпретации из рассчитанных значений и базы знаний.
@@ -452,6 +461,13 @@ export function buildAstrologyInterpretation(
     planetSection(moon, chart, detailed),
     ascendantSection(chart),
     elementSection(chart),
+    dominantsSection(chart),
+    lunarDaySection(chart),
+    dignitySection(chart),
+    ...pointsSections(chart),
+    ...transitSections(chart),
+    progressionSection(chart),
+    solarReturnSection(chart),
     ...aspectSections(chart, maxAspects),
     ...chart.positions
       .filter((position) => !["sun", "moon"].includes(position.key))

@@ -148,3 +148,54 @@ export const SIGN_PREPOSITIONAL: Record<string, string> = {
 export function signInSign(name: string): string {
   return SIGN_PREPOSITIONAL[name] ?? name;
 }
+
+/* --------------------------- ДОСТОИНСТВА ПЛАНЕТ --------------------------- */
+
+export type DignityState = "rulership" | "exaltation" | "detriment" | "fall";
+
+export const DIGNITY_LABELS: Record<DignityState, string> = {
+  rulership: "обитель",
+  exaltation: "экзальтация",
+  detriment: "изгнание",
+  fall: "падение",
+};
+
+export const DIGNITY_MEANING: Record<DignityState, string> = {
+  rulership:
+    "планета в своём знаке — действует уверенно и естественно, её качества проявляются полной силой",
+  exaltation:
+    "планета в знаке возвышения — действует ярко и признаётся окружающими, но требует зрелости, иначе уходит в перебор",
+  detriment:
+    "планета в знаке изгнания — её привычный способ не работает, качества приходится развивать сознательно",
+  fall:
+    "планета в знаке падения — энергия действует непривычно и часто через усилие, зато здесь возможен настоящий рост",
+};
+
+/**
+ * Классические достоинства: обитель, экзальтация, изгнание, падение.
+ * Для высших планет (Уран, Нептун, Плутон) традиция неоднородна: фиксируем
+ * только обитель и изгнание, а экзальтацию и падение не приписываем.
+ * Индексы знаков: 0 — Овен … 11 — Рыбы.
+ */
+export const DIGNITIES: Record<string, Partial<Record<DignityState, number[]>>> = {
+  sun: { rulership: [4], exaltation: [0], detriment: [10], fall: [6] },
+  moon: { rulership: [3], exaltation: [1], detriment: [9], fall: [7] },
+  mercury: { rulership: [2, 5], exaltation: [5], detriment: [8, 11], fall: [11] },
+  venus: { rulership: [1, 6], exaltation: [11], detriment: [7, 0], fall: [5] },
+  mars: { rulership: [0, 7], exaltation: [9], detriment: [6, 1], fall: [3] },
+  jupiter: { rulership: [8, 11], exaltation: [3], detriment: [2, 5], fall: [9] },
+  saturn: { rulership: [9, 10], exaltation: [6], detriment: [3, 4], fall: [0] },
+  uranus: { rulership: [10], detriment: [4] },
+  neptune: { rulership: [11], detriment: [5] },
+  pluto: { rulership: [7], detriment: [1] },
+};
+
+/** Достоинство планеты в знаке или null, если планета в нейтральном положении. */
+export function dignityOf(planetKey: string, signIndex: number): DignityState | null {
+  const table = DIGNITIES[planetKey];
+  if (!table) return null;
+  for (const state of ["rulership", "exaltation", "detriment", "fall"] as DignityState[]) {
+    if ((table[state] ?? []).includes(signIndex)) return state;
+  }
+  return null;
+}

@@ -23,6 +23,10 @@ export interface InterpretationSection {
   sourceNote?: string;
   /** Техническая таблица — только в расширенном разборе для владельца. */
   table?: InterpretationTable;
+  /** Короткий список под таблицей: аспекты, совпадения, перечни. */
+  list?: { title: string; items: string[] };
+  /** Примечание к методике именно этого раздела. */
+  note?: string;
   arcana?: number;
 }
 
