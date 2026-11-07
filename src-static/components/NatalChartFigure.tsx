@@ -164,7 +164,7 @@ export function NatalChartFigure({
             <p className="border-b border-[var(--line)] px-2.5 py-1.5 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-[var(--ink-faint)]">
               Положения планет и точек
             </p>
-            <ul className="max-h-[420px] overflow-auto">
+            <ul className="max-h-[26rem] overflow-y-auto overflow-x-hidden">
               {rows.map((row) => {
                 const active = selected === row.key;
                 if (row.kind === "axis") {
@@ -173,13 +173,13 @@ export function NatalChartFigure({
                       key={row.key}
                       className="flex items-baseline justify-between gap-2 border-b border-[var(--line)] bg-[rgba(37,61,75,0.03)] px-2.5 py-1 text-[0.82rem] last:border-0"
                     >
-                      <span className="flex items-baseline gap-1.5 text-[var(--ocean)]">
+                      <span className="flex min-w-0 items-baseline gap-1.5 text-[var(--ocean)]">
                         <span className="text-[0.66rem] uppercase tracking-[0.08em] text-[var(--ink-faint)]">
                           {row.symbol}
                         </span>
-                        <span>{row.name}</span>
+                        <span className="truncate">{row.name}</span>
                       </span>
-                      <span className="whitespace-nowrap text-[0.78rem] text-[var(--ink-soft)]">{row.formatted}</span>
+                      <span className="shrink-0 whitespace-nowrap text-[0.78rem] text-[var(--ink-soft)]">{row.formatted}</span>
                     </li>
                   );
                 }
@@ -193,11 +193,11 @@ export function NatalChartFigure({
                       }`}
                       aria-pressed={active}
                     >
-                      <span className="flex items-baseline gap-1.5 text-[var(--ocean)]">
+                      <span className="flex min-w-0 items-baseline gap-1.5 text-[var(--ocean)]">
                         <span aria-hidden="true">{row.symbol}</span>
-                        <span>{row.name}</span>
+                        <span className="truncate">{row.name}</span>
                       </span>
-                      <span className="whitespace-nowrap text-[0.78rem] text-[var(--ink-soft)]">
+                      <span className="shrink-0 whitespace-nowrap text-[0.78rem] text-[var(--ink-soft)]">
                         {row.formatted}
                         {row.retrograde ? " R" : ""}
                         {row.house ? ` · ${row.house}` : ""}
