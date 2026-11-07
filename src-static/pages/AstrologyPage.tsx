@@ -13,6 +13,7 @@ import { CitySearch, type PlaceValue } from "../components/CitySearch";
 import { astrologyDetails } from "../details";
 import { AdminNote } from "../components/AdminNote";
 import { CalendarIcon, ClockIcon } from "../components/icons-extra";
+import { ArrowLeftIcon as BackIcon } from "../components/icons";
 import type { TimeAccuracy } from "@/lib/types";
 
 const STEPS = ["Дата рождения", "Время и точность", "Место рождения"] as const;
@@ -99,6 +100,53 @@ export function AstrologyPage() {
       c: input.place.country,
     });
     window.history.replaceState(null, "", `?${query.toString()}`);
+  }
+
+  // После расчёта форма убирается: результат занимает всю ширину страницы.
+  function backToForm() {
+    setResult(null);
+    setErrors({});
+    window.history.replaceState(null, "", window.location.pathname);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  if (result) {
+    return (
+      <div className="container py-6 sm:py-10">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <button type="button" className="btn btn--secondary btn--sm" onClick={backToForm}>
+            <BackIcon className="h-4 w-4" />
+            Назад к форме
+          </button>
+          <p className="text-[0.82rem] text-[var(--ink-soft)]">
+            Данные рождения: <span className="text-[var(--ocean)]">{result.label}</span> ·{" "}
+            <button type="button" className="underline decoration-dotted" onClick={backToForm}>
+              изменить
+            </button>
+          </p>
+        </div>
+
+        <div className="grid gap-4">
+          <div>
+            <p className="eyebrow">Астрология</p>
+            <h1 className="h-display mt-2">Ваша натальная карта</h1>
+            <p className="lead mt-3 max-w-3xl">
+              Планеты, знаки, асцендент, дома и аспекты посчитаны по эфемеридам с учётом исторического часового пояса
+              места рождения. Всё, что ниже, рассчитано именно для этих данных — карту можно открыть крупно, а
+              описание планет и точек читать по порядку.
+            </p>
+          </div>
+          <AstroResult result={result} onBack={backToForm} />
+        </div>
+
+        <div className="mt-6 flex justify-center">
+          <button type="button" className="btn btn--secondary" onClick={backToForm}>
+            <BackIcon className="h-4 w-4" />
+            Назад к форме — посчитать другую карту
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -262,13 +310,33 @@ export function AstrologyPage() {
           </p>
         </div>
 
-        <div className="grid gap-4">{result ? <AstroResult result={result} /> : null}</div>
+        <div className="grid gap-4">
+          <div className="card p-4 sm:p-5">
+            <p className="text-[0.72rem] uppercase tracking-[0.12em] text-[var(--ink-faint)]">Что будет в разборе</p>
+            <ul className="mt-2 grid gap-1.5 text-[0.86rem] leading-snug text-[var(--ink-soft)]">
+              <li>· Большая карта со шкалой градусов, домами, планетами и аспектами.</li>
+              <li>· Положения планет, точек, асцендента и MC, достоинства и доминант.</li>
+              <li>· Транзиты на сегодня, прогрессии и соляр года.</li>
+              <li>· Совместимость с партнёром — отдельным блоком.</li>
+            </ul>
+            <p className="mt-3 text-[0.8rem] leading-relaxed text-[var(--ink-faint)]">
+              Расчёт занимает меньше секунды и идёт в браузере. После расчёта форма убирается, а разбор
+              открывается на всю ширину страницы — вернуться к форме можно кнопкой «Назад».
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
-function AstroResult({ result }: { result: { chart: NatalChart; label: string } }) {
+function AstroResult({
+  result,
+  onBack,
+}: {
+  result: { chart: NatalChart; label: string };
+  onBack?: () => void;
+}) {
   const config = getConfig();
   const admin = useAdmin();
   const { chart, label } = result;
@@ -301,6 +369,12 @@ function AstroResult({ result }: { result: { chart: NatalChart; label: string } 
           {interpretation.headline}
         </h2>
         <p className="mt-1.5 text-[0.84rem] text-[var(--ink-soft)]">{label}</p>
+        {onBack ? (
+          <button type="button" className="btn btn--secondary btn--sm mt-3" onClick={onBack}>
+            <BackIcon className="h-4 w-4" />
+            Изменить данные рождения
+          </button>
+        ) : null}
 
         <div className="mt-4 grid gap-4">
           <NatalChartFigure

@@ -240,6 +240,30 @@ async function calculateMatrix(page) {
 
   /* ------------------------- карта: масштаб и слои ------------------------ */
 
+  console.log("\n4а. После расчёта: форма убрана, результат на всю ширину");
+  check("форма расчёта скрыта после результата", !astroDoc.querySelector("#astro-date"));
+  check("нет двухколоночной раскладки с формой", !astroDoc.querySelector(".lg\\:grid-cols-\\[0\\.95fr_1\\.05fr\\]"));
+  check("есть кнопка «Назад к форме»", /Назад к форме/.test(astroText));
+  check("результат подписан как карта", /Ваша натальная карта/.test(astroText));
+  check(
+    "в шапке результата видно, какие данные посчитаны",
+    /Данные рождения:/.test(astroText) && /1992-06-23/.test(astroText)
+  );
+  const resultColumn = astroDoc.querySelector(".container > div > div");
+  check("контейнер результата на всю ширину", Boolean(resultColumn));
+
+  // «Назад» возвращает форму с уже заполненными данными.
+  const backPage = openPage(`astrology.html${astroQuery}`, { admin: true });
+  await wait(700);
+  const backDoc = backPage.window.document;
+  const backButton = [...backDoc.querySelectorAll("button")].find((node) => /Назад к форме/.test(node.textContent || ""));
+  backButton?.dispatchEvent(new backPage.window.Event("click", { bubbles: true }));
+  await wait(400);
+  check("«Назад» возвращает форму расчёта", Boolean(backDoc.querySelector("#astro-date")));
+  check("после возврата результат убран", !/Назад к форме/.test(backDoc.body.textContent || ""));
+  check("дата рождения осталась заполненной", backDoc.querySelector("#astro-date")?.value === "1992-06-23");
+  check("адрес страницы очищен от данных", !backPage.window.location.search.includes("d="));
+
   console.log("\n4в. Натальная карта: масштаб, слои, увеличение");
   const wheelPage = openPage(`astrology.html${astroQuery}`, { admin: true });
   await wait(700);
@@ -278,8 +302,8 @@ async function calculateMatrix(page) {
   await wait(200);
 
   // Кнопка «Открыть крупно» раскрывает карту во весь экран.
-  const chartZoomButton = [...wheelDoc.querySelectorAll("figure button")].find((node) => /Открыть крупно/.test(node.textContent || ""));
-  check("кнопка «Открыть крупно» есть", Boolean(chartZoomButton));
+  const chartZoomButton = [...wheelDoc.querySelectorAll("figure button")].find((node) => /Увеличить карту/.test(node.textContent || ""));
+  check("кнопка «Увеличить карту» есть", Boolean(chartZoomButton));
   chartZoomButton?.dispatchEvent(new wheelPage.window.Event("click", { bubbles: true }));
   await wait(300);
   const dialog = wheelDoc.querySelector('[role="dialog"][aria-label="Натальная карта крупно"]');

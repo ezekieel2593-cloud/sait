@@ -221,7 +221,7 @@ async function run() {
   check("астрология: градусная шкала на месте", (astroWheel?.querySelectorAll("line").length || 0) > 380);
   check("астрология: 12 секторов знаков", (astroWheel?.querySelectorAll("path").length || 0) === 12);
   check("астрология: таблица положений рядом с картой", (astroDom.window.document.querySelectorAll("figure ul button").length || 0) >= 15);
-  check("астрология: карту можно открыть крупно", /Открыть крупно/.test(astroText));
+  check("астрология: карту можно открыть крупно", /Увеличить карту/.test(astroText));
   check("аспектная сетка собирается без сервера", /Аспектная сетка \(\d+\)/.test(astroText));
   for (const block of ["Точки карты: узлы, Лилит, Хирон, Фортуна", "Достоинства планет"]) {
     check(`без сервера есть блок «${block}»`, astroText.includes(block));

@@ -150,11 +150,11 @@ export function NatalChartFigure({
         })}
         <button type="button" className="btn btn--secondary btn--sm" onClick={openLarge}>
           <ZoomIcon className="h-4 w-4" />
-          Открыть крупно
+          Увеличить карту
         </button>
       </div>
 
-      <div className="mt-2 grid gap-3 lg:grid-cols-[1.32fr_0.68fr] lg:items-start">
+      <div className="mt-2 grid gap-3 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
         <div className="rounded-[var(--radius-md)] border border-[var(--line)] bg-[linear-gradient(180deg,#fffdfa,#fbf3ec)] p-1.5">
           <NatalWheel chart={chart} idPrefix="wheel-main" {...wheelProps} />
         </div>
