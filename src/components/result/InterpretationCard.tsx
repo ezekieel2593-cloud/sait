@@ -4,7 +4,8 @@ import { CheckIcon, LockIcon, SparkleIcon, StarIcon } from "@/components/icons";
 export function InterpretationCard({ section, index }: { section: InterpretationSection; index: number }) {
   return (
     <article
-      className="card animate-in"
+      id={`sec-${section.id}`}
+      className="card animate-in scroll-mt-28"
       data-section-key={section.id}
       style={{ animationDelay: `${Math.min(index, 5) * 60}ms` }}
     >
@@ -126,7 +127,11 @@ export function InterpretationCard({ section, index }: { section: Interpretation
 
 export function LockedCard({ section, index }: { section: InterpretationSection; index: number }) {
   return (
-    <article className="relative overflow-hidden rounded-[var(--radius-lg)] border border-[var(--line)] bg-white/60 p-5">
+    <article
+      id={`sec-${section.id}`}
+      data-section-key={section.id}
+      className="relative scroll-mt-28 overflow-hidden rounded-[var(--radius-lg)] border border-[var(--line)] bg-white/60 p-5"
+    >
       <div className="flex items-start gap-3">
         <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[var(--line-gold)] bg-[rgba(255,251,245,0.9)] text-[#9c7b4c]">
           <LockIcon className="h-4 w-4" />

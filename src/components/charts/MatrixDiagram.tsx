@@ -1,3 +1,5 @@
+import type { KeyboardEvent as ReactKeyboardEvent } from "react";
+
 import type { MatrixChart } from "@/lib/matrix/engine";
 
 /**
@@ -146,6 +148,10 @@ export function MatrixDiagram({
   compact = false,
   highlight,
   idPrefix = "mx2",
+  selected = null,
+  onSelect,
+  selectedAge = null,
+  onSelectAge,
 }: {
   chart: MatrixChart;
   compact?: boolean;
@@ -153,8 +159,33 @@ export function MatrixDiagram({
   highlight?: string[] | null;
   /** Уникальный префикс id — если на странице две схемы. */
   idPrefix?: string;
+  /** Выбранная пользователем точка: обводим заметнее. */
+  selected?: string | null;
+  /** Клик по точке схемы. */
+  onSelect?: (key: string) => void;
+  /** Выбранный возраст на линии жизни. */
+  selectedAge?: number | null;
+  onSelectAge?: (age: number) => void;
 }) {
   const active = highlight && highlight.length > 0 ? new Set(highlight) : null;
+  /** Общие атрибуты кликабельной группы — и для мыши, и для клавиатуры. */
+  const interactive = (key: string, label: string) =>
+    onSelect
+      ? {
+          role: "button" as const,
+          tabIndex: 0,
+          "aria-label": label,
+          "aria-pressed": selected === key,
+          style: { cursor: "pointer" as const },
+          onClick: () => onSelect(key),
+          onKeyDown: (event: ReactKeyboardEvent) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              onSelect(key);
+            }
+          },
+        }
+      : {};
   const dim = (key: string) => (active && !active.has(key) ? 0.32 : 1);
 
   const point = (key: string) => (key === "year" ? chart.yearEnergy : chart.byKey[key] ?? null);
@@ -204,8 +235,16 @@ export function MatrixDiagram({
     const colors = COLORS[node.key] ?? COLORS.center!;
     const isActive = active?.has(node.key) ?? false;
 
+    const isSelected = selected === node.key;
     return (
-      <g key={node.key} opacity={dim(node.key)}>
+      <g
+        key={node.key}
+        opacity={dim(node.key)}
+        {...interactive(node.key, `${value.title}: ${value.arcanumTitle}`)}
+      >
+        {isSelected ? (
+          <circle cx={center.x} cy={center.y} r={node.r + 5} fill="none" stroke="#2f6f78" strokeWidth="3" />
+        ) : null}
         {isActive ? (
           <circle cx={center.x} cy={center.y} r={node.r + 9} fill="none" stroke="#3b7b83" strokeWidth="2" strokeDasharray="5 4" />
         ) : null}
@@ -272,7 +311,29 @@ export function MatrixDiagram({
         const spot = { x: base.x + normal.x * 32, y: base.y + normal.y * 32 };
         const ageSpot = { x: base.x + normal.x * 74, y: base.y + normal.y * 74 };
         return (
-          <g key={`life-${entry.age}`} opacity={active ? 0.32 : 1}>
+          <g
+            key={`life-${entry.age}`}
+            opacity={active ? 0.32 : 1}
+            {...(onSelectAge
+              ? {
+                  role: "button" as const,
+                  tabIndex: 0,
+                  "aria-label": `${ageLabel(entry.age)}: ${entry.arcanum}-я энергия`,
+                  "aria-pressed": selectedAge === entry.age,
+                  style: { cursor: "pointer" as const },
+                  onClick: () => onSelectAge(entry.age),
+                  onKeyDown: (event: ReactKeyboardEvent) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      onSelectAge(entry.age);
+                    }
+                  },
+                }
+              : {})}
+          >
+            {selectedAge === entry.age ? (
+              <circle cx={spot.x} cy={spot.y} r="16" fill="none" stroke="#2f6f78" strokeWidth="2.4" />
+            ) : null}
             <circle cx={spot.x} cy={spot.y} r="11.5" fill="#fdf8f4" stroke="rgba(150,128,136,0.45)" strokeWidth="1" />
             <text
               x={spot.x}
@@ -394,7 +455,13 @@ export function MatrixDiagram({
       {nodeEls}
 
       {/* Центр — зона комфорта. */}
-      <g opacity={centerActive ? 1 : active ? 0.32 : 1}>
+      <g
+        opacity={centerActive ? 1 : active ? 0.32 : 1}
+        {...interactive("center", `${centerValue.title}: ${centerValue.arcanumTitle}`)}
+      >
+        {selected === "center" ? (
+          <circle cx={CX} cy={CY} r={46 + 5} fill="none" stroke="#2f6f78" strokeWidth="3" />
+        ) : null}
         {centerActive ? (
           <circle cx={CX} cy={CY} r={44 + 10} fill="none" stroke="#3b7b83" strokeWidth="2" strokeDasharray="5 4" />
         ) : null}
@@ -424,7 +491,13 @@ export function MatrixDiagram({
       {/* Энергия года и подсказка по цветам — внизу, вне восьмиугольника. */}
       {compact ? null : (
         <>
-          <g opacity={active && !active.has("year") ? 0.32 : 1}>
+          <g
+            opacity={active && !active.has("year") ? 0.32 : 1}
+            {...interactive("year", `${chart.yearEnergy.title}: ${chart.yearEnergy.arcanumTitle}`)}
+          >
+            {selected === "year" ? (
+              <rect x={CX - 122} y={HEIGHT - 204} width="244" height="50" rx="25" fill="none" stroke="#2f6f78" strokeWidth="3" />
+            ) : null}
             <rect x={CX - 118} y={HEIGHT - 200} width="236" height="42" rx="21" fill="#fffaf4" stroke="rgba(207,188,166,0.9)" />
             <circle cx={CX - 88} cy={HEIGHT - 179} r="16" fill={COLORS.year!.fill} stroke={COLORS.year!.ring} strokeWidth="1.2" />
             <text

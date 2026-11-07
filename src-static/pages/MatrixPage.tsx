@@ -15,6 +15,7 @@ import { EnergyGuideCard, LockedGuideCard } from "../components/EnergyGuideCard"
 import { GuidePdfPanel } from "../components/GuidePdfPanel";
 import { CalendarIcon } from "../components/icons-extra";
 import { ArrowLeftIcon } from "../components/icons";
+import { ReportNav, type ReportNavItem } from "../components/ReportNav";
 
 function today(): string {
   return new Date().toISOString().slice(0, 10);
@@ -222,9 +223,27 @@ function MatrixResult({
     `Отношения: вход ${chart.byKey["love-entry"].arcanumTitle}, середина ${chart.byKey["love-middle"].arcanumTitle}`,
   ].join("\n");
 
+  const chips = new Set(["r-scheme", "r-chakras", "sec-point-center", "sec-point-A", "sec-point-D"]);
+  const navItems: ReportNavItem[] = [
+    { id: "r-scheme", label: "Схема" },
+    { id: "r-chakras", label: "Чакры" },
+    ...free.map((section) => ({
+      id: `sec-${section.id}`,
+      label: section.title,
+      hint: section.subtitle,
+      secondary: !chips.has(`sec-${section.id}`),
+    })),
+    ...locked
+      .slice(0, 4)
+      .map((section) => ({ id: `sec-${section.id}`, label: section.title, locked: true, secondary: true })),
+    ...(locked.length > 0 ? [{ id: "r-locked", label: "Что скрыто", secondary: true }] : []),
+    { id: "r-guides", label: "Гайды", secondary: true },
+  ];
+
   return (
     <div className="grid gap-4">
-      <section className="card gold-frame p-4 sm:p-6">
+      <ReportNav items={navItems} />
+      <section id="r-card" className="card gold-frame scroll-mt-28 p-4 sm:p-6">
         <p className="text-[0.76rem] uppercase tracking-[0.14em] text-[var(--turquoise-deep)]">Результат</p>
         <h2 className="mt-2 font-[family-name:var(--font-display)] text-[1.5rem] leading-snug text-[var(--ocean)]">
           {interpretation.headline}
@@ -239,7 +258,7 @@ function MatrixResult({
 
         {/* Сначала — большая схема, потом всё описание под ней. */}
         <div className="mt-4 grid gap-4">
-          <div className="mx-auto w-full max-w-[54rem]">
+          <div id="r-scheme" className="mx-auto w-full max-w-[54rem] scroll-mt-28">
             <MatrixFigure
             chart={chart}
             caption={
@@ -323,7 +342,7 @@ function MatrixResult({
 
       {admin ? <AdminNote locked={locked.length} /> : null}
 
-      <section className="card p-4 sm:p-6">
+      <section id="r-chakras" className="card scroll-mt-28 p-4 sm:p-6">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="h-section">Чакры по вашей дате</h2>
           <a href="chakras.html" className="text-[0.82rem] text-[var(--turquoise-deep)] underline decoration-dotted underline-offset-2">
@@ -339,7 +358,7 @@ function MatrixResult({
         </div>
       </section>
 
-      <section className="grid gap-3">
+      <section id="r-energies" className="grid scroll-mt-28 gap-3">
         <h2 className="h-section">{admin ? "Полная расшифровка" : "Ваша расшифровка"}</h2>
         {free.map((section, index) => (
           <InterpretationCard key={section.id} section={section} index={index} />
@@ -347,7 +366,7 @@ function MatrixResult({
       </section>
 
       {locked.length > 0 ? (
-        <section className="grid gap-3">
+        <section id="r-locked" className="grid scroll-mt-28 gap-3">
           <h2 className="h-section">Что скрыто в вашей схеме</h2>
           <p className="max-w-[62ch] text-[0.94rem] leading-relaxed text-[var(--ink)]">
             В вашей матрице посчитаны все энергии — открыто пока {free.length}. За остальными {locked.length} стоят ответы
@@ -429,7 +448,7 @@ function GuidesSection({
   const autoPdf = admin && guideRequest.auto;
 
   return (
-    <section className="grid gap-3" id="guides">
+    <section className="grid scroll-mt-28 gap-3" id="r-guides">
       <h2 className="h-section">{admin ? "Гайды по энергиям" : "Гайды: что делать с вашими энергиями"}</h2>
       <p className="max-w-[62ch] text-[0.94rem] leading-relaxed text-[var(--ink)]">
         У каждой энергии есть практическая часть: как она выглядит в обычной жизни, что делать по шагам,

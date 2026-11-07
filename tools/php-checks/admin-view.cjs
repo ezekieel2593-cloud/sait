@@ -295,7 +295,8 @@ async function calculateMatrix(page) {
   sunRow?.dispatchEvent(new wheelPage.window.Event("click", { bubbles: true }));
   await wait(250);
   const summary = wheelDoc.querySelector("figure")?.textContent || "";
-  check("карточка выбранной планеты открылась", /Показать описание в расшифровке/.test(summary));
+  check("карточка выбранной планеты открылась", /Читать в расшифровке/.test(summary));
+  check("в карточке объяснено, за что отвечает планета", /За что отвечает/.test(summary));
   check("в карточке видно достоинство", /обитель|экзальтация|изгнание|падение|нейтральное/.test(summary));
   const highlighted = wheelDoc.querySelectorAll('figure svg circle[stroke="#3f8791"]').length;
   check("выбранная планета выделена на карте", highlighted === 1, String(highlighted));
@@ -339,6 +340,30 @@ async function calculateMatrix(page) {
   closeButton?.dispatchEvent(new wheelPage.window.Event("click", { bubbles: true }));
   await wait(200);
   check("окно закрывается", !wheelDoc.querySelector('[role="dialog"][aria-label="Натальная карта крупно"]'));
+
+  /* --------------------- навигация по разбору и подсказки ----------------- */
+
+  console.log("\n4г. Навигация по разбору и описания по клику");
+  check("липкая навигация по разбору есть", Boolean(astroDoc.querySelector('[aria-label="Содержание разбора"]')));
+  const navChips = [...(astroDoc.querySelector('[aria-label="Содержание разбора"]')?.querySelectorAll("button") || [])];
+  check("в полосе есть основные блоки", navChips.length >= 3, String(navChips.length));
+  const allSectionsButton = [...astroDoc.querySelectorAll("button")].find((node) =>
+    /Все разделы/.test(node.textContent || "")
+  );
+  check("есть кнопка «Все разделы»", Boolean(allSectionsButton));
+  allSectionsButton?.dispatchEvent(new astroPage.window.Event("click", { bubbles: true }));
+  await wait(250);
+  const navList = astroDoc.querySelector("#report-nav-list");
+  check("список всех разделов раскрылся", Boolean(navList));
+  const navListItems = navList?.querySelectorAll("button").length || 0;
+  check("в списке много разделов", navListItems >= 8, String(navListItems));
+  check("в списке есть «Наверх страницы»", /Наверх страницы/.test(navList?.textContent || ""));
+
+  // Каждый раздел расшифровки имеет якорь, на который ведёт навигация.
+  const anchored = [...astroDoc.querySelectorAll("[data-section-key]")].filter((node) => node.id.startsWith("sec-"));
+  check("у разделов расшифровки есть id для перехода", anchored.length >= 8, String(anchored.length));
+  const chartAnchor = astroDoc.querySelector("#r-card");
+  check("у карты есть якорь", Boolean(chartAnchor));
 
   /* ------------------------- описание всех 12 домов ----------------------- */
 
@@ -440,6 +465,12 @@ async function calculateMatrix(page) {
 
   console.log("\n9. Схема матрицы");
   const guestMatrixDoc = guestMatrix.window.document;
+  check("матрица: навигация по разбору есть", Boolean(guestMatrixDoc.querySelector('[aria-label="Содержание разбора"]')));
+  check("матрица: якорь схемы", Boolean(guestMatrixDoc.querySelector("#r-scheme")));
+  check("матрица: якорь чакр", Boolean(guestMatrixDoc.querySelector("#r-chakras")));
+  check("матрица: якорь расшифровки", Boolean(guestMatrixDoc.querySelector("#r-energies")));
+  check("матрица: якорь гайдов", Boolean(guestMatrixDoc.querySelector("#r-guides")));
+
   check("блока «простыми словами» на странице матрицы нет", !/Матрица простыми словами/.test(guestMatrixText));
   // После расчёта форма убирается, как на странице натальной карты.
   check("матрица: форма расчёта скрыта", !guestMatrixDoc.querySelector("#matrix-date"));
@@ -458,6 +489,21 @@ async function calculateMatrix(page) {
   check("по кругу подписан возраст", svgText.includes("0 лет") && svgText.includes("75 лет"));
   check("на схеме больше сорока чисел", (matrixSvg?.querySelectorAll("text").length ?? 0) >= 60,
     String(matrixSvg?.querySelectorAll("text").length ?? 0));
+
+  console.log("\n9а. Клик по точке схемы");
+  const clickableNodes = [...(guestMatrixDoc.querySelectorAll('figure svg g[role="button"]') || [])];
+  check("точки схемы кликабельны", clickableNodes.length >= 18, String(clickableNodes.length));
+  const centerNode = clickableNodes.find((node) => /Центр/.test(node.getAttribute("aria-label") || ""));
+  check("центр схемы — кнопка с подписью", Boolean(centerNode), centerNode?.getAttribute("aria-label"));
+  centerNode?.dispatchEvent(new guestMatrix.window.Event("click", { bubbles: true }));
+  await wait(250);
+  const matrixFigureText = (guestMatrixDoc.querySelector("figure")?.textContent || "").replace(/\s+/g, " ");
+  check("по клику открылось описание энергии", /Формула:/.test(matrixFigureText));
+  check("в описании есть название позиции", /зона комфорта/i.test(matrixFigureText));
+  check("в описании есть смысл энергии", /энергия/i.test(matrixFigureText));
+  check("есть кнопка «Читать в расшифровке»", /Читать в расшифровке/.test(matrixFigureText));
+  check("есть ссылка на гайд по энергиям", Boolean(guestMatrixDoc.querySelector('figure a[href="guide.html"]')));
+  check("названий карт таро в описании нет", !/Влюблённые|Иерофант|Императрица|Колесо Фортуны/.test(matrixFigureText));
 
   console.log("\n9б. Схема крупно");
   const zoomButton = [...guestMatrixDoc.querySelectorAll("button")].find((node) =>

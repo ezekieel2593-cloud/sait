@@ -1,12 +1,16 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 
-import type { MatrixChart } from "@/lib/matrix/engine";
+import type { MatrixChart, MatrixPoint } from "@/lib/matrix/engine";
 import { MatrixDiagram } from "@/components/charts/MatrixDiagram";
+import { getArcanumEntry, getPositionEntry } from "@/lib/knowledge/queries";
 
 import { ZoomIcon } from "./icons-extra";
 
 /**
- * Схема матрицы с кнопкой «Увеличить схему».
+ * Схема матрицы: точки кликабельны, под схемой открывается описание выбранной
+ * энергии — что это за позиция, как она посчитана и о чём говорит. Кнопка
+ * «Читать в расшифровке» прокручивает к её карточке, «Увеличить схему» —
+ * раскрывает схему на весь экран.
  *
  * В браузерной версии мелкие цифры по краю читаются плохо, поэтому схему можно
  * раскрыть на весь экран и приблизить: масштаб меняется кнопками «−» и «+»,
@@ -27,6 +31,34 @@ export function MatrixFigure({
 }) {
   const [open, setOpen] = useState(false);
   const [zoom, setZoom] = useState(1);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [selectedAge, setSelectedAge] = useState<number | null>(null);
+
+  const select = (key: string) => {
+    setSelected((current) => (current === key ? null : key));
+    setSelectedAge(null);
+  };
+  const selectAge = (age: number) => {
+    setSelectedAge((current) => (current === age ? null : age));
+    setSelected(null);
+  };
+
+  const point: MatrixPoint | null =
+    selected === "year" ? chart.yearEnergy : selected ? chart.byKey[selected] ?? null : null;
+  const lifePoint = selectedAge === null ? null : chart.lifeLine.find((entry) => entry.age === selectedAge) ?? null;
+  const position = point ? getPositionEntry(point.key) : undefined;
+  const arcana = point ? getArcanumEntry(point.arcanum) : selectedAge !== null ? getArcanumEntry(lifePoint?.arcanum ?? 0) : undefined;
+
+  const scrollToSection = () => {
+    if (typeof document === "undefined" || !point) return;
+    const target =
+      document.getElementById(`sec-point-${point.key}`) ??
+      document.getElementById("r-energies") ??
+      document.getElementById("r-locked");
+    if (target && typeof target.scrollIntoView === "function") {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
 
   const close = useCallback(() => setOpen(false), []);
 
@@ -54,22 +86,96 @@ export function MatrixFigure({
 
   return (
     <figure className="m-0 rounded-[var(--radius-md)] border border-[var(--line)] bg-[linear-gradient(180deg,#fffdfa,#fbf3ec)] p-2">
-      <button
-        type="button"
-        onClick={openLarge}
-        className="block w-full cursor-zoom-in rounded-[var(--radius-sm)] p-0 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--turquoise-deep)]"
-        aria-label="Открыть схему матрицы крупно"
-        title="Увеличить схему"
-      >
-        <MatrixDiagram chart={chart} />
-      </button>
+      <div className="rounded-[var(--radius-sm)]">
+        <MatrixDiagram
+          chart={chart}
+          selected={selected}
+          onSelect={select}
+          selectedAge={selectedAge}
+          onSelectAge={selectAge}
+        />
+      </div>
 
       <div className="flex flex-wrap items-center justify-center gap-2 px-2 pt-2">
         <button type="button" className="btn btn--secondary btn--sm" onClick={openLarge}>
           <ZoomIcon className="h-4 w-4" />
           Увеличить схему
         </button>
+        <p className="basis-full text-center text-[0.76rem] text-[var(--ink-soft)]">
+          Нажмите на круг со схемой — откроется описание этой энергии.
+        </p>
       </div>
+
+      {point ? (
+        <div className="mx-1 mt-2 rounded-[var(--radius-sm)] border border-[rgba(63,135,145,0.35)] bg-[rgba(244,251,251,0.75)] p-3">
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <p className="text-[0.72rem] uppercase tracking-[0.12em] text-[var(--turquoise-deep)]">
+                {point.title}
+                {selected === "year" ? ` · ${chart.yearEnergy.year} год` : ""}
+              </p>
+              <p className="mt-0.5 text-[1.05rem] font-semibold text-[var(--ocean)]">{point.arcanumTitle}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSelected(null)}
+              className="text-[0.76rem] text-[var(--ink-faint)] underline decoration-dotted"
+            >
+              сбросить
+            </button>
+          </div>
+
+          {position ? (
+            <p className="mt-1.5 text-[0.84rem] leading-relaxed text-[var(--ink)]">{position.summary}</p>
+          ) : null}
+          {arcana ? (
+            <p className="mt-1.5 text-[0.84rem] leading-relaxed text-[var(--ink-soft)]">{arcana.summary}</p>
+          ) : null}
+          <p className="mt-1.5 text-[0.78rem] text-[var(--ink-faint)]">Формула: {point.formula}</p>
+
+          {arcana?.positive?.length ? (
+            <p className="mt-1.5 text-[0.8rem] leading-relaxed text-[var(--ink-soft)]">
+              <span className="text-[#2f6f78]">В плюсе:</span> {arcana.positive.slice(0, 2).join(" ")}
+            </p>
+          ) : null}
+          {arcana?.shadow?.length ? (
+            <p className="mt-1 text-[0.8rem] leading-relaxed text-[var(--ink-soft)]">
+              <span className="text-[#a86a5a]">В минусе:</span> {arcana.shadow.slice(0, 2).join(" ")}
+            </p>
+          ) : null}
+
+          <div className="mt-2 flex flex-wrap gap-2">
+            <button type="button" className="btn btn--primary btn--sm" onClick={scrollToSection}>
+              Читать в расшифровке ↓
+            </button>
+            <a
+              href="guide.html"
+              className="btn btn--secondary btn--sm"
+              title="Гайд по 22 энергиям"
+            >
+              Что это за энергия
+            </a>
+          </div>
+        </div>
+      ) : lifePoint ? (
+        <div className="mx-1 mt-2 rounded-[var(--radius-sm)] border border-[rgba(63,135,145,0.35)] bg-[rgba(244,251,251,0.75)] p-3">
+          <p className="text-[0.72rem] uppercase tracking-[0.12em] text-[var(--turquoise-deep)]">
+            Линия жизни · {selectedAge} лет
+          </p>
+          <p className="mt-0.5 text-[1.05rem] font-semibold text-[var(--ocean)]">
+            {lifePoint.arcanum}-я энергия периода
+          </p>
+          {arcana ? <p className="mt-1.5 text-[0.84rem] leading-relaxed text-[var(--ink-soft)]">{arcana.summary}</p> : null}
+          <p className="mt-1.5 text-[0.78rem] text-[var(--ink-faint)]">Формула: {lifePoint.formula}</p>
+          <button
+            type="button"
+            className="mt-2 text-[0.8rem] text-[var(--turquoise-deep)] underline decoration-dotted"
+            onClick={() => setSelectedAge(null)}
+          >
+            сбросить
+          </button>
+        </div>
+      ) : null}
 
       {caption ? (
         <figcaption className="px-2 pb-1 pt-2 text-[0.78rem] leading-relaxed text-[var(--ink-soft)]">{caption}</figcaption>
@@ -122,13 +228,21 @@ export function MatrixFigure({
             onClick={(event) => event.stopPropagation()}
           >
             <div style={{ width: `${BASE_WIDTH * zoom}px`, maxWidth: "100%" }}>
-              <MatrixDiagram chart={chart} compact={false} idPrefix="mx-zoom" />
+              <MatrixDiagram
+                chart={chart}
+                compact={false}
+                idPrefix="mx-zoom"
+                selected={selected}
+                onSelect={select}
+                selectedAge={selectedAge}
+                onSelectAge={selectAge}
+              />
             </div>
           </div>
 
           <p className="mx-auto mt-2 max-w-[1500px] text-center text-[0.76rem] text-[rgba(255,255,255,0.75)]">
-            Прокрутите схему, чтобы увидеть край, — по кругу идут возраст и энергия каждого периода. Esc или клик по
-            фону закрывают окно.
+            Прокрутите схему, чтобы увидеть край, — по кругу идут возраст и энергия каждого периода. Круги на схеме
+            кликабельны: выберите энергию, чтобы прочитать описание. Esc или клик по фону закрывают окно.
           </p>
         </div>
       ) : null}

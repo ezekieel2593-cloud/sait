@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { NatalWheel, NatalWheelLegend } from "@/components/charts/NatalWheel";
 import type { NatalChart } from "@/lib/astronomy/engine";
+import { getEntry } from "@/lib/knowledge/queries";
 
 import { ZoomIcon } from "./icons-extra";
 
@@ -105,6 +106,8 @@ export function NatalChartFigure({
   );
 
   const selectedRow = rows.find((row) => row.key === selected) ?? null;
+  // Текстовая подсказка к выбранной планете — из той же базы знаний, что и разбор.
+  const selectedEntry = selectedRow?.kind === "planet" ? getEntry("planet", selectedRow.key) : undefined;
   const selectedPoint = chart.points.find((point) => point.key === selected) ?? null;
   const selectedDignity = chart.dignities.find((item) => item.key === selected) ?? null;
   const selectedAspects = useMemo(
@@ -229,6 +232,13 @@ export function NatalChartFigure({
                 {selectedRow.house ? ` · ${selectedRow.house}-й дом` : ""}
               </p>
 
+              {selectedEntry ? (
+                <p className="mt-1.5 text-[0.8rem] leading-relaxed text-[var(--ink-soft)]">
+                  <span className="text-[var(--ocean)]">За что отвечает:</span>{" "}
+                  {selectedEntry.details.theme ?? selectedEntry.summary}
+                </p>
+              ) : null}
+
               {selectedDignity ? (
                 <p className="mt-1.5 text-[0.8rem] leading-relaxed text-[var(--ink-soft)]">
                   <span className="font-semibold text-[var(--ocean)]">{selectedDignity.label}</span> ·{" "}
@@ -264,11 +274,14 @@ export function NatalChartFigure({
                 type="button"
                 className="mt-2 text-[0.8rem] text-[var(--turquoise-deep)] underline decoration-dotted"
                 onClick={() => {
-                  const target = document.querySelector(`[data-section-key="planet-${selectedRow.key}"]`);
-                  target?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  const own = document.getElementById(`sec-${selectedRow.kind === "planet" ? "planet" : "point"}-${selectedRow.key}`);
+                  const target = own ?? document.getElementById("r-locked") ?? document.getElementById("r-card");
+                  if (target && typeof target.scrollIntoView === "function") {
+                    target.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }
                 }}
               >
-                Показать описание в расшифровке ↓
+                {selectedRow.kind === "planet" ? "Читать в расшифровке ↓" : "Читать про эту точку ↓"}
               </button>
             </div>
           ) : (
