@@ -282,6 +282,14 @@ async function calculateMatrix(page) {
   check("таблица положений рядом с картой", tableButs >= 15, String(tableButs));
   check("в таблице есть асцендент и MC", /Асцендент/.test(wheelDoc.querySelector("figure")?.textContent || ""));
 
+  // Аспектные линии идут от глифа к глифу и не обрываются в воздухе.
+  check("аспектные линии скрываются за центральной сферой", Boolean(wheelSvg?.querySelector("mask")));
+  const wheelGlyphs = [...(wheelSvg?.querySelectorAll("text") || [])]
+    .filter((node) => node.textContent && node.textContent.includes("\uFE0E"));
+  check("символы карты — текстовые, а не эмодзи", wheelGlyphs.length >= 22, String(wheelGlyphs.length));
+  const glyphFont = wheelGlyphs[0]?.getAttribute("font-family") || "";
+  check("у символов задан шрифт с астро-глифами", /DejaVu Sans|Segoe UI Symbol|Noto Sans Symbols/.test(glyphFont), glyphFont);
+
   // Выбор планеты подсвечивает её аспекты и открывает карточку.
   const sunRow = [...wheelDoc.querySelectorAll("figure ul button")].find((node) => /Солнце/.test(node.textContent || ""));
   sunRow?.dispatchEvent(new wheelPage.window.Event("click", { bubbles: true }));

@@ -69,6 +69,14 @@ function shortDegree(longitude: number) {
   return `${degrees}°${String(minutes).padStart(2, "0")}′`;
 }
 
+/**
+ * Символы зодиака и планет в Юникоде попадают в диапазон эмодзи, и браузер
+ * рисует их цветными квадратиками. Стек шрифтов и вариационный селектор
+ * \uFE0E (текстовое представление) возвращают обычные типографские глифы.
+ */
+const GLYPH_FONT =
+  "'DejaVu Sans', 'Segoe UI Symbol', 'Apple Symbols', 'Noto Sans Symbols 2', 'Cormorant Garamond', Georgia, serif";
+
 function radiusPlanetFor(item: WheelItem) {
   return item.kind === "point" ? 9 : 12;
 }
@@ -140,7 +148,7 @@ export function NatalWheel({
   // Планеты, стоящие близко, иначе наезжают друг на друга. Разводим их по
   // кольцу с минимальным шагом, а к точному градусу тянем тонкую выноску:
   // так градус остаётся честным, а подписи читаются.
-  const MIN_STEP = 11;
+  const MIN_STEP = 13;
   const sorted = [...items]
     .map((item) => ({ item, angle: rotate(item.longitude) }))
     .sort((a, b) => a.angle - b.angle);
@@ -165,6 +173,9 @@ export function NatalWheel({
   }
 
   const placed = sorted.map((entry, index) => ({ ...entry, displayAngle: displayAngles[index]! }));
+  // Аспектные линии ведём между глифами планет, а не по внутреннему кругу:
+  // иначе линия «обрезается» и непонятно, кого она соединяет.
+  const displayAngleByKey = new Map(placed.map((entry) => [entry.item.key, entry.displayAngle]));
 
 
   const cusps = chart.houses?.map((house) => rotate(house.cusp)) ?? null;
@@ -207,6 +218,11 @@ export function NatalWheel({
         <filter id={`${idPrefix}-soft`} x="-30%" y="-30%" width="160%" height="160%">
           <feDropShadow dx="0" dy="1.5" stdDeviation="1.6" floodColor="#7a5f57" floodOpacity="0.22" />
         </filter>
+        {/* Аспектные линии прячутся за центральной сферой, а не обрываются в воздухе. */}
+        <mask id={`${idPrefix}-aspect-mask`}>
+          <rect x="0" y="0" width={SIZE} height={SIZE} fill="#fff" />
+          <circle cx={C} cy={C} r={R.center + 2} fill="#000" />
+        </mask>
       </defs>
 
       {/* Фон */}
@@ -234,9 +250,10 @@ export function NatalWheel({
               dominantBaseline="central"
               fontSize="23"
               fill="#5a4d55"
-              fontFamily="'Cormorant Garamond', Georgia, serif"
+              fontFamily={GLYPH_FONT}
             >
               {sign.symbol}
+              {"\uFE0E"}
             </text>
             <text
               x={middle.x}
@@ -323,8 +340,8 @@ export function NatalWheel({
           <line
             x1={polar(R.signOuter, 0).x}
             y1={polar(R.signOuter, 0).y}
-            x2={polar(R.aspect, 180).x}
-            y2={polar(R.aspect, 180).y}
+            x2={polar(R.signOuter, 180).x}
+            y2={polar(R.signOuter, 180).y}
             stroke="rgba(63,135,145,0.55)"
             strokeWidth="1.4"
           />
@@ -357,8 +374,8 @@ export function NatalWheel({
       <line
         x1={polar(R.signOuter, mc).x}
         y1={polar(R.signOuter, mc).y}
-        x2={polar(R.aspect, mc + 180).x}
-        y2={polar(R.aspect, mc + 180).y}
+        x2={polar(R.signOuter, mc + 180).x}
+        y2={polar(R.signOuter, mc + 180).y}
         stroke="rgba(201,167,119,0.85)"
         strokeWidth="1.2"
       />
@@ -388,13 +405,13 @@ export function NatalWheel({
 
       {/* Аспектные линии */}
       {showAspects ? (
-        <g>
+        <g mask={`url(#${idPrefix}-aspect-mask)`}>
           {chart.aspects.map((aspect) => {
-            const aLongitude = longitudeByKey.get(aspect.a);
-            const bLongitude = longitudeByKey.get(aspect.b);
-            if (aLongitude === undefined || bLongitude === undefined) return null;
-            const a = polar(R.aspect, rotate(aLongitude));
-            const b = polar(R.aspect, rotate(bLongitude));
+            const aAngle = displayAngleByKey.get(aspect.a);
+            const bAngle = displayAngleByKey.get(aspect.b);
+            if (aAngle === undefined || bAngle === undefined) return null;
+            const a = polar(R.planet, aAngle);
+            const b = polar(R.planet, bAngle);
             const active = !highlight || highlight === aspect.a || highlight === aspect.b;
             const isConjunction = aspect.type === "conjunction";
             return (
@@ -418,7 +435,7 @@ export function NatalWheel({
       {placed.map(({ item, angle, displayAngle }) => {
         const radius = R.planet;
         const point = polar(radius, displayAngle);
-        const degreePoint = polar(radius - 20, displayAngle);
+        const degreePoint = polar(radius - 23, displayAngle);
         const exactPoint = polar(R.signInner, angle);
         const isActive = highlight === item.key;
         const isPoint = item.kind === "point";
@@ -472,9 +489,10 @@ export function NatalWheel({
               dominantBaseline="central"
               fontSize={isPoint ? 11 : 13}
               fill="#253d4b"
-              fontFamily="'Cormorant Garamond', Georgia, serif"
+              fontFamily={GLYPH_FONT}
             >
               {item.symbol}
+              {"\uFE0E"}
             </text>
             {showDegreeLabels ? (
               <text
@@ -484,6 +502,9 @@ export function NatalWheel({
                 dominantBaseline="central"
                 fontSize="8.5"
                 fill={item.retrograde ? "#a1604a" : "#7d7078"}
+                stroke="#fffdfa"
+                strokeWidth="2.6"
+                paintOrder="stroke"
               >
                 {degreeLabel}
               </text>
