@@ -4,7 +4,6 @@ import { buildMatrixInterpretation } from "@/lib/interpretation/matrix";
 import { buildMatrixGuides, guideToText } from "@/lib/interpretation/guides";
 import { buildSimpleGuide } from "@/lib/interpretation/simple";
 import { MatrixFigure } from "../components/MatrixFigure";
-import { InterpretationCard, LockedCard } from "@/components/result/InterpretationCard";
 import { getConfig } from "../config";
 import { useAdmin } from "../admin";
 import { LeadForm } from "../components/LeadForm";
@@ -16,6 +15,8 @@ import { GuidePdfPanel } from "../components/GuidePdfPanel";
 import { CalendarIcon } from "../components/icons-extra";
 import { ArrowLeftIcon } from "../components/icons";
 import { ReportNav, type ReportNavItem } from "../components/ReportNav";
+import { ReportSections } from "../components/ReportSections";
+import { plainHint } from "@/lib/interpretation/plain";
 
 function today(): string {
   return new Date().toISOString().slice(0, 10);
@@ -230,12 +231,16 @@ function MatrixResult({
     ...free.map((section) => ({
       id: `sec-${section.id}`,
       label: section.title,
-      hint: section.subtitle,
+      hint: plainHint(section.id) ?? section.subtitle,
       secondary: !chips.has(`sec-${section.id}`),
     })),
-    ...locked
-      .slice(0, 4)
-      .map((section) => ({ id: `sec-${section.id}`, label: section.title, locked: true, secondary: true })),
+    ...locked.slice(0, 4).map((section) => ({
+      id: `sec-${section.id}`,
+      label: section.title,
+      hint: plainHint(section.id),
+      locked: true,
+      secondary: true,
+    })),
     ...(locked.length > 0 ? [{ id: "r-locked", label: "Что скрыто", secondary: true }] : []),
     { id: "r-guides", label: "Гайды", secondary: true },
   ];
@@ -358,29 +363,15 @@ function MatrixResult({
         </div>
       </section>
 
-      <section id="r-energies" className="grid scroll-mt-28 gap-3">
-        <h2 className="h-section">{admin ? "Полная расшифровка" : "Ваша расшифровка"}</h2>
-        {free.map((section, index) => (
-          <InterpretationCard key={section.id} section={section} index={index} />
-        ))}
-      </section>
-
-      {locked.length > 0 ? (
-        <section id="r-locked" className="grid scroll-mt-28 gap-3">
-          <h2 className="h-section">Что скрыто в вашей схеме</h2>
-          <p className="max-w-[62ch] text-[0.94rem] leading-relaxed text-[var(--ink)]">
-            В вашей матрице посчитаны все энергии — открыто пока {free.length}. За остальными {locked.length} стоят ответы
-            на самые частые вопросы: почему деньги приходят рывками, откуда берётся один и тот же сценарий в отношениях,
-            что вы повторяете за родом и куда вам действительно стоит идти в этом году. Каждая энергия у вас уже есть —
-            остаётся прочитать её про вас.
-          </p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {locked.slice(0, 4).map((section, index) => (
-              <LockedCard key={section.id} section={section} index={index} />
-            ))}
-          </div>
-        </section>
-      ) : null}
+      <div id="r-energies" className="scroll-mt-28">
+        <ReportSections
+          sections={free}
+          locked={locked}
+          heading={admin ? "Полная расшифровка по разделам" : "Ваша расшифровка по разделам"}
+          lockedHeading="Что скрыто в вашей схеме"
+          lockedIntro={`В вашей матрице посчитаны все энергии — открыто пока ${free.length}. За остальными ${locked.length} стоят ответы на самые частые вопросы: почему деньги приходят рывками, откуда берётся один и тот же сценарий в отношениях, что вы повторяете за родом и куда вам действительно стоит идти в этом году. Каждая энергия у вас уже есть — остаётся прочитать её про вас.`}
+        />
+      </div>
 
       <GuidesSection
         chart={chart}

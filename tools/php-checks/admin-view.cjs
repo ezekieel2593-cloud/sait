@@ -105,6 +105,19 @@ function setValue(window, el, value) {
   el.dispatchEvent(new window.Event("change", { bubbles: true }));
 }
 
+/**
+ * Разделы разбора по умолчанию свёрнуты. Перед проверкой текстов раскрываем
+ * все пункты кнопкой «Раскрыть все» — так же, как это сделал бы человек.
+ */
+async function expandReport(page) {
+  const doc = page.window.document;
+  const button = [...doc.querySelectorAll("button")].find((node) => /Раскрыть все/.test(node.textContent || ""));
+  if (!button) return false;
+  button.dispatchEvent(new page.window.Event("click", { bubbles: true }));
+  await wait(400);
+  return true;
+}
+
 async function calculateMatrix(page) {
   const doc = page.window.document;
   await wait(350);
@@ -139,6 +152,7 @@ async function calculateMatrix(page) {
   console.log("\n2. Владелец: матрица");
   const adminPage = openPage("matrix.html", { admin: true });
   check("матрица считается", await calculateMatrix(adminPage));
+  check("владельцу доступна кнопка «Раскрыть все»", await expandReport(adminPage));
   const adminDoc = adminPage.window.document;
   const adminText = adminDoc.body.textContent || "";
   check("заголовок «Полная расшифровка»", /Полная расшифровка/.test(adminText));
@@ -162,6 +176,7 @@ async function calculateMatrix(page) {
     "?d=1992-06-23&a=exact&t=14%3A30&c=Москва&p=Москва&la=55.7558&lo=37.6173&tz=Europe%2FMoscow";
   const astroPage = openPage(`astrology.html${astroQuery}`, { admin: true });
   await wait(700);
+  check("владельцу доступна кнопка «Раскрыть все» в астрологии", await expandReport(astroPage));
   const astroDoc = astroPage.window.document;
   const astroText = astroDoc.body.textContent || "";
   check("карта рассчитана", /Асцендент|Солнце/.test(astroText));
@@ -301,6 +316,19 @@ async function calculateMatrix(page) {
   const highlighted = wheelDoc.querySelectorAll('figure svg circle[stroke="#3f8791"]').length;
   check("выбранная планета выделена на карте", highlighted === 1, String(highlighted));
 
+  // Кнопка «Читать в расшифровке» раскрывает раздел этой планеты.
+  const readButton = [...wheelDoc.querySelectorAll("figure button")].find((node) =>
+    /Читать в расшифровке/.test(node.textContent || "")
+  );
+  check("у выбранной планеты есть «Читать в расшифровке»", Boolean(readButton));
+  readButton?.dispatchEvent(new wheelPage.window.Event("click", { bubbles: true }));
+  await wait(400);
+  check(
+    "кнопка раскрывает раздел планеты",
+    Boolean(wheelDoc.querySelector("#sec-body-planet-sun")),
+    String(Boolean(wheelDoc.querySelector("#sec-body-planet-sun")))
+  );
+
   // Слои: отключаем аспекты — линий на карте становится меньше.
   const aspectsChip = [...wheelDoc.querySelectorAll("figure button")].find((node) => /Аспекты/.test(node.textContent || ""));
   aspectsChip?.dispatchEvent(new wheelPage.window.Event("click", { bubbles: true }));
@@ -364,6 +392,63 @@ async function calculateMatrix(page) {
   check("у разделов расшифровки есть id для перехода", anchored.length >= 8, String(anchored.length));
   const chartAnchor = astroDoc.querySelector("#r-card");
   check("у карты есть якорь", Boolean(chartAnchor));
+
+  /* ------------------- разделы списком: свёрнуто и раскрытие --------------- */
+
+  console.log("\n4д. Разделы расшифровки списком");
+  const reportPage = openPage(`astrology.html${astroQuery}`, { admin: true });
+  await wait(900);
+  const reportDoc = reportPage.window.document;
+  const reportRows = [...reportDoc.querySelectorAll("#r-report ol > li")];
+  check("разделы собраны в список", reportRows.length >= 20, String(reportRows.length));
+  check(
+    "у каждого раздела есть название",
+    reportRows.every((row) => (row.querySelector("button")?.textContent || "").length > 5)
+  );
+  const openedByDefault = reportRows.filter((row) => row.querySelector('[id^="sec-body-"]')).length;
+  check("по умолчанию раскрыт один раздел", openedByDefault === 1, String(openedByDefault));
+  const hintsInTitles = reportRows.filter((row) => /\([^)]{8,}\)/.test(row.textContent || "")).length;
+  check("у названий есть пояснение в скобках", hintsInTitles >= reportRows.length - 2, String(hintsInTitles));
+  const hintsText = reportRows.map((row) => row.textContent || "").join(" ");
+  check("пояснения говорят бытовым языком", /(твоя суть|эмоции|деньги|любовь|где у тебя сила)/i.test(hintsText));
+
+  const secondRow = reportRows[1];
+  secondRow?.querySelector("button")?.dispatchEvent(new reportPage.window.Event("click", { bubbles: true }));
+  await wait(300);
+  const secondBody = reportDoc.querySelector(`#sec-body-${reportRows[1]?.id.replace("sec-", "")}`);
+  check("нажатие раскрывает раздел", Boolean(secondBody));
+  check("в раскрытом разделе полный текст", (secondBody?.textContent || "").length > 200);
+  check("в раскрытом разделе нет дублирующего заголовка", (secondBody?.querySelectorAll("h3").length || 0) === 0);
+
+  const openAll = [...reportDoc.querySelectorAll("button")].find((node) => /Раскрыть все/.test(node.textContent || ""));
+  openAll?.dispatchEvent(new reportPage.window.Event("click", { bubbles: true }));
+  await wait(400);
+  const openedAfterAll = reportDoc.querySelectorAll('[id^="sec-body-"]').length;
+  check("«Раскрыть все» открывает все разделы", openedAfterAll === reportRows.length, `${openedAfterAll}/${reportRows.length}`);
+  const collapseAll = [...reportDoc.querySelectorAll("button")].find((node) => /Свернуть все/.test(node.textContent || ""));
+  check("кнопка переключается на «Свернуть все»", Boolean(collapseAll));
+  collapseAll?.dispatchEvent(new reportPage.window.Event("click", { bubbles: true }));
+  await wait(300);
+  check(
+    "«Свернуть все» закрывает разделы",
+    reportDoc.querySelectorAll('[id^="sec-body-"]').length === 0,
+    String(reportDoc.querySelectorAll('[id^="sec-body-"]').length)
+  );
+
+  // Переход из полосы навигации открывает свёрнутый раздел.
+  const navListButton = [...reportDoc.querySelectorAll("button")].find((node) => /Все разделы/.test(node.textContent || ""));
+  navListButton?.dispatchEvent(new reportPage.window.Event("click", { bubbles: true }));
+  await wait(200);
+  const navItems = [...(reportDoc.querySelector("#report-nav-list")?.querySelectorAll("button") || [])];
+  const targetNav = navItems.find((node) => /Достоинства/i.test(node.textContent || ""));
+  check("в списке навигации есть пояснения простыми словами", /где у тебя сила/i.test(reportDoc.querySelector("#report-nav-list")?.textContent || ""));
+  targetNav?.dispatchEvent(new reportPage.window.Event("click", { bubbles: true }));
+  await wait(400);
+  check(
+    "переход из навигации раскрывает раздел",
+    Boolean(reportDoc.querySelector("#sec-body-dignities")),
+    String(Boolean(reportDoc.querySelector("#sec-body-dignities")))
+  );
 
   /* ------------------------- описание всех 12 домов ----------------------- */
 
@@ -489,6 +574,19 @@ async function calculateMatrix(page) {
   check("по кругу подписан возраст", svgText.includes("0 лет") && svgText.includes("75 лет"));
   check("на схеме больше сорока чисел", (matrixSvg?.querySelectorAll("text").length ?? 0) >= 60,
     String(matrixSvg?.querySelectorAll("text").length ?? 0));
+
+  console.log("\n9в. Матрица: разделы списком и пояснения");
+  const matrixRows = [...guestMatrixDoc.querySelectorAll("#r-report ol > li")];
+  check("матрица: разделы собраны в список", matrixRows.length >= 3, String(matrixRows.length));
+  check(
+    "матрица: у названий есть пояснение в скобках",
+    matrixRows.filter((row) => /\([^)]{6,}\)/.test(row.textContent || "")).length >= Math.min(2, matrixRows.length)
+  );
+  check(
+    "матрица: пояснения бытовые",
+    /(зона комфорта|деньги|любовь|талант|род)/i.test(matrixRows.map((row) => row.textContent || "").join(" "))
+  );
+  check("матрица: по умолчанию раскрыт один раздел", matrixRows.filter((row) => row.querySelector('[id^="sec-body-"]')).length === 1);
 
   console.log("\n9а. Клик по точке схемы");
   const clickableNodes = [...(guestMatrixDoc.querySelectorAll('figure svg g[role="button"]') || [])];

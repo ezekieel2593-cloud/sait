@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { revealSection } from "./section-open";
+
 /**
  * Навигация по готовому разбору: липкая полоса с основными блоками и кнопка
  * «Содержание», которая раскрывает весь список разделов.
@@ -21,13 +23,9 @@ export interface ReportNavItem {
   secondary?: boolean;
 }
 
+/** Переход к разделу: свёрнутый раздел сначала раскрывается. */
 function scrollToId(id: string) {
-  if (typeof document === "undefined") return;
-  const target = document.getElementById(id);
-  if (!target) return;
-  if (typeof target.scrollIntoView === "function") {
-    target.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
+  revealSection(id);
 }
 
 export function ReportNav({ items, title = "Содержание разбора" }: { items: ReportNavItem[]; title?: string }) {

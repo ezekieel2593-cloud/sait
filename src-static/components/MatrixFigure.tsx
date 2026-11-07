@@ -5,6 +5,7 @@ import { MatrixDiagram } from "@/components/charts/MatrixDiagram";
 import { getArcanumEntry, getPositionEntry } from "@/lib/knowledge/queries";
 
 import { ZoomIcon } from "./icons-extra";
+import { revealSection } from "./section-open";
 
 /**
  * Схема матрицы: точки кликабельны, под схемой открывается описание выбранной
@@ -51,13 +52,12 @@ export function MatrixFigure({
 
   const scrollToSection = () => {
     if (typeof document === "undefined" || !point) return;
-    const target =
-      document.getElementById(`sec-point-${point.key}`) ??
-      document.getElementById("r-energies") ??
-      document.getElementById("r-locked");
-    if (target && typeof target.scrollIntoView === "function") {
-      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    const own = `sec-point-${point.key}`;
+    if (document.getElementById(own)) {
+      revealSection(own);
+      return;
     }
+    revealSection("r-energies");
   };
 
   const close = useCallback(() => setOpen(false), []);

@@ -5,6 +5,7 @@ import type { NatalChart } from "@/lib/astronomy/engine";
 import { getEntry } from "@/lib/knowledge/queries";
 
 import { ZoomIcon } from "./icons-extra";
+import { revealSection } from "./section-open";
 
 /**
  * Большая натальная карта с управлением: включение слоёв, выбор планеты,
@@ -274,11 +275,9 @@ export function NatalChartFigure({
                 type="button"
                 className="mt-2 text-[0.8rem] text-[var(--turquoise-deep)] underline decoration-dotted"
                 onClick={() => {
-                  const own = document.getElementById(`sec-${selectedRow.kind === "planet" ? "planet" : "point"}-${selectedRow.key}`);
-                  const target = own ?? document.getElementById("r-locked") ?? document.getElementById("r-card");
-                  if (target && typeof target.scrollIntoView === "function") {
-                    target.scrollIntoView({ behavior: "smooth", block: "start" });
-                  }
+                  const id = `sec-${selectedRow.kind === "planet" ? "planet" : "point"}-${selectedRow.key}`;
+                  if (document.getElementById(id)) revealSection(id);
+                  else revealSection("r-locked");
                 }}
               >
                 {selectedRow.kind === "planet" ? "Читать в расшифровке ↓" : "Читать про эту точку ↓"}

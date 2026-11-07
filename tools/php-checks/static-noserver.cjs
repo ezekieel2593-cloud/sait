@@ -222,6 +222,13 @@ async function run() {
   check("астрология: 12 секторов знаков", (astroWheel?.querySelectorAll("path").length || 0) === 12);
   check("астрология: таблица положений рядом с картой", (astroDom.window.document.querySelectorAll("figure ul button").length || 0) >= 15);
   check("астрология: карту можно открыть крупно", /Увеличить карту/.test(astroText));
+  const staticRows = [...astroDom.window.document.querySelectorAll("#r-report ol > li")];
+  check("без сервера: разделы списком", staticRows.length >= 2, String(staticRows.length));
+  check(
+    "без сервера: пояснения к названиям в скобках",
+    staticRows.some((row) => /\([^)]{6,}\)/.test(row.textContent || ""))
+  );
+  check("без сервера: по умолчанию раскрыт один раздел", staticRows.filter((row) => row.querySelector('[id^="sec-body-"]')).length === 1);
   check("аспектная сетка собирается без сервера", /Аспектная сетка \(\d+\)/.test(astroText));
   for (const block of ["Точки карты: узлы, Лилит, Хирон, Фортуна", "Достоинства планет"]) {
     check(`без сервера есть блок «${block}»`, astroText.includes(block));

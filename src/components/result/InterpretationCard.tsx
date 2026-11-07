@@ -1,29 +1,40 @@
 import type { InterpretationSection } from "@/lib/interpretation/types";
 import { CheckIcon, LockIcon, SparkleIcon, StarIcon } from "@/components/icons";
 
-export function InterpretationCard({ section, index }: { section: InterpretationSection; index: number }) {
+export function InterpretationCard({
+  section,
+  index,
+  hideTitle = false,
+}: {
+  section: InterpretationSection;
+  index: number;
+  /** true — заголовок уже показан в списке разделов, внутри карточки он не нужен. */
+  hideTitle?: boolean;
+}) {
   return (
     <article
       id={`sec-${section.id}`}
-      className="card animate-in scroll-mt-28"
+      className={`animate-in scroll-mt-28${hideTitle ? "" : " card"}`}
       data-section-key={section.id}
       style={{ animationDelay: `${Math.min(index, 5) * 60}ms` }}
     >
-      <header className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="font-[family-name:var(--font-display)] text-[1.3rem] leading-snug text-[var(--ocean)]">
-            {section.title}
-          </h3>
-          {section.subtitle ? (
-            <p className="mt-1 text-[0.8rem] uppercase tracking-[0.1em] text-[var(--turquoise-deep)]">{section.subtitle}</p>
-          ) : null}
-        </div>
-        <span className="mt-1 shrink-0 text-[#c9a777]" aria-hidden="true">
-          <SparkleIcon className="h-5 w-5" />
-        </span>
-      </header>
+      {hideTitle ? null : (
+        <header className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h3 className="font-[family-name:var(--font-display)] text-[1.3rem] leading-snug text-[var(--ocean)]">
+              {section.title}
+            </h3>
+            {section.subtitle ? (
+              <p className="mt-1 text-[0.8rem] uppercase tracking-[0.1em] text-[var(--turquoise-deep)]">{section.subtitle}</p>
+            ) : null}
+          </div>
+          <span className="mt-1 shrink-0 text-[#c9a777]" aria-hidden="true">
+            <SparkleIcon className="h-5 w-5" />
+          </span>
+        </header>
+      )}
 
-      <div className="mt-3 grid gap-2.5">
+      <div className={`grid gap-2.5${hideTitle ? "" : " mt-3"}`}>
         {section.paragraphs.map((paragraph, paragraphIndex) => (
           <p key={paragraphIndex} className="text-[0.94rem] leading-relaxed text-[var(--ink)]">
             {paragraph}

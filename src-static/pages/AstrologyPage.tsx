@@ -4,7 +4,6 @@ import { buildAstrologyInterpretation } from "@/lib/interpretation/astrology";
 import { NatalChartFigure } from "../components/NatalChartFigure";
 import { AspectGrid } from "../components/AspectGrid";
 import { SynastryPanel } from "../components/SynastryPanel";
-import { InterpretationCard, LockedCard } from "@/components/result/InterpretationCard";
 import { offsetLabelAt } from "@/lib/astronomy/timezone";
 import { getConfig } from "../config";
 import { useAdmin } from "../admin";
@@ -15,6 +14,8 @@ import { AdminNote } from "../components/AdminNote";
 import { CalendarIcon, ClockIcon } from "../components/icons-extra";
 import { ArrowLeftIcon as BackIcon } from "../components/icons";
 import { ReportNav, type ReportNavItem } from "../components/ReportNav";
+import { ReportSections } from "../components/ReportSections";
+import { plainHint } from "@/lib/interpretation/plain";
 import type { TimeAccuracy } from "@/lib/types";
 
 const STEPS = ["Дата рождения", "Время и точность", "Место рождения"] as const;
@@ -376,12 +377,16 @@ function AstroResult({
     ...opened.map((section) => ({
       id: `sec-${section.id}`,
       label: section.title,
-      hint: section.subtitle,
+      hint: plainHint(section.id) ?? section.subtitle,
       secondary: !chipIds.has(`sec-${section.id}`),
     })),
-    ...locked
-      .slice(0, 4)
-      .map((section) => ({ id: `sec-${section.id}`, label: section.title, locked: true, secondary: true })),
+    ...locked.slice(0, 4).map((section) => ({
+      id: `sec-${section.id}`,
+      label: section.title,
+      hint: plainHint(section.id),
+      locked: true,
+      secondary: true,
+    })),
     ...(locked.length > 0 ? [{ id: "r-locked", label: "Что ещё видно", secondary: true }] : []),
   ];
 
@@ -539,29 +544,15 @@ function AstroResult({
 
       {admin ? <AdminNote locked={locked.length} /> : null}
 
-      <section className="grid gap-3">
-        <h2 className="h-section">{admin ? "Полная расшифровка" : "Ваша расшифровка"}</h2>
-        {free.map((section, index) => (
-          <InterpretationCard key={section.id} section={section} index={index} />
-        ))}
-      </section>
-
-      {locked.length > 0 ? (
-        <section id="r-locked" className="grid scroll-mt-28 gap-3">
-          <h2 className="h-section">Что ещё видно в вашей карте</h2>
-          <p className="max-w-[62ch] text-[0.94rem] leading-relaxed text-[var(--ink)]">
-            Мы уже посчитали {locked.length} {locked.length === 1 ? "раздел" : locked.length < 5 ? "раздела" : "разделов"} —
-            остальные планеты, их дома и точные аспекты. Именно они объясняют то, что не видно в общих словах: почему
-            в одном и том же деле вы выкладываетесь, а отклика нет, и где ваша сила работает на вас без сопротивления.
-            Разбираем это вместе — спокойно и под вашу ситуацию.
-          </p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {locked.slice(0, 4).map((section, index) => (
-              <LockedCard key={section.id} section={section} index={index} />
-            ))}
-          </div>
-        </section>
-      ) : null}
+      <ReportSections
+        sections={free}
+        locked={locked}
+        heading={admin ? "Полная расшифровка по разделам" : "Ваша расшифровка по разделам"}
+        lockedHeading="Что ещё видно в вашей карте"
+        lockedIntro={`Мы уже посчитали ${locked.length} ${
+          locked.length === 1 ? "раздел" : locked.length < 5 ? "раздела" : "разделов"
+        } — остальные планеты, их дома и точные аспекты. Именно они объясняют то, что не видно в общих словах: почему в одном и том же деле вы выкладываетесь, а отклика нет, и где ваша сила работает на вас без сопротивления. Разбираем это вместе — спокойно и под вашу ситуацию.`}
+      />
 
       {admin ? null : (
         <LeadForm
