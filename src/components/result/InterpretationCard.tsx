@@ -3,7 +3,11 @@ import { CheckIcon, LockIcon, SparkleIcon, StarIcon } from "@/components/icons";
 
 export function InterpretationCard({ section, index }: { section: InterpretationSection; index: number }) {
   return (
-    <article className="card animate-in" style={{ animationDelay: `${Math.min(index, 5) * 60}ms` }}>
+    <article
+      className="card animate-in"
+      data-section-key={section.id}
+      style={{ animationDelay: `${Math.min(index, 5) * 60}ms` }}
+    >
       <header className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="font-[family-name:var(--font-display)] text-[1.3rem] leading-snug text-[var(--ocean)]">

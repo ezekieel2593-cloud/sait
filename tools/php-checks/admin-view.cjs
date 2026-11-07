@@ -238,6 +238,76 @@ async function calculateMatrix(page) {
   }
   check("гость не видит транзитных карточек", !/Транзит .* к (Солнцу|Луне)/.test(guestAstroText) || /Транзиты на/.test(guestAstroText));
 
+  /* ------------------------- карта: масштаб и слои ------------------------ */
+
+  console.log("\n4в. Натальная карта: масштаб, слои, увеличение");
+  const wheelPage = openPage(`astrology.html${astroQuery}`, { admin: true });
+  await wait(700);
+  const wheelDoc = wheelPage.window.document;
+  const wheelSvg = wheelDoc.querySelector('figure svg[role="img"]');
+  check("карта отрисована как схема", Boolean(wheelSvg));
+  const wheelLines = wheelSvg ? wheelSvg.querySelectorAll("line").length : 0;
+  check("в карте есть градусная шкала", wheelLines > 380, String(wheelLines));
+  const signSectors = wheelSvg ? wheelSvg.querySelectorAll("path").length : 0;
+  check("в карте 12 секторов знаков", signSectors === 12, String(signSectors));
+  const wheelText = wheelSvg?.textContent || "";
+  check("знаки подписаны словами", /ОВЕН/.test(wheelText) && /РЫБЫ/.test(wheelText));
+  check("подписаны оси ASC, MC, DSC, IC", /ASC/.test(wheelText) && /MC/.test(wheelText) && /DSC/.test(wheelText) && /IC/.test(wheelText));
+  check("у домов есть номера", /1.*2.*3.*4.*5.*6/.test(wheelText.replace(/\s+/g, "")));
+  const tableButs = wheelDoc.querySelectorAll("figure ul button").length;
+  check("таблица положений рядом с картой", tableButs >= 15, String(tableButs));
+  check("в таблице есть асцендент и MC", /Асцендент/.test(wheelDoc.querySelector("figure")?.textContent || ""));
+
+  // Выбор планеты подсвечивает её аспекты и открывает карточку.
+  const sunRow = [...wheelDoc.querySelectorAll("figure ul button")].find((node) => /Солнце/.test(node.textContent || ""));
+  sunRow?.dispatchEvent(new wheelPage.window.Event("click", { bubbles: true }));
+  await wait(250);
+  const summary = wheelDoc.querySelector("figure")?.textContent || "";
+  check("карточка выбранной планеты открылась", /Показать описание в расшифровке/.test(summary));
+  check("в карточке видно достоинство", /обитель|экзальтация|изгнание|падение|нейтральное/.test(summary));
+  const highlighted = wheelDoc.querySelectorAll('figure svg circle[stroke="#3f8791"]').length;
+  check("выбранная планета выделена на карте", highlighted === 1, String(highlighted));
+
+  // Слои: отключаем аспекты — линий на карте становится меньше.
+  const aspectsChip = [...wheelDoc.querySelectorAll("figure button")].find((node) => /Аспекты/.test(node.textContent || ""));
+  aspectsChip?.dispatchEvent(new wheelPage.window.Event("click", { bubbles: true }));
+  await wait(250);
+  const afterToggle = wheelDoc.querySelector('figure svg[role="img"]')?.querySelectorAll("line").length ?? 0;
+  check("слой аспектов отключается", afterToggle < wheelLines, `${wheelLines} → ${afterToggle}`);
+  aspectsChip?.dispatchEvent(new wheelPage.window.Event("click", { bubbles: true }));
+  await wait(200);
+
+  // Кнопка «Открыть крупно» раскрывает карту во весь экран.
+  const chartZoomButton = [...wheelDoc.querySelectorAll("figure button")].find((node) => /Открыть крупно/.test(node.textContent || ""));
+  check("кнопка «Открыть крупно» есть", Boolean(chartZoomButton));
+  chartZoomButton?.dispatchEvent(new wheelPage.window.Event("click", { bubbles: true }));
+  await wait(300);
+  const dialog = wheelDoc.querySelector('[role="dialog"][aria-label="Натальная карта крупно"]');
+  check("карта открывается в окне на весь экран", Boolean(dialog));
+  const zoomLabel = (dialog?.textContent || "").match(/(\d+)%/);
+  check(
+    "в окне свои кнопки масштаба",
+    Boolean(dialog?.textContent?.includes("+")) && Boolean(zoomLabel) && Number(zoomLabel?.[1]) >= 100,
+    zoomLabel?.[0]
+  );
+  const zoomSvg = dialog?.querySelector("svg[role=\"img\"]");
+  check("в окне своя копия карты", Boolean(zoomSvg));
+  const zoomIn = [...(dialog?.querySelectorAll("button") || [])].find((node) => node.textContent?.trim() === "+");
+  zoomIn?.dispatchEvent(new wheelPage.window.Event("click", { bubbles: true }));
+  await wait(200);
+  const zoomAfter = (wheelDoc.querySelector('[role="dialog"][aria-label="Натальная карта крупно"]')?.textContent || "").match(
+    /(\d+)%/
+  );
+  check(
+    "масштаб увеличивается",
+    Boolean(zoomAfter) && Number(zoomAfter?.[1]) > Number(zoomLabel?.[1]),
+    `${zoomLabel?.[1]}% → ${zoomAfter?.[1]}%`
+  );
+  const closeButton = [...(dialog?.querySelectorAll("button") || [])].find((node) => node.textContent?.trim() === "Закрыть");
+  closeButton?.dispatchEvent(new wheelPage.window.Event("click", { bubbles: true }));
+  await wait(200);
+  check("окно закрывается", !wheelDoc.querySelector('[role="dialog"][aria-label="Натальная карта крупно"]'));
+
   /* ------------------------- описание всех 12 домов ----------------------- */
 
   console.log("\n5. Дома в разборе карты");

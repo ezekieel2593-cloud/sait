@@ -216,6 +216,12 @@ async function run() {
   check("астрология: заголовок «Ваша расшифровка»", /Ваша расшифровка/.test(astroText));
   check("астрология: «Бесплатная расшифровка» убрана", !/Бесплатная расшифровка/i.test(astroText));
   check("астрология: интригующий блок про закрытые разделы", /Что ещё видно в вашей карте/.test(astroText));
+  const astroWheel = astroDom.window.document.querySelector('figure svg[role="img"]');
+  check("астрология: карта нарисована схемой", Boolean(astroWheel));
+  check("астрология: градусная шкала на месте", (astroWheel?.querySelectorAll("line").length || 0) > 380);
+  check("астрология: 12 секторов знаков", (astroWheel?.querySelectorAll("path").length || 0) === 12);
+  check("астрология: таблица положений рядом с картой", (astroDom.window.document.querySelectorAll("figure ul button").length || 0) >= 15);
+  check("астрология: карту можно открыть крупно", /Открыть крупно/.test(astroText));
   check("аспектная сетка собирается без сервера", /Аспектная сетка \(\d+\)/.test(astroText));
   for (const block of ["Точки карты: узлы, Лилит, Хирон, Фортуна", "Достоинства планет"]) {
     check(`без сервера есть блок «${block}»`, astroText.includes(block));

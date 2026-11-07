@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { computeNatalChart, type NatalChart } from "@/lib/astronomy/engine";
 import { buildAstrologyInterpretation } from "@/lib/interpretation/astrology";
-import { NatalWheel } from "@/components/charts/NatalWheel";
+import { NatalChartFigure } from "../components/NatalChartFigure";
 import { AspectGrid } from "../components/AspectGrid";
 import { SynastryPanel } from "../components/SynastryPanel";
 import { InterpretationCard, LockedCard } from "@/components/result/InterpretationCard";
@@ -302,15 +302,12 @@ function AstroResult({ result }: { result: { chart: NatalChart; label: string } 
         </h2>
         <p className="mt-1.5 text-[0.84rem] text-[var(--ink-soft)]">{label}</p>
 
-        <div className="mt-4 grid gap-4 sm:grid-cols-[0.95fr_1.05fr] sm:items-start">
-          <figure className="m-0 rounded-[var(--radius-md)] border border-[var(--line)] bg-[linear-gradient(180deg,#fffdfa,#fbf3ec)] p-2">
-            <NatalWheel chart={chart} />
-            <figcaption className="px-2 pb-1 pt-1 text-[0.78rem] leading-relaxed text-[var(--ink-soft)]">
-              Карта развёрнута так, что асцендент слева. Внутри — Солнце, на кольце — планеты с домами,
-              снаружи — знаки зодиака.
-            </figcaption>
-          </figure>
-          <div className="grid gap-3">
+        <div className="mt-4 grid gap-4">
+          <NatalChartFigure
+            chart={chart}
+            caption="Асцендент — слева, дальше знаки и дома идут против часовой стрелки. На кольце — знаки и градусная шкала, внутри — планеты с точными градусами, точки и аспектные линии. Карту можно открыть крупно и выбрать любую планету."
+          />
+          <div className="grid gap-3 lg:grid-cols-2 lg:items-start">
             <div className="grid grid-cols-2 gap-2">
               <Metric label="Солнце" value={sun ? degreeOnly(sun.formatted) : "—"} note={sun ? `${sun.sign}${sun.house ? ` · ${sun.house} дом` : ""}` : ""} />
               <Metric label="Луна" value={moon ? degreeOnly(moon.formatted) : "—"} note={moon ? `${moon.sign}${moon.house ? ` · ${moon.house} дом` : ""}` : ""} />
