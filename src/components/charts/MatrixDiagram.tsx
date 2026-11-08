@@ -3,16 +3,20 @@ import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import type { MatrixChart } from "@/lib/matrix/engine";
 
 /**
- * Схема Матрицы судьбы в классическом виде — как в онлайн-калькуляторах:
+ * Схема Матрицы судьбы в классическом виде — как в онлайн-калькуляторах,
+ * но в жемчужной палитре сайта:
  *
- * - восемь больших кругов-углов в двойной чёрной обводке;
- * - цветные круги внутренних точек (род, деньги, отношения, таланты);
- * - два квадрата и диагонали, тонкие чёрные линии;
- * - по краю — восемь секторов с разметкой периода: числа энергий, крошечные
- *   подписи диапазона лет и крупные «5 лет», «15 лет», «55 лет» … на середине
- *   каждого десятилетия;
+ * - восемь больших кругов-углов в двойной обводке (графит + тонкое золото),
+ *   внутри — жемчужная заливка;
+ * - внутренние точки — перламутровые круги с тонким ободком и тёмной цифрой;
+ * - два квадрата и диагонали, тонкие тёмные линии;
+ * - по краю — восемь секторов с разметкой периода: числа энергий, подписи
+ *   «5 лет», «15 лет», «55 лет» … на середине каждого десятилетия;
  * - по диагоналям из центра идут линии рода с подписями и стрелками,
  *   деньги и любовь отмечены значками $ и ♥.
+ *
+ * Мелкие числа вдоль сторон автоматически отодвигаются от больших угловых
+ * кругов, чтобы их не закрывало.
  *
  * Названий карт таро нет: только номер и слово «энергия».
  */
@@ -29,10 +33,10 @@ const CY = HEIGHT / 2;
 const R = 500;
 /** Внешняя граница секторов разметки. */
 const R_SECTOR = R + 172;
-/** Радиус, на котором стоят числа периода. */
-const R_ENERGY = R + 62;
-/** Радиус крошечных подписей «12-13» и крупных «5 лет». */
-const R_AGES = R + 132;
+/** Радиус кольца с числами периода — вне угловых кругов, чтобы не перекрывать их. */
+const R_ENERGY = R + 74;
+/** Отступ подписей «5 лет», «15 лет» … от стороны восьмиугольника. */
+const AGE_OFFSET = 134;
 
 type NodeShape = {
   key: string;
@@ -43,32 +47,40 @@ type NodeShape = {
   /**
    * corner — большой круг в двойной обводке (углы квадратов);
    * core    — центр в золотой заливке;
-   * inner   — цветной круг с белой цифрой.
+   * inner   — жемчужный круг с тёмной цифрой.
    */
   kind: "corner" | "core" | "inner";
-  /** Цвет заливки (для inner) — из классической палитры. */
+  /** Оттенок заливки (для inner) — из жемчужной палитры. */
   paint?: PaintKey;
 };
 
-/** Палитра как в классических калькуляторах: насыщенные цвета, белые цифры. */
+/**
+ * Жемчужная палитра: приглушённые перламутровые оттенки вместо
+ * насыщенных цветов — серо-розовый, лавандовый, шалфейный, аквамарин,
+ * кремовый, дымчатый. Цифры тёмные, поэтому читаются на любом оттенке.
+ */
 const PAINT = {
-  blue: { fill: "#2563eb", ring: "#1e4fbf" },
-  sky: { fill: "#0ea5e9", ring: "#0284c7" },
-  cyan: { fill: "#06b6d4", ring: "#0891b2" },
-  teal: { fill: "#0d9488", ring: "#0f766e" },
-  green: { fill: "#16a34a", ring: "#15803d" },
-  lime: { fill: "#65a30d", ring: "#4d7c0f" },
-  gold: { fill: "#f4c430", ring: "#d9a917" },
-  orange: { fill: "#f59e0b", ring: "#d97706" },
-  red: { fill: "#ef4444", ring: "#dc2626" },
-  rose: { fill: "#e11d48", ring: "#be123c" },
-  pink: { fill: "#ec4899", ring: "#db2777" },
-  purple: { fill: "#8b5cf6", ring: "#7c3aed" },
-  violet: { fill: "#7c3aed", ring: "#6d28d9" },
-  indigo: { fill: "#4f46e5", ring: "#4338ca" },
+  plum: { fill: "#d6c4e4", ring: "#ab93c8" },
+  lilac: { fill: "#e2d6ec", ring: "#b8a3cf" },
+  rose: { fill: "#f0c4cd", ring: "#cd97a6" },
+  blush: { fill: "#f6d6c9", ring: "#dbaf9c" },
+  cream: { fill: "#f3e5c6", ring: "#d6c190" },
+  peach: { fill: "#f7d5b6", ring: "#dcae86" },
+  gold: { fill: "#f1debc", ring: "#cdb488" },
+  sage: { fill: "#d2dfc5", ring: "#aabf99" },
+  mint: { fill: "#c8e4d4", ring: "#96c3a9" },
+  aqua: { fill: "#c8e1e5", ring: "#95bfc5" },
+  sky: { fill: "#ccdaee", ring: "#9ab0d0" },
+  iris: { fill: "#d0cdee", ring: "#a29fd2" },
+  teal: { fill: "#c1dcd6", ring: "#93bab2" },
+  slate: { fill: "#d5d9e2", ring: "#aab0bc" },
 } as const;
 
 type PaintKey = keyof typeof PAINT;
+
+/** Тёмная краска цифр и линий — жемчужный графит вместо чёрного. */
+const INK = "#2b2a33";
+const INK_SOFT = "#5b5769";
 
 /** Восемь углов: личный квадрат (A, B, C, D) и родовой (F, G, H, I). */
 const NODES: NodeShape[] = [
@@ -81,53 +93,52 @@ const NODES: NodeShape[] = [
   { key: "A", angle: 270, radius: R, r: 52, kind: "corner" },
   { key: "family-top-left", angle: 315, radius: R, r: 44, kind: "corner" },
 
-  // Центр рода: родовой центр и общая точка — рядом с центром, как «12» и «8».
-  { key: "family-core", angle: 90, radius: 132, r: 27, kind: "inner", paint: "purple" },
-  { key: "family-force", angle: 90, radius: 210, r: 25, kind: "inner", paint: "orange" },
+  // Центр рода: родовой центр и общая точка — рядом с центром.
+  { key: "family-core", angle: 90, radius: 132, r: 27, kind: "inner", paint: "plum" },
+  { key: "family-force", angle: 90, radius: 210, r: 25, kind: "inner", paint: "peach" },
 
   // Вертикаль вверх: удовольствия → таланты → вторая аджна.
-  { key: "pleasures", angle: 0, radius: 128, r: 25, kind: "inner", paint: "green" },
-  { key: "talent-line", angle: 0, radius: 240, r: 25, kind: "inner", paint: "cyan" },
-  { key: "talent-second", angle: 0, radius: 330, r: 27, kind: "inner", paint: "blue" },
+  { key: "pleasures", angle: 0, radius: 128, r: 25, kind: "inner", paint: "sage" },
+  { key: "talent-line", angle: 0, radius: 240, r: 25, kind: "inner", paint: "aqua" },
+  { key: "talent-second", angle: 0, radius: 330, r: 27, kind: "inner", paint: "sky" },
 
   // Горизонталь влево: страхи → внуки → дети.
-  { key: "fears", angle: 270, radius: 150, r: 25, kind: "inner", paint: "green" },
+  { key: "fears", angle: 270, radius: 150, r: 25, kind: "inner", paint: "sage" },
   { key: "person-support", angle: 270, radius: 250, r: 24, kind: "inner", paint: "sky" },
-  { key: "person-experience", angle: 270, radius: 340, r: 24, kind: "inner", paint: "blue" },
+  { key: "person-experience", angle: 270, radius: 340, r: 24, kind: "inner", paint: "iris" },
 
   // Горизонталь вправо: деньги.
-  { key: "money-entry", angle: 90, radius: 300, r: 25, kind: "inner", paint: "orange" },
-  { key: "money-middle", angle: 90, radius: 372, r: 24, kind: "inner", paint: "orange" },
+  { key: "money-entry", angle: 90, radius: 300, r: 25, kind: "inner", paint: "peach" },
+  { key: "money-middle", angle: 90, radius: 372, r: 24, kind: "inner", paint: "cream" },
 
   // Вертикаль вниз: готовность к отношениям и кармический хвост.
-  { key: "love-entry", angle: 180, radius: 150, r: 26, kind: "inner", paint: "orange" },
-  { key: "love-middle", angle: 180, radius: 300, r: 25, kind: "inner", paint: "red" },
+  { key: "love-entry", angle: 180, radius: 150, r: 26, kind: "inner", paint: "blush" },
+  { key: "love-middle", angle: 180, radius: 300, r: 25, kind: "inner", paint: "rose" },
 
   // Диагонали рода: таланты и деньги линий отца и матери.
-  { key: "family-talent-father", angle: 315, radius: 230, r: 24, kind: "inner", paint: "blue" },
-  { key: "family-material-father", angle: 315, radius: 330, r: 24, kind: "inner", paint: "sky" },
-  { key: "family-talent-mother", angle: 45, radius: 230, r: 24, kind: "inner", paint: "blue" },
-  { key: "family-material-mother", angle: 45, radius: 330, r: 24, kind: "inner", paint: "sky" },
-  { key: "family-spirit-father", angle: 135, radius: 230, r: 24, kind: "inner", paint: "teal" },
-  { key: "family-balance", angle: 135, radius: 330, r: 24, kind: "inner", paint: "lime" },
-  { key: "family-spirit-mother", angle: 225, radius: 230, r: 24, kind: "inner", paint: "teal" },
-  { key: "family-support", angle: 225, radius: 330, r: 24, kind: "inner", paint: "purple" },
+  { key: "family-talent-father", angle: 315, radius: 230, r: 24, kind: "inner", paint: "sky" },
+  { key: "family-material-father", angle: 315, radius: 330, r: 24, kind: "inner", paint: "aqua" },
+  { key: "family-talent-mother", angle: 45, radius: 230, r: 24, kind: "inner", paint: "sky" },
+  { key: "family-material-mother", angle: 45, radius: 330, r: 24, kind: "inner", paint: "aqua" },
+  { key: "family-spirit-father", angle: 135, radius: 230, r: 24, kind: "inner", paint: "mint" },
+  { key: "family-balance", angle: 135, radius: 330, r: 24, kind: "inner", paint: "sage" },
+  { key: "family-spirit-mother", angle: 225, radius: 230, r: 24, kind: "inner", paint: "mint" },
+  { key: "family-support", angle: 225, radius: 330, r: 24, kind: "inner", paint: "lilac" },
 
   // Нижний правый сектор: пара, отношения, профессия.
-  { key: "shared", angle: 135, radius: 150, r: 24, kind: "inner", paint: "indigo" },
-  { key: "love-partner", angle: 158, radius: 254, r: 23, kind: "inner", paint: "pink" },
-  { key: "money-profession", angle: 112, radius: 254, r: 23, kind: "inner", paint: "lime" },
+  { key: "shared", angle: 135, radius: 150, r: 24, kind: "inner", paint: "iris" },
+  { key: "love-partner", angle: 158, radius: 254, r: 23, kind: "inner", paint: "rose" },
+  { key: "money-profession", angle: 112, radius: 254, r: 23, kind: "inner", paint: "sage" },
 ];
 
-/** Легенда внутренних точек — расшифровка номеров и цветов под схемой. */
-const INNER_LEGEND: [string, string][] = [
-  ["#8b5cf6", "родовой центр и общий центр квадратов"],
-  ["#16a34a", "страхи и удовольствия"],
-  ["#2563eb", "таланты и способности"],
-  ["#f59e0b", "деньги, отношения, год"],
-  ["#ef4444", "готовность к отношениям"],
-  ["#0d9488", "духовные программы рода"],
-  ["#ec4899", "характер пары"],
+const INNER_LEGEND: [string, string, string][] = [
+  [PAINT.plum.fill, PAINT.plum.ring, "родовой центр и общий центр квадратов"],
+  [PAINT.sage.fill, PAINT.sage.ring, "страхи и удовольствия"],
+  [PAINT.sky.fill, PAINT.sky.ring, "таланты и способности"],
+  [PAINT.peach.fill, PAINT.peach.ring, "деньги, отношения, год"],
+  [PAINT.rose.fill, PAINT.rose.ring, "готовность к отношениям"],
+  [PAINT.mint.fill, PAINT.mint.ring, "духовные программы рода"],
+  [PAINT.blush.fill, PAINT.blush.ring, "характер пары"],
 ];
 
 /** Углы восьмиугольника по часовой стрелке — в том же порядке, что линия жизни. */
@@ -149,13 +160,6 @@ function ageLabel(age: number): string {
   if (age === 0) return "0 лет";
   if (Number.isInteger(age)) return `${age} лет`;
   return `${String(age).replace(".", ",")} лет`;
-}
-
-/** Крошечная подпись диапазона: «12-13». */
-function rangeLabel(start: number): string {
-  const from = Number.isInteger(start) ? String(start) : String(start).replace(".", ",");
-  const to = Number.isInteger(start + 1.25) ? String(start + 1.25) : String(start + 1.25).replace(".", ",");
-  return `${from}-${to}`;
 }
 
 const SANS = "'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
@@ -211,7 +215,7 @@ export function MatrixDiagram({
   const vertex = (index: number) => polar(VERTEX_ANGLES[index]!, R);
 
   const line = (a: { x: number; y: number }, b: { x: number; y: number }, width = 1.6) => (
-    <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#1b1b1b" strokeWidth={width} strokeLinecap="round" />
+    <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={INK} strokeWidth={width} strokeLinecap="round" />
   );
 
   /* --------------------------- секторы периода --------------------------- */
@@ -231,24 +235,32 @@ export function MatrixDiagram({
     return { x: nx, y: ny };
   };
 
-  /** Точка на стороне: t = 0 у первого угла, 1 у второго, плюс смещение наружу. */
-  const sidePoint = (index: number, t: number, offset: number) => {
+  /** Подпись возраста идёт вдоль стороны восьмиугольника, снаружи от чисел. */
+  const sideCaption = (index: number) => {
     const from = vertex(index);
     const to = vertex((index + 1) % 8);
     const normal = sideNormal(from, to);
-    return {
-      x: from.x + (to.x - from.x) * t + normal.x * offset,
-      y: from.y + (to.y - from.y) * t + normal.y * offset,
-      rotation: (() => {
-        const dx = to.x - from.x;
-        const dy = to.y - from.y;
-        const deg = (Math.atan2(dy, dx) * 180) / Math.PI;
-        return deg > 90 || deg < -90 ? deg + 180 : deg;
-      })(),
-    };
+    const x = (from.x + to.x) / 2 + normal.x * AGE_OFFSET;
+    const y = (from.y + to.y) / 2 + normal.y * AGE_OFFSET;
+    const deg = (Math.atan2(to.y - from.y, to.x - from.x) * 180) / Math.PI;
+    return { x, y, rotation: deg > 90 || deg < -90 ? deg + 180 : deg };
   };
 
-  const octagon = VERTEX_ANGLES.map((angle) => polar(angle, R));
+  /**
+   * Число периода идёт по кольцу между восьмиугольником и рамкой секторов.
+   * Кольцо проходит вне угловых кругов, поэтому мелкие цифры никогда
+   * не прячутся за большими.
+   */
+  const ringPoint = (index: number, t: number, radius: number) => {
+    const angle = VERTEX_ANGLES[index]! + t * 45;
+    const p = polar(angle, radius);
+    // Разворот подписи всегда «читаемым» боком: угол в пределах ±90°.
+    let rotation = angle + 90;
+    while (rotation > 90) rotation -= 180;
+    while (rotation < -90) rotation += 180;
+    return { ...p, rotation };
+  };
+
   const octagonOuter = VERTEX_ANGLES.map((angle) => polar(angle, R_SECTOR));
 
   /* --------------------------- линия жизни --------------------------- */
@@ -259,8 +271,8 @@ export function MatrixDiagram({
         const sector = Math.floor(entry.age / 10 + 0.0001);
         const t = entry.kind === "vertex" ? 0 : (entry.age - sector * 10) / 10;
         const mid = entry.age % 10 === 5;
-        const spot = sidePoint(sector, t, 24);
-        const ageSpot = sidePoint(sector, t, 92);
+        const spot = ringPoint(sector, t, R_ENERGY);
+        const ageSpot = mid ? sideCaption(sector) : null;
         return (
           <g
             key={`life-${entry.age}`}
@@ -283,7 +295,10 @@ export function MatrixDiagram({
               : {})}
           >
             {selectedAge === entry.age ? (
-              <circle cx={spot.x} cy={spot.y} r="17" fill="none" stroke="#2563eb" strokeWidth="2.6" />
+              <circle cx={spot.x} cy={spot.y} r="18" fill="#ffffff" opacity="0.9" />
+            ) : null}
+            {selectedAge === entry.age ? (
+              <circle cx={spot.x} cy={spot.y} r="18" fill="none" stroke={PAINT.plum.ring} strokeWidth="2.4" />
             ) : null}
             <g transform={`rotate(${spot.rotation} ${spot.x} ${spot.y})`}>
               <text
@@ -294,12 +309,12 @@ export function MatrixDiagram({
                 fontFamily={SANS}
                 fontSize={entry.kind === "vertex" ? 15 : 13.5}
                 fontWeight={entry.kind === "vertex" ? 700 : 500}
-                fill="#1b1b1b"
+                fill={INK}
               >
                 {entry.arcanum}
               </text>
             </g>
-            {entry.kind === "vertex" || !mid ? null : (
+            {entry.kind === "vertex" || !ageSpot ? null : (
               <g transform={`rotate(${ageSpot.rotation} ${ageSpot.x} ${ageSpot.y})`}>
                 <text
                   x={ageSpot.x}
@@ -309,7 +324,10 @@ export function MatrixDiagram({
                   fontFamily={SANS}
                   fontSize="15"
                   fontWeight="700"
-                  fill="#111111"
+                  fill={INK}
+                  stroke="#fffdfa"
+                  strokeWidth="4"
+                  paintOrder="stroke"
                 >
                   {ageLabel(entry.age)}
                 </text>
@@ -333,16 +351,17 @@ export function MatrixDiagram({
     return (
       <g key={node.key} opacity={dim(node.key)} {...interactive(node.key, label)}>
         {isActive ? (
-          <circle cx={center.x} cy={center.y} r={node.r + 12} fill="none" stroke="#2563eb" strokeWidth="2.4" strokeDasharray="6 5" />
+          <circle cx={center.x} cy={center.y} r={node.r + 12} fill="none" stroke={PAINT.plum.ring} strokeWidth="2.4" strokeDasharray="6 5" />
         ) : null}
         {node.kind === "corner" ? (
           <>
             {isSelected ? (
-              <circle cx={center.x} cy={center.y} r={node.r + 9} fill="none" stroke="#2563eb" strokeWidth="3" />
+              <circle cx={center.x} cy={center.y} r={node.r + 9} fill="none" stroke={PAINT.plum.ring} strokeWidth="3" />
             ) : null}
-            {/* Двойная чёрная обводка углов — как в классической схеме. */}
-            <circle cx={center.x} cy={center.y} r={node.r} fill="#ffffff" stroke="#1b1b1b" strokeWidth="5" />
-            <circle cx={center.x} cy={center.y} r={node.r - 8} fill="none" stroke="#1b1b1b" strokeWidth="1.4" />
+            {/* Двойная обводка углов: графит снаружи, тонкое золото внутри. */}
+            <circle cx={center.x} cy={center.y} r={node.r} fill="#ffffff" stroke={INK} strokeWidth="4" />
+            <circle cx={center.x} cy={center.y} r={node.r} fill={`url(#pearl-white-${idPrefix})`} />
+            <circle cx={center.x} cy={center.y} r={node.r - 8} fill="none" stroke="#c9ae83" strokeWidth="1.3" />
             <text
               x={center.x}
               y={center.y + 2}
@@ -351,21 +370,29 @@ export function MatrixDiagram({
               fontFamily={SANS}
               fontWeight="700"
               fontSize={node.r * 0.82}
-              fill="#1b1b1b"
+              fill={INK}
             >
               {value.arcanum}
             </text>
           </>
         ) : (
           (() => {
-            const paint = PAINT[node.paint ?? "blue"];
+            const paint = PAINT[node.paint ?? "sky"];
             return (
               <>
                 {isSelected ? (
-                  <circle cx={center.x} cy={center.y} r={node.r + 6} fill="none" stroke="#2563eb" strokeWidth="3" />
+                  <circle cx={center.x} cy={center.y} r={node.r + 6} fill="none" stroke={PAINT.plum.ring} strokeWidth="3" />
                 ) : null}
-                <circle cx={center.x} cy={center.y} r={node.r + 4} fill={paint.fill} opacity="0.25" />
-                <circle cx={center.x} cy={center.y} r={node.r} fill={paint.fill} stroke={paint.ring} strokeWidth="1.5" />
+                <circle cx={center.x} cy={center.y} r={node.r + 5} fill={paint.fill} opacity="0.3" />
+                <circle
+                  cx={center.x}
+                  cy={center.y}
+                  r={node.r}
+                  fill={paint.fill}
+                  stroke={paint.ring}
+                  strokeWidth="1.6"
+                />
+                <circle cx={center.x} cy={center.y} r={node.r} fill={`url(#pearl-sheen-${idPrefix})`} />
                 <text
                   x={center.x}
                   y={center.y + 1}
@@ -373,8 +400,8 @@ export function MatrixDiagram({
                   dominantBaseline="central"
                   fontFamily={SANS}
                   fontWeight="700"
-                  fontSize={node.r * 0.82}
-                  fill="#ffffff"
+                  fontSize={node.r * 0.86}
+                  fill={INK}
                 >
                   {value.arcanum}
                 </text>
@@ -402,28 +429,62 @@ export function MatrixDiagram({
       role="img"
       aria-label={`Схема Матрицы судьбы: центр ${chart.byKey.center.arcanumTitle}, личность ${chart.byKey.A.arcanumTitle}, талант ${chart.byKey.B.arcanumTitle}, кармическая задача ${chart.byKey.D.arcanumTitle}; по кругу — энергия каждого периода жизни`}
     >
-      <rect x="0" y="0" width={SIZE} height={HEIGHT} rx="18" fill="#ffffff" />
+      <defs>
+        {/* Жемчужный фон холста: светлый центр, перламутровые края. */}
+        <radialGradient id={`pearl-bg-${idPrefix}`} cx="50%" cy="46%" r="72%">
+          <stop offset="0%" stopColor="#ffffff" />
+          <stop offset="55%" stopColor="#fdfbf8" />
+          <stop offset="82%" stopColor="#f7f2f6" />
+          <stop offset="100%" stopColor="#f1eaf2" />
+        </radialGradient>
+        {/* Перламутровый блик на кругах. */}
+        <radialGradient id={`pearl-sheen-${idPrefix}`} cx="34%" cy="26%" r="78%">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.92" />
+          <stop offset="42%" stopColor="#ffffff" stopOpacity="0.34" />
+          <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id={`pearl-white-${idPrefix}`} cx="36%" cy="28%" r="80%">
+          <stop offset="0%" stopColor="#ffffff" />
+          <stop offset="70%" stopColor="#fbf7f2" />
+          <stop offset="100%" stopColor="#f2e9df" />
+        </radialGradient>
+        {/* Мягкое жемчужное свечение под схемой. */}
+        <radialGradient id={`pearl-halo-${idPrefix}`} cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#e9dced" stopOpacity="0.75" />
+          <stop offset="70%" stopColor="#efe6ef" stopOpacity="0.35" />
+          <stop offset="100%" stopColor="#f6f1f4" stopOpacity="0" />
+        </radialGradient>
+        <marker id={`${idPrefix}-arrow-blue`} markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L7,3 z" fill="#7b89b8" />
+        </marker>
+        <marker id={`${idPrefix}-arrow-red`} markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L7,3 z" fill="#c07f8d" />
+        </marker>
+      </defs>
+
+      <rect x="0" y="0" width={SIZE} height={HEIGHT} rx="18" fill={`url(#pearl-bg-${idPrefix})`} />
+      <circle cx={CX} cy={CY} r={R * 1.18} fill={`url(#pearl-halo-${idPrefix})`} />
 
       {/* Внешний восьмиугольник — рамка шкалы периода. */}
       <polygon
         points={octagonOuter.map((p) => `${p.x},${p.y}`).join(" ")}
         fill="none"
-        stroke="#1b1b1b"
-        strokeWidth="1.6"
+        stroke={INK}
+        strokeWidth="1.5"
       />
       {/* Лучи от углов к внешней рамке: восемь секторов по десять лет. */}
       {VERTEX_ANGLES.map((angle) => (
-        <g key={`spoke-${angle}`}>{line(polar(angle, R), polar(angle, R_SECTOR), 1.2)}</g>
+        <g key={`spoke-${angle}`}>{line(polar(angle, R), polar(angle, R_SECTOR), 1.1)}</g>
       ))}
 
-      {/* Два квадрата и диагонали: тонкие чёрные линии. */}
+      {/* Два квадрата и диагонали: тонкие тёмные линии. */}
       <polygon
         points={[0, 90, 180, 270]
           .map((angle) => polar(angle, R))
           .map((p) => `${p.x},${p.y}`)
           .join(" ")}
         fill="none"
-        stroke="#1b1b1b"
+        stroke={INK}
         strokeWidth="2.4"
       />
       <polygon
@@ -432,21 +493,19 @@ export function MatrixDiagram({
           .map((p) => `${p.x},${p.y}`)
           .join(" ")}
         fill="none"
-        stroke="#1b1b1b"
+        stroke={INK}
         strokeWidth="2.4"
       />
       {[0, 45, 90, 135].map((angle) => (
-        <g key={`diag-${angle}`}>
-          {line(polar(angle, R), polar(angle + 180, R), 2)}
-        </g>
+        <g key={`diag-${angle}`}>{line(polar(angle, R), polar(angle + 180, R), 2)}</g>
       ))}
       {/* Оси от углов к центру. */}
       {VERTEX_ANGLES.map((angle) => (
         <g key={`axis-${angle}`}>{line(polar(angle, R), { x: CX, y: CY }, 1.1)}</g>
       ))}
       {/* Средний круг: зона комфорта. */}
-      <circle cx={CX} cy={CY} r={R * 0.62} fill="none" stroke="#1b1b1b" strokeWidth="1.1" />
-      <circle cx={CX} cy={CY} r={R * 0.36} fill="none" stroke="rgba(27,27,27,0.18)" strokeWidth="1" />
+      <circle cx={CX} cy={CY} r={R * 0.62} fill="none" stroke={INK} strokeWidth="1.1" />
+      <circle cx={CX} cy={CY} r={R * 0.36} fill="none" stroke={INK} strokeOpacity="0.2" strokeWidth="1" />
 
       {/* Линии рода и каналов со стрелками — как в классической схеме. */}
       {!compact ? (
@@ -456,7 +515,15 @@ export function MatrixDiagram({
             const to = polar(315, R * 0.92);
             return (
               <g>
-                <line x1={from.x} y1={from.y} x2={to.x} y2={to.y} stroke="#4f6ed7" strokeWidth="3" markerEnd={`url(#${idPrefix}-arrow-blue)`} />
+                <line
+                  x1={from.x}
+                  y1={from.y}
+                  x2={to.x}
+                  y2={to.y}
+                  stroke="#7b89b8"
+                  strokeWidth="3"
+                  markerEnd={`url(#${idPrefix}-arrow-blue)`}
+                />
                 <text
                   x={(from.x + to.x) / 2}
                   y={(from.y + to.y) / 2 - 10}
@@ -464,7 +531,7 @@ export function MatrixDiagram({
                   transform={`rotate(-45 ${(from.x + to.x) / 2} ${(from.y + to.y) / 2 - 10})`}
                   fontFamily={SANS}
                   fontSize="12"
-                  fill="#4f6ed7"
+                  fill="#65729c"
                 >
                   линия мужского рода
                 </text>
@@ -476,7 +543,15 @@ export function MatrixDiagram({
             const to = polar(45, R * 0.92);
             return (
               <g>
-                <line x1={from.x} y1={from.y} x2={to.x} y2={to.y} stroke="#e0584f" strokeWidth="3" markerEnd={`url(#${idPrefix}-arrow-red)`} />
+                <line
+                  x1={from.x}
+                  y1={from.y}
+                  x2={to.x}
+                  y2={to.y}
+                  stroke="#c07f8d"
+                  strokeWidth="3"
+                  markerEnd={`url(#${idPrefix}-arrow-red)`}
+                />
                 <text
                   x={(from.x + to.x) / 2}
                   y={(from.y + to.y) / 2 - 10}
@@ -484,7 +559,7 @@ export function MatrixDiagram({
                   transform={`rotate(45 ${(from.x + to.x) / 2} ${(from.y + to.y) / 2 - 10})`}
                   fontFamily={SANS}
                   fontSize="12"
-                  fill="#e0584f"
+                  fill="#a76976"
                 >
                   линия женского рода
                 </text>
@@ -492,40 +567,41 @@ export function MatrixDiagram({
             );
           })()}
           {/* Деньги и любовь: значки на схеме. */}
-          <text x={CX + 150} y={CY + 78} fontFamily={SANS} fontSize="40" fontWeight="700" fill="#3ecf4a">
+          <text x={CX + 150} y={CY + 84} fontFamily={SANS} fontSize="34" fontWeight="700" fill="#8aa98c">
             $
           </text>
-          <text x={CX + 62} y={CY + 118} fontSize="34" fill="#ef2b2b" textAnchor="middle">
+          <text x={CX - 156} y={CY + 106} fontSize="26" fill="#c98a96" textAnchor="middle">
             ♥
           </text>
-          <text x={CX} y={CY + 158} textAnchor="middle" fontFamily={SANS} fontSize="11.5" letterSpacing="0.06em" fill="#4b5563">
+          <rect x={CX - 128} y={CY + 78} width="256" height="30" rx="15" fill="#fffdfa" opacity="0.92" />
+          <text
+            x={CX}
+            y={CY + 100}
+            textAnchor="middle"
+            fontFamily={SERIF}
+            fontSize="15"
+            letterSpacing="0.22em"
+            fill={INK_SOFT}
+          >
             ЗОНА КОМФОРТА
           </text>
         </>
       ) : null}
 
-      <defs>
-        <marker id={`${idPrefix}-arrow-blue`} markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
-          <path d="M0,0 L0,6 L7,3 z" fill="#4f6ed7" />
-        </marker>
-        <marker id={`${idPrefix}-arrow-red`} markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
-          <path d="M0,0 L0,6 L7,3 z" fill="#e0584f" />
-        </marker>
-      </defs>
-
       {lifeEls}
       {nodeEls}
 
-      {/* Центр — зона комфорта: золотой круг с тёмной цифрой. */}
+      {/* Центр — зона комфорта: жемчужно-золотой круг. */}
       <g opacity={centerActive ? 1 : active ? 0.3 : 1} {...interactive("center", `${centerValue.title}: ${centerValue.arcanumTitle}`)}>
         {centerActive ? (
-          <circle cx={CX} cy={CY} r={centerR + 12} fill="none" stroke="#2563eb" strokeWidth="2.4" strokeDasharray="6 5" />
+          <circle cx={CX} cy={CY} r={centerR + 12} fill="none" stroke={PAINT.plum.ring} strokeWidth="2.4" strokeDasharray="6 5" />
         ) : null}
         {selected === "center" ? (
-          <circle cx={CX} cy={CY} r={centerR + 8} fill="none" stroke="#2563eb" strokeWidth="3" />
+          <circle cx={CX} cy={CY} r={centerR + 8} fill="none" stroke={PAINT.plum.ring} strokeWidth="3" />
         ) : null}
-        <circle cx={CX} cy={CY} r={centerR} fill={PAINT.gold.fill} stroke="#ffffff" strokeWidth="4" />
-        <circle cx={CX} cy={CY} r={centerR + 4} fill="none" stroke="#e8c96a" strokeWidth="1.6" />
+        <circle cx={CX} cy={CY} r={centerR} fill={PAINT.gold.fill} stroke="#cbb083" strokeWidth="2" />
+        <circle cx={CX} cy={CY} r={centerR} fill={`url(#pearl-sheen-${idPrefix})`} />
+        <circle cx={CX} cy={CY} r={centerR + 6} fill="none" stroke="#e3d2b4" strokeWidth="1.2" />
         <text
           x={CX}
           y={CY + 2}
@@ -534,7 +610,7 @@ export function MatrixDiagram({
           fontFamily={SANS}
           fontWeight="700"
           fontSize={compact ? 40 : 52}
-          fill="#1b1b1b"
+          fill={INK}
         >
           {centerValue.arcanum}
         </text>
@@ -548,14 +624,15 @@ export function MatrixDiagram({
           {...interactive("year", `${chart.yearEnergy.title}: ${chart.yearEnergy.arcanumTitle}`)}
         >
           {selected === "year" ? (
-            <rect x={64} y={54} width="330" height="76" rx="10" fill="none" stroke="#2563eb" strokeWidth="3" />
+            <rect x={64} y={54} width="330" height="76" rx="12" fill="none" stroke={PAINT.plum.ring} strokeWidth="3" />
           ) : null}
-          <rect x={70} y={60} width="318" height="64" rx="8" fill="#ffffff" stroke="#1b1b1b" strokeWidth="1.6" />
-          <circle cx={110} cy={92} r="22" fill={PAINT.orange.fill} stroke={PAINT.orange.ring} strokeWidth="1.6" />
-          <text x={110} y={93} textAnchor="middle" dominantBaseline="central" fontFamily={SANS} fontWeight="700" fontSize="19" fill="#ffffff">
+          <rect x={70} y={60} width="318" height="64" rx="10" fill="#fffdfa" stroke="#cdbfae" strokeWidth="1.4" />
+          <circle cx={110} cy={92} r="22" fill={PAINT.peach.fill} stroke={PAINT.peach.ring} strokeWidth="1.6" />
+          <circle cx={110} cy={92} r="22" fill={`url(#pearl-sheen-${idPrefix})`} />
+          <text x={110} y={93} textAnchor="middle" dominantBaseline="central" fontFamily={SANS} fontWeight="700" fontSize="19" fill={INK}>
             {chart.yearEnergy.arcanum}
           </text>
-          <text x={144} y={98} fontFamily={SANS} fontSize="15" fill="#1b1b1b">
+          <text x={144} y={98} fontFamily={SANS} fontSize="15" fill={INK}>
             энергия {chart.yearEnergy.year} года
           </text>
         </g>
@@ -564,10 +641,10 @@ export function MatrixDiagram({
       {/* Легенда цветов — мелко, под схемой. */}
       {compact ? null : (
         <g transform={`translate(70 ${HEIGHT - 96})`}>
-          {LEGEND.map(([color, text], index) => (
+          {LEGEND.map(([fillColor, ringColor, text], index) => (
             <g key={text} transform={`translate(${(index % 4) * 430} ${Math.floor(index / 4) * 26})`}>
-              <circle cx="0" cy="-4" r="8" fill={color} />
-              <text x="16" y="0" fontFamily={SANS} fontSize="14" fill="#4b5563">
+              <circle cx="0" cy="-4" r="8" fill={fillColor} stroke={ringColor} strokeWidth="1.2" />
+              <text x="16" y="0" fontFamily={SANS} fontSize="14" fill={INK_SOFT}>
                 {text}
               </text>
             </g>

@@ -612,12 +612,18 @@ async function calculateMatrix(page) {
     const arrows = schema?.querySelectorAll("marker").length ?? 0;
     check("схема: линии рода со стрелками", arrows >= 2, String(arrows));
     const corners = [...(schema?.querySelectorAll("circle") || [])].filter((node) =>
-      (node.getAttribute("stroke") || "").includes("#1b1b1b")
+      (node.getAttribute("stroke") || "").includes("#2b2a33")
     );
-    check("схема: восемь углов в чёрной обводке", corners.length >= 16, String(corners.length));
+    check("схема: углы и центр в графитовой обводке", corners.length >= 8, String(corners.length));
+    // Жемчужный вид: градиентные блики на кругах и холсте.
+    check(
+      "схема: жемчужные заливки и блики",
+      (schema?.querySelectorAll("radialGradient").length ?? 0) >= 3,
+      String(schema?.querySelectorAll("radialGradient").length ?? 0)
+    );
     // Линии между точками схемы — чёрные и сплошные, иначе их не видно на светлом фоне.
     const dark = [...(schema?.querySelectorAll("line, polygon") || [])].filter((node) =>
-      ["#1b1b1b", "#1f1f1f", "#2f2b2e", "#3a3538", "#2b2729"].includes(node.getAttribute("stroke") || "")
+      ["#2b2a33", "#1b1b1b", "#1f1f1f", "#2f2b2e", "#3a3538", "#2b2729"].includes(node.getAttribute("stroke") || "")
     );
     check("схема: линии между цифрами видны", dark.length >= 9, String(dark.length));
   }
