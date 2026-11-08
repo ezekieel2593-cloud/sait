@@ -585,30 +585,39 @@ async function calculateMatrix(page) {
   const svgText = matrixSvg?.textContent || "";
   const circles = matrixSvg ? matrixSvg.querySelectorAll("circle").length : 0;
   check("схема подробная", circles >= 40, String(circles));
-  for (const label of ["таланты", "Кармическая задача", "как тебя видят", "зона комфорта", "деньги: как приходят", "готовность к отношениям", "родовой центр"]) {
-    check(`на схеме подписано «${label}»`, svgText.includes(label));
+  for (const label of ["таланты", "зона комфорта", "готовность к отношениям", "родовой центр", "профессия"]) {
+    check(`на схеме подписано «${label}»`, svgText.toLowerCase().includes(label));
   }
   check("на схеме есть легенда", svgText.includes("комфорт"));
-  for (const callout of ["Линия отца", "Линия матери", "Таланты от природы", "Кармическая задача", "Внутренний портрет", "Родовые программы"]) {
-    check(`схема: выноска «${callout}»`, svgText.includes(callout));
+  // Схема — копия классического калькулятора: зона комфорта, линии рода, значок года.
+  for (const marker of ["ЗОНА КОМФОРТА", "линия мужского рода", "линия женского рода", "энергия 2026 года"]) {
+    check(`схема: ориентир «${marker}»`, svgText.includes(marker));
   }
-  check("схема: у выносок есть пояснение простыми словами", /ресурсы и опора рода/.test(svgText) && /опыт и установки семьи/.test(svgText));
   check(
-    "схема: подписаны все внутренние точки в легенде",
-    /деньги: как приходят/.test(svgText) && /источники дохода/.test(svgText) && /духовное матери/.test(svgText)
+    "схема: цвета точек расшифрованы в легенде",
+    /родовой центр и общий центр квадратов/.test(svgText) &&
+      /духовные программы рода/.test(svgText) &&
+      /характер пары/.test(svgText)
+  );
+  check(
+    "схема: у каждой точки есть подпись для наведения",
+    (matrixSvg?.querySelectorAll("title").length ?? 0) >= 33,
+    String(matrixSvg?.querySelectorAll("title").length ?? 0)
   );
   {
     const schema = matrixSvg;
     const width = Number((schema?.getAttribute("viewBox") || "").split(" ")[2] || 0);
     const height = Number((schema?.getAttribute("viewBox") || "").split(" ")[3] || 0);
     check("схема: подробная, крупный холст", width >= 1200 && height >= 1200, `${width}×${height}`);
-    const lines = [...(schema?.querySelectorAll("line") || [])].filter((node) =>
-      node.getAttribute("stroke") === "#4b5563"
+    const arrows = schema?.querySelectorAll("marker").length ?? 0;
+    check("схема: линии рода со стрелками", arrows >= 2, String(arrows));
+    const corners = [...(schema?.querySelectorAll("circle") || [])].filter((node) =>
+      (node.getAttribute("stroke") || "").includes("#1b1b1b")
     );
-    check("схема: к каждой подписи идёт линия-выноска", lines.length >= 8, String(lines.length));
+    check("схема: восемь углов в чёрной обводке", corners.length >= 16, String(corners.length));
     // Линии между точками схемы — чёрные и сплошные, иначе их не видно на светлом фоне.
     const dark = [...(schema?.querySelectorAll("line, polygon") || [])].filter((node) =>
-      ["#1f1f1f", "#2f2b2e", "#3a3538", "#2b2729"].includes(node.getAttribute("stroke") || "")
+      ["#1b1b1b", "#1f1f1f", "#2f2b2e", "#3a3538", "#2b2729"].includes(node.getAttribute("stroke") || "")
     );
     check("схема: линии между цифрами видны", dark.length >= 9, String(dark.length));
   }
