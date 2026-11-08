@@ -19,12 +19,12 @@ import type { MatrixChart } from "@/lib/matrix/engine";
  * только номер и слово «энергия».
  */
 
-export const MATRIX_DIAGRAM_WIDTH = 1700;
+export const MATRIX_DIAGRAM_WIDTH = 1800;
 export const MATRIX_DIAGRAM_HEIGHT = 1560;
 
 const SIZE = MATRIX_DIAGRAM_WIDTH;
 const HEIGHT = MATRIX_DIAGRAM_HEIGHT;
-const CX = 850;
+const CX = 900;
 const CY = 760;
 /** Радиус, на котором стоят восемь углов двух квадратов. */
 const R = 380;
@@ -42,47 +42,47 @@ type NodeShape = {
 
 const NODES: NodeShape[] = [
   // Личный квадрат и родовой квадрат: восемь углов октаграммы.
-  { key: "B", angle: 0, radius: R, r: 42, kind: "corner" },
-  { key: "family-top-right", angle: 45, radius: R, r: 36, kind: "family" },
-  { key: "C", angle: 90, radius: R, r: 42, kind: "corner" },
-  { key: "family-bottom-right", angle: 135, radius: R, r: 36, kind: "family" },
-  { key: "D", angle: 180, radius: R, r: 42, kind: "corner" },
-  { key: "family-bottom-left", angle: 225, radius: R, r: 36, kind: "family" },
-  { key: "A", angle: 270, radius: R, r: 42, kind: "corner" },
-  { key: "family-top-left", angle: 315, radius: R, r: 36, kind: "family" },
+  { key: "B", angle: 0, radius: R, r: 50, kind: "corner" },
+  { key: "family-top-right", angle: 45, radius: R, r: 42, kind: "family" },
+  { key: "C", angle: 90, radius: R, r: 50, kind: "corner" },
+  { key: "family-bottom-right", angle: 135, radius: R, r: 42, kind: "family" },
+  { key: "D", angle: 180, radius: R, r: 50, kind: "corner" },
+  { key: "family-bottom-left", angle: 225, radius: R, r: 42, kind: "family" },
+  { key: "A", angle: 270, radius: R, r: 50, kind: "corner" },
+  { key: "family-top-left", angle: 315, radius: R, r: 42, kind: "family" },
 
   // Горизонталь «линия земли»: слева страхи, дети и внуки, справа деньги.
-  { key: "fears", angle: 270, radius: 110, r: 23, kind: "axis", badge: 6 },
-  { key: "person-support", angle: 270, radius: 195, r: 25, kind: "axis", badge: 4 },
-  { key: "person-experience", angle: 270, radius: 280, r: 25, kind: "axis", badge: 5 },
-  { key: "money-entry", angle: 90, radius: 195, r: 25, kind: "axis", badge: 7 },
-  { key: "money-middle", angle: 90, radius: 280, r: 25, kind: "axis", badge: 8 },
+  { key: "fears", angle: 270, radius: 110, r: 28, kind: "axis", badge: 6 },
+  { key: "person-support", angle: 270, radius: 195, r: 30, kind: "axis", badge: 4 },
+  { key: "person-experience", angle: 270, radius: 280, r: 30, kind: "axis", badge: 5 },
+  { key: "money-entry", angle: 90, radius: 195, r: 30, kind: "axis", badge: 7 },
+  { key: "money-middle", angle: 90, radius: 280, r: 30, kind: "axis", badge: 8 },
 
   // Вертикаль «линия неба»: сверху таланты, снизу отношения и кармический хвост.
-  { key: "pleasures", angle: 0, radius: 110, r: 23, kind: "axis", badge: 3 },
-  { key: "talent-line", angle: 0, radius: 195, r: 25, kind: "axis", badge: 1 },
-  { key: "talent-second", angle: 0, radius: 280, r: 25, kind: "axis", badge: 2 },
-  { key: "love-entry", angle: 180, radius: 145, r: 25, kind: "axis", badge: 10 },
-  { key: "love-middle", angle: 180, radius: 245, r: 25, kind: "axis", badge: 11 },
+  { key: "pleasures", angle: 0, radius: 110, r: 28, kind: "axis", badge: 3 },
+  { key: "talent-line", angle: 0, radius: 195, r: 30, kind: "axis", badge: 1 },
+  { key: "talent-second", angle: 0, radius: 280, r: 30, kind: "axis", badge: 2 },
+  { key: "love-entry", angle: 180, radius: 145, r: 30, kind: "axis", badge: 10 },
+  { key: "love-middle", angle: 180, radius: 245, r: 30, kind: "axis", badge: 11 },
 
   // Центр рода: родовой центр и общая точка двух центров.
-  { key: "family-force", angle: 62, radius: 150, r: 22, kind: "core", badge: 14 },
-  { key: "family-core", angle: 118, radius: 150, r: 22, kind: "core", badge: 15 },
+  { key: "family-force", angle: 62, radius: 150, r: 27, kind: "core", badge: 14 },
+  { key: "family-core", angle: 118, radius: 150, r: 27, kind: "core", badge: 15 },
 
   // Диагонали родового квадрата: от угла к центру две точки.
-  { key: "family-talent-father", angle: 315, radius: 225, r: 23, kind: "family", badge: 16 },
-  { key: "family-material-father", angle: 315, radius: 305, r: 23, kind: "family", badge: 17 },
-  { key: "family-talent-mother", angle: 45, radius: 225, r: 23, kind: "family", badge: 18 },
-  { key: "family-material-mother", angle: 45, radius: 305, r: 23, kind: "family", badge: 19 },
-  { key: "family-balance", angle: 135, radius: 305, r: 23, kind: "family", badge: 20 },
-  { key: "family-spirit-father", angle: 135, radius: 225, r: 23, kind: "family", badge: 21 },
-  { key: "family-support", angle: 225, radius: 305, r: 23, kind: "family", badge: 22 },
-  { key: "family-spirit-mother", angle: 225, radius: 225, r: 23, kind: "family", badge: 23 },
+  { key: "family-talent-father", angle: 315, radius: 225, r: 28, kind: "family", badge: 16 },
+  { key: "family-material-father", angle: 315, radius: 305, r: 28, kind: "family", badge: 17 },
+  { key: "family-talent-mother", angle: 45, radius: 225, r: 28, kind: "family", badge: 18 },
+  { key: "family-material-mother", angle: 45, radius: 305, r: 28, kind: "family", badge: 19 },
+  { key: "family-balance", angle: 135, radius: 305, r: 28, kind: "family", badge: 20 },
+  { key: "family-spirit-father", angle: 135, radius: 225, r: 28, kind: "family", badge: 21 },
+  { key: "family-support", angle: 225, radius: 305, r: 28, kind: "family", badge: 22 },
+  { key: "family-spirit-mother", angle: 225, radius: 225, r: 28, kind: "family", badge: 23 },
 
   // Нижний правый сектор: пересечение линий и точки рядом с ним.
-  { key: "shared", angle: 135, radius: 175, r: 23, kind: "sec", badge: 13 },
-  { key: "love-partner", angle: 152, radius: 300, r: 22, kind: "sec", badge: 12 },
-  { key: "money-profession", angle: 124, radius: 296, r: 22, kind: "sec", badge: 9 },
+  { key: "shared", angle: 135, radius: 175, r: 28, kind: "sec", badge: 13 },
+  { key: "love-partner", angle: 152, radius: 300, r: 27, kind: "sec", badge: 12 },
+  { key: "money-profession", angle: 124, radius: 296, r: 27, kind: "sec", badge: 9 },
 ];
 
 /** Легенда внутренних точек: номер → короткое пояснение. */
@@ -157,20 +157,19 @@ type Callout = { key: string; lines: string[]; align: "left" | "right" | "center
 const CALLOUTS: Callout[] = [
   { key: "B", lines: ["Таланты от природы", "что даётся легче всего"], align: "center", x: CX, y: 262 },
   { key: "D", lines: ["Кармическая задача", "что предстоит освоить"], align: "center", x: CX, y: 1292 },
-  { key: "family-top-left", lines: ["Линия отца", "ресурсы и опора рода"], align: "right", x: 340, y: 430 },
-  { key: "A", lines: ["Внутренний портрет", "как тебя видят другие"], align: "right", x: 340, y: 760 },
-  { key: "family-bottom-left", lines: ["Унаследованные задачи", "что идёт из истории рода"], align: "right", x: 340, y: 1090 },
-  { key: "family-top-right", lines: ["Линия матери", "ресурсы и опора рода"], align: "left", x: 1360, y: 430 },
-  { key: "C", lines: ["Родовые программы", "опыт и установки семьи"], align: "left", x: 1360, y: 760 },
-  { key: "family-bottom-right", lines: ["Реализация рода", "роль в социуме"], align: "left", x: 1360, y: 1090 },
+  { key: "family-top-left", lines: ["Линия отца", "ресурсы и опора рода"], align: "right", x: 372, y: 430 },
+  { key: "A", lines: ["Внутренний портрет", "как тебя видят другие"], align: "right", x: 372, y: 760 },
+  { key: "family-bottom-left", lines: ["Унаследованные задачи", "что идёт из истории рода"], align: "right", x: 372, y: 1090 },
+  { key: "family-top-right", lines: ["Линия матери", "ресурсы и опора рода"], align: "left", x: 1428, y: 430 },
+  { key: "C", lines: ["Родовые программы", "опыт и установки семьи"], align: "left", x: 1428, y: 760 },
+  { key: "family-bottom-right", lines: ["Реализация рода", "роль в социуме"], align: "left", x: 1428, y: 1090 },
 ];
 
-const CALLOUT_TITLE = 15;
-const CALLOUT_SUB = 13;
-const CALLOUT_LINE = 19;
-const CALLOUT_PAD_X = 15;
-const CALLOUT_PAD_Y = 10;
-const LABEL_FONT = 12.5;
+const CALLOUT_TITLE = 19;
+const CALLOUT_SUB = 16;
+const CALLOUT_LINE = 24;
+const CALLOUT_PAD_X = 18;
+const CALLOUT_PAD_Y = 12;
 
 /** Ширина строки без измерений DOM: средняя буква чуть шире половины кегля. */
 function textWidth(text: string, size: number) {
@@ -181,7 +180,7 @@ function calloutBox(callout: Callout): Rect {
   const widest = Math.max(
     ...callout.lines.map((line, index) => textWidth(line, index === 0 ? CALLOUT_TITLE : CALLOUT_SUB))
   );
-  const w = Math.max(176, Math.round(widest) + CALLOUT_PAD_X * 2);
+  const w = Math.max(210, Math.round(widest) + CALLOUT_PAD_X * 2);
   const h = callout.lines.length * CALLOUT_LINE + CALLOUT_PAD_Y * 2;
   const x = callout.align === "center" ? callout.x - w / 2 : callout.align === "right" ? callout.x - w : callout.x;
   return { x, y: callout.y - h / 2, w, h };
@@ -326,8 +325,8 @@ export function MatrixDiagram({
         const from = exitPoint(box, target);
         const value = point(callout.key);
         if (!value) return null;
-        const lastLineY = box.y + box.h - CALLOUT_PAD_Y - 6;
-        const firstLineY = box.y + CALLOUT_PAD_Y + 11;
+        const lastLineY = box.y + box.h - CALLOUT_PAD_Y - 7;
+        const firstLineY = box.y + CALLOUT_PAD_Y + 14;
         return (
           <g
             key={`callout-${callout.key}`}
@@ -393,7 +392,7 @@ export function MatrixDiagram({
     const isActive = active?.has(node.key) ?? false;
     const fontSize = node.kind === "corner" ? node.r * 0.9 : node.r * 0.88;
     // Номер легенды — снаружи от круга, по направлению от центра схемы.
-    const badgeSpot = polar(node.angle, node.radius + node.r + 7);
+    const badgeSpot = polar(node.angle, node.radius + node.r + 9);
 
     return (
       <g key={node.key} opacity={dim(node.key)} {...interactive(node.key, `${value.title}: ${value.arcanumTitle}`)}>
@@ -420,16 +419,16 @@ export function MatrixDiagram({
         </text>
         {compact || !node.badge ? null : (
           <g>
-            <circle cx={badgeSpot.x} cy={badgeSpot.y} r="9" fill="#fdf8f4" stroke="rgba(120,140,150,0.5)" strokeWidth="1" />
+            <circle cx={badgeSpot.x} cy={badgeSpot.y} r="12" fill="#fdf8f4" stroke="rgba(120,140,150,0.55)" strokeWidth="1.2" />
             <text
               x={badgeSpot.x}
               y={badgeSpot.y + 1}
               textAnchor="middle"
               dominantBaseline="central"
               fontFamily={SANS}
-              fontSize="9.5"
+              fontSize="12.5"
               fontWeight="600"
-              fill="#4f6b74"
+              fill="#40545e"
             >
               {node.badge}
             </text>
@@ -477,16 +476,16 @@ export function MatrixDiagram({
             {selectedAge === entry.age ? (
               <circle cx={spot.x} cy={spot.y} r="16" fill="none" stroke="#2f6f78" strokeWidth="2.4" />
             ) : null}
-            <circle cx={spot.x} cy={spot.y} r="12" fill="#fdf8f4" stroke="rgba(150,128,136,0.45)" strokeWidth="1" />
+            <circle cx={spot.x} cy={spot.y} r="15" fill="#fdf8f4" stroke="rgba(150,128,136,0.5)" strokeWidth="1.2" />
             <text
               x={spot.x}
               y={spot.y + 1}
               textAnchor="middle"
               dominantBaseline="central"
               fontFamily={SERIF}
-              fontSize="12"
+              fontSize="15"
               fontWeight="600"
-              fill="#5b4750"
+              fill="#4a3a42"
             >
               {entry.arcanum}
             </text>
@@ -497,8 +496,8 @@ export function MatrixDiagram({
                 textAnchor="middle"
                 dominantBaseline="central"
                 fontFamily={SANS}
-                fontSize="10.5"
-                fill="#8b7d83"
+                fontSize="13"
+                fill="#7a6c73"
               >
                 {ageLabel(entry.age)}
               </text>
@@ -527,8 +526,8 @@ export function MatrixDiagram({
               textAnchor="middle"
               dominantBaseline="central"
               fontFamily={SANS}
-              fontSize="11"
-              fill="#8b7d83"
+              fontSize="13.5"
+              fill="#6f6268"
               stroke="#fdf8f4"
               strokeWidth="5"
               paintOrder="stroke"
@@ -544,7 +543,7 @@ export function MatrixDiagram({
   const centerValue = chart.byKey.center;
   const centerColors = COLORS.center!;
   const centerActive = active?.has("center") ?? false;
-  const centerR = 62;
+  const centerR = 72;
 
   const octagon = VERTEX_ANGLES.map((angle) => polar(angle, R));
   const squares = [
@@ -563,7 +562,7 @@ export function MatrixDiagram({
 
   return (
     <svg
-      viewBox={`0 186 ${SIZE} ${HEIGHT - 186}`}
+      viewBox={`0 190 ${SIZE} ${HEIGHT - 190}`}
       className="h-auto w-full"
       role="img"
       aria-label={`Полная схема Матрицы судьбы: центр ${chart.byKey.center.arcanumTitle}, личность ${chart.byKey.A.arcanumTitle}, талант ${chart.byKey.B.arcanumTitle}, кармическая задача ${chart.byKey.D.arcanumTitle}; все точки схемы и линия жизни с 0 до 80 лет`}
@@ -575,7 +574,7 @@ export function MatrixDiagram({
         </radialGradient>
       </defs>
 
-      <rect x="0" y="186" width={SIZE} height={HEIGHT - 186} rx="26" fill={`url(#${idPrefix}-bg)`} />
+      <rect x="0" y="190" width={SIZE} height={HEIGHT - 190} rx="26" fill={`url(#${idPrefix}-bg)`} />
 
       {/* Восьмиугольник и два квадрата — каркас схемы. */}
       <polygon
@@ -637,7 +636,7 @@ export function MatrixDiagram({
           dominantBaseline="central"
           fontFamily={SERIF}
           fontWeight="600"
-          fontSize={compact ? 34 : 46}
+          fontSize={compact ? 34 : 56}
           fill={centerColors.text}
         >
           {centerValue.arcanum}
@@ -649,7 +648,7 @@ export function MatrixDiagram({
             textAnchor="middle"
             dominantBaseline="central"
             fontFamily={SANS}
-            fontSize="12"
+            fontSize="14"
             fontWeight="600"
             fill="#6b5e33"
           >
@@ -677,27 +676,27 @@ export function MatrixDiagram({
               textAnchor="middle"
               dominantBaseline="central"
               fontFamily={SERIF}
-              fontSize="16"
+              fontSize="19"
               fontWeight="600"
               fill={COLORS.year!.text}
             >
               {chart.yearEnergy.arcanum}
             </text>
-            <text x={194} y={1160} fontFamily={SANS} fontSize="12.5" fill="#6a5b62">
+            <text x={197} y={1161} fontFamily={SANS} fontSize="15" fill="#5c4f57">
               энергия {chart.yearEnergy.year} года
             </text>
           </g>
 
           {/* Номера внутренних точек: три колонки под схемой. */}
           {[0, 8, 16].map((offset, column) => (
-            <g key={`inner-${column}`} transform={`translate(${132 + column * 500} 1352)`}>
+            <g key={`inner-${column}`} transform={`translate(${140 + column * 480} 1350)`}>
               {INNER_LEGEND.slice(offset, offset + 8).map(([num, label], index) => (
-                <g key={num} transform={`translate(0 ${index * 21})`}>
-                  <circle cx="0" cy="-4" r="8.5" fill="#fdf8f4" stroke="rgba(120,140,150,0.5)" strokeWidth="1" />
-                  <text x="0" y="-3" textAnchor="middle" dominantBaseline="central" fontFamily={SANS} fontSize="9.5" fontWeight="600" fill="#4f6b74">
+                <g key={num} transform={`translate(0 ${index * 26})`}>
+                  <circle cx="0" cy="-4" r="11" fill="#fdf8f4" stroke="rgba(120,140,150,0.55)" strokeWidth="1.1" />
+                  <text x="0" y="-3" textAnchor="middle" dominantBaseline="central" fontFamily={SANS} fontSize="12" fontWeight="600" fill="#40545e">
                     {num}
                   </text>
-                  <text x="14" y="0" fontFamily={SANS} fontSize="12" fill="#66737c">
+                  <text x="18" y="1" fontFamily={SANS} fontSize="15" fill="#4f5b63">
                     {label}
                   </text>
                 </g>
@@ -707,12 +706,12 @@ export function MatrixDiagram({
 
           <g transform={`translate(140 1236)`}>
             {LEGEND.map(([color, label], index) => {
-              const x = (index % 3) * 168;
-              const y = Math.floor(index / 3) * 24;
+              const x = (index % 3) * 190;
+              const y = Math.floor(index / 3) * 30;
               return (
                 <g key={label} transform={`translate(${x} ${y})`}>
-                  <circle cx="0" cy="-4" r="6.5" fill={color} stroke="rgba(90,70,80,0.18)" />
-                  <text x="12" y="0" fontFamily={SANS} fontSize="11.5" fill="#7b6c73">
+                  <circle cx="0" cy="-4" r="8" fill={color} stroke="rgba(90,70,80,0.22)" />
+                  <text x="14" y="1" fontFamily={SANS} fontSize="15" fill="#5c666d">
                     {label}
                   </text>
                 </g>
