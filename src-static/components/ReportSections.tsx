@@ -79,7 +79,12 @@ export function ReportSections({
   return (
     <section id="r-report" className="grid scroll-mt-28 gap-3">
       <div className="flex flex-wrap items-end justify-between gap-2">
-        <h2 className="h-section">{heading}</h2>
+        <h2 className="h-section">
+          {heading}
+          <span className="ml-2 align-middle text-[0.8rem] font-normal text-[var(--ink-faint)]">
+            {sections.length} {sections.length === 1 ? "раздел" : sections.length < 5 ? "раздела" : "разделов"}
+          </span>
+        </h2>
         <button
           type="button"
           className="btn btn--secondary btn--sm"
@@ -91,7 +96,7 @@ export function ReportSections({
       </div>
       <p className="max-w-[62ch] text-[0.9rem] leading-relaxed text-[var(--ink-soft)]">{introText}</p>
 
-      <ol className="grid gap-2">
+      <ol className="grid gap-2" aria-label="Разделы разбора">
         {sections.map((section, index) => {
           const open = openIds.includes(section.id);
           const hint = plainHint(section.id);
@@ -106,7 +111,7 @@ export function ReportSections({
                 onClick={() => toggle(section.id)}
                 aria-expanded={open}
                 aria-controls={`sec-body-${section.id}`}
-                className={`flex w-full items-start gap-3 px-3 py-2.5 text-left transition-colors ${
+                className={`flex w-full items-start gap-3 px-3 py-3 text-left transition-colors ${
                   open ? "bg-[rgba(184,221,224,0.20)]" : "hover:bg-[rgba(184,221,224,0.10)]"
                 }`}
               >

@@ -227,6 +227,7 @@ function MatrixResult({
   const chips = new Set(["r-scheme", "r-chakras", "sec-point-center", "sec-point-A", "sec-point-D"]);
   const navItems: ReportNavItem[] = [
     { id: "r-scheme", label: "Схема" },
+    { id: "r-report", label: "Разделы" },
     { id: "r-chakras", label: "Чакры" },
     ...free.map((section) => ({
       id: `sec-${section.id}`,
@@ -345,6 +346,18 @@ function MatrixResult({
         </div>
       </section>
 
+      {/* Список разделов идёт сразу под схемой: нажатие раскрывает текст под
+          названием, без прыжка в конец страницы. */}
+      <div id="r-energies" className="scroll-mt-28">
+        <ReportSections
+          sections={free}
+          locked={locked}
+          heading={admin ? "Полная расшифровка по разделам" : "Ваша расшифровка по разделам"}
+          lockedHeading="Что скрыто в вашей схеме"
+          lockedIntro={`В вашей матрице посчитаны все энергии — открыто пока ${free.length}. За остальными ${locked.length} стоят ответы на самые частые вопросы: почему деньги приходят рывками, откуда берётся один и тот же сценарий в отношениях, что вы повторяете за родом и куда вам действительно стоит идти в этом году. Каждая энергия у вас уже есть — остаётся прочитать её про вас.`}
+        />
+      </div>
+
       {admin ? <AdminNote locked={locked.length} /> : null}
 
       <section id="r-chakras" className="card scroll-mt-28 p-4 sm:p-6">
@@ -362,16 +375,6 @@ function MatrixResult({
           <ChakraResult chart={chart} />
         </div>
       </section>
-
-      <div id="r-energies" className="scroll-mt-28">
-        <ReportSections
-          sections={free}
-          locked={locked}
-          heading={admin ? "Полная расшифровка по разделам" : "Ваша расшифровка по разделам"}
-          lockedHeading="Что скрыто в вашей схеме"
-          lockedIntro={`В вашей матрице посчитаны все энергии — открыто пока ${free.length}. За остальными ${locked.length} стоят ответы на самые частые вопросы: почему деньги приходят рывками, откуда берётся один и тот же сценарий в отношениях, что вы повторяете за родом и куда вам действительно стоит идти в этом году. Каждая энергия у вас уже есть — остаётся прочитать её про вас.`}
-        />
-      </div>
 
       <GuidesSection
         chart={chart}

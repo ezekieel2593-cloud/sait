@@ -373,6 +373,7 @@ function AstroResult({
 
   const navItems: ReportNavItem[] = [
     { id: "r-card", label: "Карта" },
+    { id: "r-report", label: "Разделы" },
     { id: "synastry", label: "Совместимость" },
     ...opened.map((section) => ({
       id: `sec-${section.id}`,
@@ -540,10 +541,8 @@ function AstroResult({
         ) : null}
       </section>
 
-      <SynastryPanel chart={chart} showAll={admin} />
-
-      {admin ? <AdminNote locked={locked.length} /> : null}
-
+      {/* Разделы идут сразу под картой: нажатие на название раскрывает текст
+          прямо под ним, а не уводит в низ страницы. */}
       <ReportSections
         sections={free}
         locked={locked}
@@ -553,6 +552,10 @@ function AstroResult({
           locked.length === 1 ? "раздел" : locked.length < 5 ? "раздела" : "разделов"
         } — остальные планеты, их дома и точные аспекты. Именно они объясняют то, что не видно в общих словах: почему в одном и том же деле вы выкладываетесь, а отклика нет, и где ваша сила работает на вас без сопротивления. Разбираем это вместе — спокойно и под вашу ситуацию.`}
       />
+
+      <SynastryPanel chart={chart} showAll={admin} />
+
+      {admin ? <AdminNote locked={locked.length} /> : null}
 
       {admin ? null : (
         <LeadForm

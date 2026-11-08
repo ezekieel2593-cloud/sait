@@ -412,6 +412,16 @@ async function calculateMatrix(page) {
   const hintsText = reportRows.map((row) => row.textContent || "").join(" ");
   check("пояснения говорят бытовым языком", /(твоя суть|эмоции|деньги|любовь|где у тебя сила)/i.test(hintsText));
 
+  // Список идёт сразу под картой, а не в конце страницы.
+  // jsdom не считает геометрию, поэтому порядок проверяем по дереву документа.
+  const reportEl = reportDoc.querySelector("#r-report");
+  const synastryEl = reportDoc.querySelector("#synastry");
+  check(
+    "разделы идут выше блока совместимости",
+    Boolean(reportEl && synastryEl && reportEl.compareDocumentPosition(synastryEl) & 4),
+    reportEl && synastryEl ? "порядок в документе" : "нет элементов"
+  );
+
   const secondRow = reportRows[1];
   secondRow?.querySelector("button")?.dispatchEvent(new reportPage.window.Event("click", { bubbles: true }));
   await wait(300);
@@ -587,6 +597,13 @@ async function calculateMatrix(page) {
     /(зона комфорта|деньги|любовь|талант|род)/i.test(matrixRows.map((row) => row.textContent || "").join(" "))
   );
   check("матрица: по умолчанию раскрыт один раздел", matrixRows.filter((row) => row.querySelector('[id^="sec-body-"]')).length === 1);
+  const matrixReportEl = guestMatrixDoc.querySelector("#r-report");
+  const chakraEl = guestMatrixDoc.querySelector("#r-chakras");
+  check(
+    "матрица: разделы идут выше чакр",
+    Boolean(matrixReportEl && chakraEl && matrixReportEl.compareDocumentPosition(chakraEl) & 4),
+    matrixReportEl && chakraEl ? "порядок в документе" : "нет элементов"
+  );
 
   console.log("\n9а. Клик по точке схемы");
   const clickableNodes = [...(guestMatrixDoc.querySelectorAll('figure svg g[role="button"]') || [])];
