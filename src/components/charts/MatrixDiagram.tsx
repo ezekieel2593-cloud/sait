@@ -112,41 +112,45 @@ const INNER_LEGEND: [number, string][] = [
   [23, "духовное матери"],
 ];
 
-/** Цвета кругов: спокойная пастель, у каждой роли свой оттенок. */
-const COLORS: Record<string, { fill: string; ring: string; text: string }> = {
-  A: { fill: "#d9c8ef", ring: "#b79fdb", text: "#3d2f52" },
-  B: { fill: "#c9b4ea", ring: "#a98fd3", text: "#362a4a" },
-  C: { fill: "#f6c3d2", ring: "#e39cb3", text: "#56293a" },
-  D: { fill: "#f0a9c0", ring: "#d98aa5", text: "#4f2333" },
-  "family-top-left": { fill: "#cfe3ee", ring: "#a8c6d6", text: "#2f4450" },
-  "family-top-right": { fill: "#d6e7f0", ring: "#aecbd9", text: "#2f4450" },
-  "family-bottom-right": { fill: "#d3efe2", ring: "#a8d3c1", text: "#2b4a3d" },
-  "family-bottom-left": { fill: "#dbeaf3", ring: "#b3ccda", text: "#2f4450" },
-  center: { fill: "#f7d98a", ring: "#dfb85f", text: "#4a3a12" },
-  "family-force": { fill: "#c6e3bb", ring: "#9ec794", text: "#2f4529" },
-  "family-core": { fill: "#dcebcf", ring: "#b3d5a6", text: "#2f4529" },
-  "money-entry": { fill: "#bfe4c9", ring: "#94c7a3", text: "#254434" },
-  "money-middle": { fill: "#cdeada", ring: "#a3cfb9", text: "#254434" },
-  "money-profession": { fill: "#d7efe0", ring: "#a9d3b8", text: "#254434" },
-  "love-entry": { fill: "#f8cbdc", ring: "#e0a5bd", text: "#4f2333" },
-  "love-middle": { fill: "#fadbe6", ring: "#e5b6c9", text: "#4f2333" },
-  "love-partner": { fill: "#fbe3ec", ring: "#e9c2d1", text: "#4f2333" },
-  "talent-line": { fill: "#cbc4ef", ring: "#a89fd9", text: "#332c50" },
-  "talent-second": { fill: "#d8d2f4", ring: "#b4abdf", text: "#332c50" },
-  pleasures: { fill: "#e5e0f7", ring: "#c3bce6", text: "#332c50" },
-  "person-support": { fill: "#d9e6f4", ring: "#aec7de", text: "#2c3f52" },
-  "person-experience": { fill: "#e3edf7", ring: "#b9cfe2", text: "#2c3f52" },
-  fears: { fill: "#eee7f5", ring: "#cfc3df", text: "#3c3648" },
-  "family-talent-father": { fill: "#d6e7f0", ring: "#aecbd9", text: "#2f4450" },
-  "family-material-father": { fill: "#e2eff6", ring: "#bdd7e4", text: "#2f4450" },
-  "family-talent-mother": { fill: "#dbeaf3", ring: "#b3ccda", text: "#2f4450" },
-  "family-material-mother": { fill: "#e6f1f8", ring: "#c2dbe8", text: "#2f4450" },
-  "family-balance": { fill: "#d3efe2", ring: "#a8d3c1", text: "#2b4a3d" },
-  "family-spirit-father": { fill: "#dff3e9", ring: "#b7dcc9", text: "#2b4a3d" },
-  "family-support": { fill: "#dbeaf3", ring: "#b3ccda", text: "#2f4450" },
-  "family-spirit-mother": { fill: "#e9f3fa", ring: "#c6deeb", text: "#2f4450" },
-  shared: { fill: "#c3e6e6", ring: "#97c9c9", text: "#234a4a" },
-  year: { fill: "#efe6da", ring: "#cfbca6", text: "#463a2b" },
+/**
+ * Классическая палитра схемы: насыщенные круги с белыми цифрами, как в
+ * калькуляторах матрицы. У каждой роли свой цвет, внутри точки — белое число.
+ */
+type Paint = { fill: string; ring: string };
+const COLORS: Record<string, Paint> = {
+  A: { fill: "#7b4bc9", ring: "#6438ac" },
+  B: { fill: "#2f6fe0", ring: "#2458b8" },
+  C: { fill: "#e0453e", ring: "#bd322c" },
+  D: { fill: "#ef8f2b", ring: "#cf7618" },
+  center: { fill: "#e0453e", ring: "#bd322c" },
+  "family-top-left": { fill: "#1f9d94", ring: "#148078" },
+  "family-top-right": { fill: "#2f6fe0", ring: "#2458b8" },
+  "family-bottom-right": { fill: "#2fa46a", ring: "#218353" },
+  "family-bottom-left": { fill: "#ef8f2b", ring: "#cf7618" },
+  "family-force": { fill: "#7b4bc9", ring: "#6438ac" },
+  "family-core": { fill: "#d94a8f", ring: "#b63674" },
+  "family-talent-father": { fill: "#2f6fe0", ring: "#2458b8" },
+  "family-material-father": { fill: "#4a8fe8", ring: "#2f6fc0" },
+  "family-talent-mother": { fill: "#1f9d94", ring: "#148078" },
+  "family-material-mother": { fill: "#38b0a8", ring: "#22948c" },
+  "family-balance": { fill: "#2fa46a", ring: "#218353" },
+  "family-spirit-father": { fill: "#3fb87a", ring: "#2c9660" },
+  "family-support": { fill: "#d94a8f", ring: "#b63674" },
+  "family-spirit-mother": { fill: "#e2649f", ring: "#c4457f" },
+  "money-entry": { fill: "#2fa46a", ring: "#218353" },
+  "money-middle": { fill: "#3fb87a", ring: "#2c9660" },
+  "money-profession": { fill: "#22a37f", ring: "#178362" },
+  "love-entry": { fill: "#e0453e", ring: "#bd322c" },
+  "love-middle": { fill: "#ef8f2b", ring: "#cf7618" },
+  "love-partner": { fill: "#d94a8f", ring: "#b63674" },
+  shared: { fill: "#7b4bc9", ring: "#6438ac" },
+  "talent-line": { fill: "#2f6fe0", ring: "#2458b8" },
+  "talent-second": { fill: "#4a8fe8", ring: "#2f6fc0" },
+  pleasures: { fill: "#ef8f2b", ring: "#cf7618" },
+  "person-support": { fill: "#1f9d94", ring: "#148078" },
+  "person-experience": { fill: "#38b0a8", ring: "#22948c" },
+  fears: { fill: "#7b4bc9", ring: "#6438ac" },
+  year: { fill: "#ef8f2b", ring: "#cf7618" },
 };
 
 type Rect = { x: number; y: number; w: number; h: number };
@@ -338,20 +342,20 @@ export function MatrixDiagram({
               y1={from.y}
               x2={target.x}
               y2={target.y}
-              stroke="rgba(43,39,41,0.55)"
-              strokeWidth="1.2"
+              stroke="#4b5563"
+              strokeWidth="1.1"
               strokeLinecap="round"
             />
-            <circle cx={target.x} cy={target.y} r="3.4" fill="#2b2729" />
+            <circle cx={target.x} cy={target.y} r="3" fill="#1f1f1f" />
             <rect
               x={box.x}
               y={box.y}
               width={box.w}
               height={box.h}
-              rx="7"
-              fill="rgba(255,253,250,0.94)"
-              stroke={selected === callout.key ? "#2f6f78" : "rgba(150,132,138,0.42)"}
-              strokeWidth={selected === callout.key ? 2 : 1}
+              rx="4"
+              fill="#ffffff"
+              stroke={selected === callout.key ? "#1f6feb" : "#d0d5dd"}
+              strokeWidth={selected === callout.key ? 2 : 1.2}
             />
             <text
               x={box.x + box.w / 2}
@@ -360,7 +364,7 @@ export function MatrixDiagram({
               fontFamily={SANS}
               fontSize={CALLOUT_TITLE}
               fontWeight="600"
-              fill="#35424a"
+              fill="#1f2328"
             >
               {callout.lines[0]}
             </text>
@@ -371,7 +375,7 @@ export function MatrixDiagram({
                 textAnchor="middle"
                 fontFamily={SANS}
                 fontSize={CALLOUT_SUB}
-                fill="#6d6f78"
+                fill="#6b7280"
               >
                 {callout.lines[1]}
               </text>
@@ -390,36 +394,34 @@ export function MatrixDiagram({
     const colors = COLORS[node.key] ?? COLORS.center!;
     const isSelected = selected === node.key;
     const isActive = active?.has(node.key) ?? false;
-    const fontSize = node.kind === "corner" ? node.r * 0.9 : node.r * 0.88;
+    const fontSize = node.kind === "corner" ? node.r * 0.86 : node.r * 0.82;
     // Номер легенды — снаружи от круга, по направлению от центра схемы.
     const badgeSpot = polar(node.angle, node.radius + node.r + 9);
 
     return (
       <g key={node.key} opacity={dim(node.key)} {...interactive(node.key, `${value.title}: ${value.arcanumTitle}`)}>
         {isActive ? (
-          <circle cx={center.x} cy={center.y} r={node.r + 9} fill="none" stroke="#3b7b83" strokeWidth="2" strokeDasharray="5 4" />
+          <circle cx={center.x} cy={center.y} r={node.r + 9} fill="none" stroke="#1f6feb" strokeWidth="2.5" strokeDasharray="5 4" />
         ) : null}
         {isSelected ? (
-          <circle cx={center.x} cy={center.y} r={node.r + 5} fill="none" stroke="#2f6f78" strokeWidth="3" />
+          <circle cx={center.x} cy={center.y} r={node.r + 5} fill="none" stroke="#1f6feb" strokeWidth="3" />
         ) : null}
-        <circle cx={center.x} cy={center.y + 3} r={node.r} fill="rgba(70,52,60,0.10)" />
-        <circle cx={center.x} cy={center.y} r={node.r} fill={colors.fill} stroke={colors.ring} strokeWidth="1.4" />
-        <circle cx={center.x - node.r * 0.3} cy={center.y - node.r * 0.34} r={node.r * 0.52} fill="rgba(255,255,255,0.45)" />
+        <circle cx={center.x} cy={center.y} r={node.r} fill={colors.fill} stroke={colors.ring} strokeWidth="1.6" />
         <text
           x={center.x}
           y={center.y + 1}
           textAnchor="middle"
           dominantBaseline="central"
-          fontFamily={SERIF}
-          fontWeight="600"
+          fontFamily={SANS}
+          fontWeight="700"
           fontSize={fontSize}
-          fill={colors.text}
+          fill="#ffffff"
         >
           {value.arcanum}
         </text>
         {compact || !node.badge ? null : (
           <g>
-            <circle cx={badgeSpot.x} cy={badgeSpot.y} r="12" fill="#fdf8f4" stroke="rgba(120,140,150,0.55)" strokeWidth="1.2" />
+            <circle cx={badgeSpot.x} cy={badgeSpot.y} r="12" fill="#ffffff" stroke="#9aa0a6" strokeWidth="1.1" />
             <text
               x={badgeSpot.x}
               y={badgeSpot.y + 1}
@@ -428,7 +430,7 @@ export function MatrixDiagram({
               fontFamily={SANS}
               fontSize="12.5"
               fontWeight="600"
-              fill="#40545e"
+              fill="#374151"
             >
               {node.badge}
             </text>
@@ -476,18 +478,18 @@ export function MatrixDiagram({
               : {})}
           >
             {selectedAge === entry.age ? (
-              <circle cx={spot.x} cy={spot.y} r="17" fill="none" stroke="#2f6f78" strokeWidth="2.4" />
+              <circle cx={spot.x} cy={spot.y} r="17" fill="none" stroke="#1f6feb" strokeWidth="2.4" />
             ) : null}
-            <circle cx={spot.x} cy={spot.y} r="13" fill="#fdf8f4" stroke="rgba(150,128,136,0.55)" strokeWidth="1.1" />
+            <circle cx={spot.x} cy={spot.y} r="13" fill="#ffffff" stroke="#9aa0a6" strokeWidth="1.1" />
             <text
               x={spot.x}
               y={spot.y + 1}
               textAnchor="middle"
               dominantBaseline="central"
-              fontFamily={SERIF}
+              fontFamily={SANS}
               fontSize="13"
               fontWeight="600"
-              fill="#4a3a42"
+              fill="#1f2328"
             >
               {entry.arcanum}
             </text>
@@ -499,7 +501,7 @@ export function MatrixDiagram({
                 dominantBaseline="central"
                 fontFamily={SANS}
                 fontSize="13"
-                fill="#7a6c73"
+                fill="#6b7280"
               >
                 {ageLabel(entry.age)}
               </text>
@@ -529,8 +531,8 @@ export function MatrixDiagram({
               dominantBaseline="central"
               fontFamily={SANS}
               fontSize="13.5"
-              fill="#6f6268"
-              stroke="#fdf8f4"
+              fill="#4b5563"
+              stroke="#ffffff"
               strokeWidth="5"
               paintOrder="stroke"
               opacity={active ? 0.32 : 1}
@@ -554,12 +556,12 @@ export function MatrixDiagram({
   ];
 
   const LEGEND: [string, string][] = [
-    ["#c9b4ea", "личность"],
-    ["#cfe3ee", "род"],
-    ["#cbc4ef", "талант"],
-    ["#bfe4c9", "деньги"],
-    ["#f8cbdc", "отношения"],
-    ["#f7d98a", "комфорт"],
+    ["#2f6fe0", "личный квадрат"],
+    ["#1f9d94", "родовой квадрат"],
+    ["#2fa46a", "деньги"],
+    ["#e0453e", "отношения"],
+    ["#ef8f2b", "таланты и год"],
+    ["#7b4bc9", "центр рода"],
   ];
 
   return (
@@ -569,21 +571,14 @@ export function MatrixDiagram({
       role="img"
       aria-label={`Полная схема Матрицы судьбы: центр ${chart.byKey.center.arcanumTitle}, личность ${chart.byKey.A.arcanumTitle}, талант ${chart.byKey.B.arcanumTitle}, кармическая задача ${chart.byKey.D.arcanumTitle}; все точки схемы и линия жизни с 0 до 80 лет`}
     >
-      <defs>
-        <radialGradient id={`${idPrefix}-bg`} cx="0.5" cy="0.45" r="0.7">
-          <stop offset="0" stopColor="#fffefc" />
-          <stop offset="1" stopColor="#f7f1ec" />
-        </radialGradient>
-      </defs>
-
-      <rect x="0" y="190" width={SIZE} height={HEIGHT - 190} rx="26" fill={`url(#${idPrefix}-bg)`} />
+      <rect x="0" y="190" width={SIZE} height={HEIGHT - 190} rx="18" fill="#ffffff" />
 
       {/* Восьмиугольник и два квадрата — каркас схемы. */}
       <polygon
         points={octagon.map((p) => `${p.x},${p.y}`).join(" ")}
         fill="none"
-        stroke="#2f2b2e"
-        strokeWidth="1.8"
+        stroke="#1f1f1f"
+        strokeWidth="1.4"
       />
       {squares.map((set, index) => (
         <polygon
@@ -593,20 +588,20 @@ export function MatrixDiagram({
             .map((p) => `${p.x},${p.y}`)
             .join(" ")}
           fill="none"
-          stroke="#3a3538"
-          strokeWidth="1.5"
+          stroke="#1f1f1f"
+          strokeWidth="1.2"
         />
       ))}
-      <circle cx={CX} cy={CY} r={R * 0.62} fill="none" stroke="rgba(60,54,58,0.22)" strokeWidth="1" />
+      <circle cx={CX} cy={CY} r={R * 0.62} fill="none" stroke="rgba(31,31,31,0.14)" strokeWidth="1" />
 
       {/* Диагонали рода: от каждого угла к центру. */}
       {[315, 45, 135, 225].map((angle) => (
-        <g key={`diag-${angle}`}>{line(polar(angle, R), { x: CX, y: CY }, "#3a3538", 1.4)}</g>
+        <g key={`diag-${angle}`}>{line(polar(angle, R), { x: CX, y: CY }, "#1f1f1f", 1.1)}</g>
       ))}
 
       {/* Линии земли (горизонталь) и неба (вертикаль). */}
-      {line(polar(270, R), polar(90, R), "#2b2729", 1.9)}
-      {line(polar(0, R), polar(180, R), "#2b2729", 1.9)}
+      {line(polar(270, R), polar(90, R), "#1f1f1f", 1.4)}
+      {line(polar(0, R), polar(180, R), "#1f1f1f", 1.4)}
 
       {/* Выноски рисуем до кругов: линии уходят под подписи и обводки. */}
       {calloutEls}
@@ -628,31 +623,29 @@ export function MatrixDiagram({
         {selected === "center" ? (
           <circle cx={CX} cy={CY} r={centerR + 6} fill="none" stroke="#2f6f78" strokeWidth="3" />
         ) : null}
-        <circle cx={CX} cy={CY + 3} r={centerR} fill="rgba(70,52,60,0.10)" />
-        <circle cx={CX} cy={CY} r={centerR} fill={centerColors.fill} stroke={centerColors.ring} strokeWidth="1.6" />
-        <circle cx={CX - 18} cy={CY - 20} r="30" fill="rgba(255,255,255,0.5)" />
+        <circle cx={CX} cy={CY} r={centerR} fill={centerColors.fill} stroke={centerColors.ring} strokeWidth="2" />
         <text
           x={CX}
           y={compact ? CY + 1 : CY - 8}
           textAnchor="middle"
           dominantBaseline="central"
-          fontFamily={SERIF}
-          fontWeight="600"
+          fontFamily={SANS}
+          fontWeight="700"
           fontSize={compact ? 34 : 56}
-          fill={centerColors.text}
+          fill="#ffffff"
         >
           {centerValue.arcanum}
         </text>
         {compact ? null : (
           <text
             x={CX}
-            y={CY + 30}
+            y={CY + centerR + 20}
             textAnchor="middle"
             dominantBaseline="central"
             fontFamily={SANS}
-            fontSize="14"
+            fontSize="15"
             fontWeight="600"
-            fill="#6b5e33"
+            fill="#1f2328"
           >
             зона комфорта
           </text>
@@ -668,23 +661,23 @@ export function MatrixDiagram({
             {...interactive("year", `${chart.yearEnergy.title}: ${chart.yearEnergy.arcanumTitle}`)}
           >
             {selected === "year" ? (
-              <rect x={132} y={1126} width="284" height="58" rx="29" fill="none" stroke="#2f6f78" strokeWidth="3" />
+              <rect x={132} y={1126} width="284" height="58" rx="29" fill="none" stroke="#1f6feb" strokeWidth="3" />
             ) : null}
-            <rect x={136} y={1131} width="276" height="48" rx="24" fill="#fffaf4" stroke="rgba(207,188,166,0.9)" />
+            <rect x={136} y={1131} width="276" height="48" rx="24" fill="#ffffff" stroke="#d0d5dd" strokeWidth="1.2" />
             <circle cx={168} cy={1155} r="17" fill={COLORS.year!.fill} stroke={COLORS.year!.ring} strokeWidth="1.2" />
             <text
               x={168}
               y={1156}
               textAnchor="middle"
               dominantBaseline="central"
-              fontFamily={SERIF}
+              fontFamily={SANS}
               fontSize="19"
-              fontWeight="600"
-              fill={COLORS.year!.text}
+              fontWeight="700"
+              fill="#ffffff"
             >
               {chart.yearEnergy.arcanum}
             </text>
-            <text x={197} y={1161} fontFamily={SANS} fontSize="15" fill="#5c4f57">
+            <text x={197} y={1161} fontFamily={SANS} fontSize="15" fill="#374151">
               энергия {chart.yearEnergy.year} года
             </text>
           </g>
@@ -694,11 +687,11 @@ export function MatrixDiagram({
             <g key={`inner-${column}`} transform={`translate(${140 + column * 480} 1350)`}>
               {INNER_LEGEND.slice(offset, offset + 8).map(([num, label], index) => (
                 <g key={num} transform={`translate(0 ${index * 26})`}>
-                  <circle cx="0" cy="-4" r="11" fill="#fdf8f4" stroke="rgba(120,140,150,0.55)" strokeWidth="1.1" />
-                  <text x="0" y="-3" textAnchor="middle" dominantBaseline="central" fontFamily={SANS} fontSize="12" fontWeight="600" fill="#40545e">
+                  <circle cx="0" cy="-4" r="11" fill="#ffffff" stroke="#9aa0a6" strokeWidth="1.1" />
+                  <text x="0" y="-3" textAnchor="middle" dominantBaseline="central" fontFamily={SANS} fontSize="12" fontWeight="600" fill="#374151">
                     {num}
                   </text>
-                  <text x="18" y="1" fontFamily={SANS} fontSize="15" fill="#4f5b63">
+                  <text x="18" y="1" fontFamily={SANS} fontSize="15" fill="#374151">
                     {label}
                   </text>
                 </g>
@@ -712,8 +705,8 @@ export function MatrixDiagram({
               const y = Math.floor(index / 3) * 30;
               return (
                 <g key={label} transform={`translate(${x} ${y})`}>
-                  <circle cx="0" cy="-4" r="8" fill={color} stroke="rgba(90,70,80,0.22)" />
-                  <text x="14" y="1" fontFamily={SANS} fontSize="15" fill="#5c666d">
+                  <circle cx="0" cy="-4" r="8" fill={color} stroke="rgba(0,0,0,0.12)" />
+                  <text x="14" y="1" fontFamily={SANS} fontSize="15" fill="#4b5563">
                     {label}
                   </text>
                 </g>
