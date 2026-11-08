@@ -46,11 +46,11 @@ describe("Матрица судьбы (matrix-22-v1)", () => {
     expect(chart.karmaTail.map((program) => program.arcanum)).toEqual([15, 20, 5]);
   });
 
-  it("строит линию жизни: 0–80 лет шагом 2,5 года", () => {
+  it("строит линию жизни: восемь делений по 1,25 года в каждом десятилетии", () => {
     const chart = computeMatrix({ date: "1992-06-23", currentYear: 2026 });
-    expect(chart.lifeLine).toHaveLength(32);
-    expect(chart.lifeLine.map((point) => point.age).slice(0, 4)).toEqual([0, 2.5, 5, 7.5]);
-    expect(chart.lifeLine.at(-1)!.age).toBe(77.5);
+    expect(chart.lifeLine).toHaveLength(64);
+    expect(chart.lifeLine.map((point) => point.age).slice(0, 4)).toEqual([0, 1.25, 2.5, 3.75]);
+    expect(chart.lifeLine.at(-1)!.age).toBe(78.75);
     // Углы идут по кругу: 0 лет — A, 10 — родовой угол, 20 — B, 40 — C, 60 — D.
     const corners = chart.lifeLine.filter((point) => point.kind === "vertex");
     expect(corners.map((point) => point.age)).toEqual([0, 10, 20, 30, 40, 50, 60, 70]);

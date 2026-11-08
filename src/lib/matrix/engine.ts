@@ -58,9 +58,9 @@ export interface MatrixProgram {
 
 /** Точка «линии жизни»: возраст человека и энергия этого периода. */
 export interface LifeLinePoint {
-  /** Возраст в годах; шаг 2,5 года. */
+  /** Возраст в годах; шаг 1,25 года — восемь делений на десятилетие. */
   age: number;
-  /** Какой это возраст: вершина квадрата, середина десятилетия или четверть. */
+  /** Вершина квадрата (кратно 10 годам) или промежуточная точка периода. */
   kind: "vertex" | "middle" | "quarter";
   /** Ключ вершины, от которой считается отрезок. */
   corner: string;
@@ -82,7 +82,7 @@ export interface MatrixChart {
   byKey: Record<string, MatrixPoint>;
   layout: { key: string; x: number; y: number; label: string }[];
   yearEnergy: MatrixPoint & { year: number };
-  /** Линия жизни: от 0 до 80 лет по 2,5 года, считается по углам квадратов. */
+  /** Линия жизни: восемь делений по 1,25 года в каждом десятилетии, от 0 до 80 лет. */
   lifeLine: LifeLinePoint[];
   /** Предназначения: личное, социальное, духовное и линии, из которых они сложены. */
   programs: MatrixProgram[];
@@ -345,20 +345,32 @@ export function computeMatrix(input: MatrixInput): MatrixChart {
     year: currentYear,
   };
 
-  // Линия жизни: углы квадратов идут по кругу шагом 10 лет (A — 0, F — 10, B — 20 …),
-  // середина десятилетия — сумма соседних углов, точки 2,5 и 7,5 года — сумма угла и середины.
+  // Линия жизни: углы квадратов идут по кругу шагом 10 лет (A — 0, F — 10, B — 20 …).
+  // Каждое десятилетие делится на восемь отрезков по 1,25 года (около 456 дней) —
+  // как в классической схеме: d = угол + следующий угол, b = угол + d, a = угол + b,
+  // c = b + d, f = d + следующий угол, e = d + f, g = f + следующий угол.
   const lifeOrder = ["A", "family-top-left", "B", "family-top-right", "C", "family-bottom-right", "D", "family-bottom-left"];
   const lifeLine: LifeLinePoint[] = [];
   lifeOrder.forEach((key, index) => {
     const next = lifeOrder[(index + 1) % lifeOrder.length]!;
     const corner = values[key]!;
     const following = values[next]!;
-    const middle = reduce22(corner + following);
+    const middle = reduce22(corner + following); // 5 лет
+    const quarterStart = reduce22(corner + middle); // 2,5 года
+    const eighthStart = reduce22(corner + quarterStart); // 1,25 года
+    const thirdQuarter = reduce22(quarterStart + middle); // 3,75 года
+    const sixthEighth = reduce22(middle + reduce22(middle + following)); // 6,25 года
+    const quarterEnd = reduce22(middle + following); // 7,5 года
+    const eighthEnd = reduce22(quarterEnd + following); // 8,75 года
     const base = index * 10;
     lifeLine.push({ age: base, kind: "vertex", corner: key, arcanum: corner, formula: "угол квадрата" });
-    lifeLine.push({ age: base + 2.5, kind: "quarter", corner: key, arcanum: reduce22(corner + middle), formula: `${key} + середина 5 лет` });
+    lifeLine.push({ age: base + 1.25, kind: "quarter", corner: key, arcanum: eighthStart, formula: `${key} + 2,5 года` });
+    lifeLine.push({ age: base + 2.5, kind: "quarter", corner: key, arcanum: quarterStart, formula: `${key} + середина 5 лет` });
+    lifeLine.push({ age: base + 3.75, kind: "quarter", corner: key, arcanum: thirdQuarter, formula: `2,5 года + середина` });
     lifeLine.push({ age: base + 5, kind: "middle", corner: key, arcanum: middle, formula: `${key} + ${next}` });
-    lifeLine.push({ age: base + 7.5, kind: "quarter", corner: key, arcanum: reduce22(middle + following), formula: `середина + ${next}` });
+    lifeLine.push({ age: base + 6.25, kind: "quarter", corner: key, arcanum: sixthEighth, formula: `середина + 7,5 года` });
+    lifeLine.push({ age: base + 7.5, kind: "quarter", corner: key, arcanum: quarterEnd, formula: `середина + ${next}` });
+    lifeLine.push({ age: base + 8.75, kind: "quarter", corner: key, arcanum: eighthEnd, formula: `7,5 года + ${next}` });
   });
 
   // Предназначения складываются из диагоналей квадратов: земля (A+C) и небо (B+D).

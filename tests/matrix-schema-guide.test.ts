@@ -157,7 +157,7 @@ describe("Схема матрицы", () => {
     for (const age of ["0 лет", "5 лет", "15 лет", "25 лет", "45 лет", "65 лет", "75 лет"]) {
       expect(html).toContain(age);
     }
-    expect(chart.lifeLine).toHaveLength(32);
+    expect(chart.lifeLine).toHaveLength(64);
     expect(chart.lifeLine[0]).toMatchObject({ age: 0, kind: "vertex", arcanum: chart.byKey.A.arcanum });
     // Четверть десятилетия — сумма угла и середины.
     const a = chart.byKey.A.arcanum;

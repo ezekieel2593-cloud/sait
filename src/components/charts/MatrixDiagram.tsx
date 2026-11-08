@@ -441,17 +441,19 @@ export function MatrixDiagram({
 
   /* --------------------------- линия жизни --------------------------- */
 
-  // В каждом десятилетии три промежуточные точки (2,5 · 5 · 7,5 года).
+  // В каждом десятилетии восемь делений по 1,25 года — числа идут по всему кругу.
   const lifeEls = compact
     ? null
     : chart.lifeLine.map((entry) => {
         if (entry.kind === "vertex") return null;
-        const index = Math.floor(entry.age / 10);
-        const t = entry.kind === "middle" ? 0.5 : entry.age % 10 === 2.5 ? 0.25 : 0.75;
+        const index = Math.floor(entry.age / 10 + 0.0001);
+        // Восемь делений на стороне: отступ от углов, чтобы числа не наезжали на круги.
+        const step = (entry.age - index * 10) / 1.25; // 1…7
+        const t = 0.145 + ((step - 1) / 6) * 0.71;
         const base = edgePoint(index, t);
         const normal = edgeNormal(index);
-        const spot = { x: base.x + normal.x * 32, y: base.y + normal.y * 32 };
-        const ageSpot = { x: base.x + normal.x * 66, y: base.y + normal.y * 66 };
+        const spot = { x: base.x + normal.x * 62, y: base.y + normal.y * 62 };
+        const ageSpot = { x: base.x + normal.x * 96, y: base.y + normal.y * 96 };
         return (
           <g
             key={`life-${entry.age}`}
@@ -474,22 +476,22 @@ export function MatrixDiagram({
               : {})}
           >
             {selectedAge === entry.age ? (
-              <circle cx={spot.x} cy={spot.y} r="16" fill="none" stroke="#2f6f78" strokeWidth="2.4" />
+              <circle cx={spot.x} cy={spot.y} r="17" fill="none" stroke="#2f6f78" strokeWidth="2.4" />
             ) : null}
-            <circle cx={spot.x} cy={spot.y} r="15" fill="#fdf8f4" stroke="rgba(150,128,136,0.5)" strokeWidth="1.2" />
+            <circle cx={spot.x} cy={spot.y} r="13" fill="#fdf8f4" stroke="rgba(150,128,136,0.55)" strokeWidth="1.1" />
             <text
               x={spot.x}
               y={spot.y + 1}
               textAnchor="middle"
               dominantBaseline="central"
               fontFamily={SERIF}
-              fontSize="15"
+              fontSize="13"
               fontWeight="600"
               fill="#4a3a42"
             >
               {entry.arcanum}
             </text>
-            {entry.kind === "middle" ? (
+            {entry.age % 10 === 5 ? (
               <text
                 x={ageSpot.x}
                 y={ageSpot.y + 1}
@@ -514,7 +516,7 @@ export function MatrixDiagram({
         .map((entry) => {
           const index = Math.round(entry.age / 10);
           const angle = VERTEX_ANGLES[index]!;
-          const spot = polar(angle, R + 74);
+          const spot = polar(angle, R + 118);
           // Слева и справа подпись возраста стоит на линии земли — поднимаем её,
           // чтобы чёрная линия не перечёркивала текст.
           if (angle === 270 || angle === 90) spot.y -= 18;
