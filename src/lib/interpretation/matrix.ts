@@ -7,7 +7,7 @@ import type { Interpretation, InterpretationSection } from "./types";
  * Тексты берутся из базы знаний (позиция + аркан), расчётные числа — из движка.
  */
 
-const FREE_POINTS = ["center", "A", "B", "D", "money-entry", "love-entry"];
+const FREE_POINTS = ["center", "A", "B", "D", "money-entry", "love-entry", "talent-line"];
 
 function pointSection(point: MatrixPoint, detailed = false): InterpretationSection {
   const position = getPositionEntry(point.key);
@@ -16,6 +16,9 @@ function pointSection(point: MatrixPoint, detailed = false): InterpretationSecti
   const paragraphs: string[] = [];
   if (position) {
     paragraphs.push(`${position.title}. ${position.summary}`);
+    paragraphs.push(`Формула расчёта: ${point.formula}.`);
+  } else {
+    paragraphs.push(`${point.title}. Сфера: ${point.sphere}.`);
     paragraphs.push(`Формула расчёта: ${point.formula}.`);
   }
   if (arcana) {
@@ -72,6 +75,86 @@ function pointSection(point: MatrixPoint, detailed = false): InterpretationSecti
         }
       : undefined,
   };
+}
+
+/**
+ * Программы схемы: предназначения, линии рода и кармический хвост.
+ * Считаются из диагоналей квадратов — это отдельные разделы, а не точки.
+ */
+function programSections(chart: MatrixChart): InterpretationSection[] {
+  const sections: InterpretationSection[] = [];
+  const program = (
+    id: string,
+    title: string,
+    rows: { label: string; value: string }[],
+    note: string,
+    premium: boolean
+  ): InterpretationSection => {
+    const first = rows[0];
+    return {
+      id,
+      title,
+      subtitle: first ? first.value : undefined,
+      paragraphs: [note],
+      table: { caption: "Из чего сложилось", rows },
+      premium,
+    };
+  };
+
+  const personal = chart.programs.find((item) => item.key === "purpose-personal");
+  const social = chart.programs.find((item) => item.key === "purpose-social");
+  const spiritual = chart.programs.find((item) => item.key === "purpose-spiritual");
+  const earth = chart.programs.find((item) => item.key === "line-earth");
+  const sky = chart.programs.find((item) => item.key === "line-sky");
+  const father = chart.programs.find((item) => item.key === "line-father");
+  const mother = chart.programs.find((item) => item.key === "line-mother");
+
+  sections.push(
+    program(
+      "program-purpose",
+      "Предназначение: личное, социальное, духовное",
+      [
+        { label: "Линия земли", value: earth ? `${earth.arcanumTitle} · ${earth.parts}` : "—" },
+        { label: "Линия неба", value: sky ? `${sky.arcanumTitle} · ${sky.parts}` : "—" },
+        { label: "Личное предназначение", value: personal ? `${personal.arcanumTitle} · ${personal.parts}` : "—" },
+        { label: "Род отца", value: father ? `${father.arcanumTitle} · ${father.parts}` : "—" },
+        { label: "Род матери", value: mother ? `${mother.arcanumTitle} · ${mother.parts}` : "—" },
+        { label: "Социальное предназначение", value: social ? `${social.arcanumTitle} · ${social.parts}` : "—" },
+        { label: "Духовное предназначение", value: spiritual ? `${spiritual.arcanumTitle} · ${spiritual.parts}` : "—" },
+      ],
+      personal && spiritual
+        ? `Личное предназначение — ${personal.arcanumTitle}: то, что человек делает для себя и своей жизни. Социальное — ${social?.arcanumTitle}: как он проявляется среди людей и в работе. Духовное — ${spiritual.arcanumTitle}: общий смысл, к которому ведёт вся схема.`
+        : "Предназначения складываются из диагоналей личного и родового квадратов.",
+      false
+    )
+  );
+
+  const tail = chart.karmaTail;
+  sections.push(
+    program(
+      "program-karma-tail",
+      "Кармический хвост",
+      tail.map((item) => ({ label: item.title, value: `${item.arcanumTitle} · ${item.formula}` })),
+      `Кармический хвост — три энергии нижней вертикали: ${tail
+        .map((item) => item.arcanumTitle)
+        .join(" → ")}. Это то, что пришло из прошлого и требует осознанной проработки: сначала смотрим, что мешает, потом — какое следствие это даёт, и в конце — итоговую задачу.`,
+      false
+    )
+  );
+
+  const family: InterpretationSection[] = [];
+  for (const item of chart.programs.filter((entry) => entry.key.startsWith("line-"))) {
+    family.push({
+      id: `program-${item.key}`,
+      title: item.title,
+      subtitle: item.arcanumTitle,
+      paragraphs: [`${item.formula}: ${item.parts}.`],
+      premium: true,
+    });
+  }
+  sections.push(...family);
+
+  return sections;
 }
 
 /**
@@ -180,42 +263,68 @@ export function buildMatrixInterpretation(
 ): Interpretation {
   const freeSections = Math.max(3, options.freeSections ?? 5);
 
-  const ordered = [
+  // Порядок повторов схему: центр, углы личного квадрата, родовой квадрат,
+  // оси и внутренние точки, затем программы и энергия года.
+  const order = [
     "center",
     "A",
     "B",
     "C",
     "D",
+    "talent-line",
+    "talent-second",
+    "pleasures",
+    "person-support",
+    "person-experience",
+    "fears",
     "money-entry",
     "money-middle",
     "love-entry",
     "love-middle",
     "shared",
+    "love-partner",
+    "money-profession",
     "family-top-left",
     "family-top-right",
-    "family-bottom-left",
     "family-bottom-right",
+    "family-bottom-left",
     "family-force",
-  ]
+    "family-core",
+    "family-talent-father",
+    "family-material-father",
+    "family-talent-mother",
+    "family-material-mother",
+    "family-balance",
+    "family-spirit-father",
+    "family-support",
+    "family-spirit-mother",
+  ];
+  const ordered = order
     .map((key) => chart.byKey[key])
     .filter((point): point is MatrixPoint => Boolean(point));
 
   const detailed = options.detailed === true;
   const sections = [
+    ...programSections(chart),
     ...ordered.map((point) => pointSection(point, detailed)),
     pointSection(chart.yearEnergy, detailed),
     ...(detailed ? matrixCalculationSections(chart) : []),
   ];
 
-  const prepared = sections.map((section, index) => ({
-    ...section,
-    premium:
-      options.includePremium === true || (detailed && section.id.startsWith("data-"))
-        ? false
-        : section.premium
-          ? true
-          : index >= freeSections,
-  }));
+  // Бесплатная часть считается по точкам схемы, а не по общему индексу:
+  // программы идут первыми и не должны «съедать» лимит гостя.
+  let openedPoints = 0;
+  const prepared = sections.map((section) => {
+    if (options.includePremium === true || (detailed && section.id.startsWith("data-"))) {
+      return { ...section, premium: false };
+    }
+    if (section.id.startsWith("point-")) {
+      const open = !section.premium && openedPoints < freeSections;
+      if (open) openedPoints += 1;
+      return { ...section, premium: !open };
+    }
+    return { ...section, premium: section.premium };
+  });
 
   const center = chart.byKey.center!;
   const centerEntry = getArcanumEntry(center.arcanum);

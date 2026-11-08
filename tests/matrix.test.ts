@@ -16,15 +16,34 @@ describe("Матрица судьбы (matrix-22-v1)", () => {
     expect(chart.byKey["family-bottom-left"].arcanum).toBe(10);
     expect(chart.byKey["family-force"].arcanum).toBe(11);
     expect(chart.byKey["money-entry"].arcanum).toBe(4);
-    expect(chart.byKey["money-middle"].arcanum).toBe(5);
+    // Источники заработка: Q = C + L = 21 + 4 = 25 → 7.
+    expect(chart.byKey["money-middle"].arcanum).toBe(7);
     expect(chart.byKey["love-entry"].arcanum).toBe(15);
-    expect(chart.byKey["love-middle"].arcanum).toBe(7);
+    // Средняя энергия кармического хвоста: N = D + M = 5 + 15 = 20.
+    expect(chart.byKey["love-middle"].arcanum).toBe(20);
     expect(chart.byKey.shared.arcanum).toBe(19);
     // Второе кольцо точек: «угол + центр» и «угол + найденная точка».
     expect(chart.byKey["talent-line"].arcanum).toBe(16);
     expect(chart.byKey["talent-second"].arcanum).toBe(22);
     expect(chart.byKey["person-support"].arcanum).toBe(15);
     expect(chart.byKey["person-experience"].arcanum).toBe(20);
+    // Полная схема: родовой центр, общий центр, диагонали рода, сектор R.
+    expect(chart.byKey["family-core"].arcanum).toBe(21);
+    expect(chart.byKey.fears.arcanum).toBe(7);
+    expect(chart.byKey.pleasures.arcanum).toBe(8);
+    expect(chart.byKey["family-talent-father"].arcanum).toBe(22);
+    expect(chart.byKey["family-talent-mother"].arcanum).toBe(20);
+    expect(chart.byKey["family-balance"].arcanum).toBe(19);
+    expect(chart.byKey["family-support"].arcanum).toBe(21);
+    expect(chart.byKey["family-material-father"].arcanum).toBe(6);
+    expect(chart.byKey["family-material-mother"].arcanum).toBe(11);
+    expect(chart.byKey["family-spirit-father"].arcanum).toBe(9);
+    expect(chart.byKey["family-spirit-mother"].arcanum).toBe(4);
+    expect(chart.byKey["love-partner"].arcanum).toBe(7);
+    expect(chart.byKey["money-profession"].arcanum).toBe(5);
+    // Предназначения и кармический хвост.
+    expect(chart.programs.map((program) => program.arcanum)).toEqual([8, 11, 19, 19, 19, 11, 3]);
+    expect(chart.karmaTail.map((program) => program.arcanum)).toEqual([15, 20, 5]);
   });
 
   it("строит линию жизни: 0–80 лет шагом 2,5 года", () => {
