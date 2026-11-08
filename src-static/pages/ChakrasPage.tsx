@@ -26,14 +26,20 @@ const SHORT_LABELS: Record<string, string> = {
   sahasrara: "смысл",
 };
 
+/** Цвета чакр — насыщенные, как в классических таблицах разбора. */
 const COLOR_HEX: Record<string, string> = {
-  "Красный": "#d98a8a",
-  "Оранжевый": "#e6b183",
-  "Жёлтый": "#e6cf84",
-  "Зелёный": "#a9cfa9",
-  "Голубой": "#9fc6dc",
-  "Синий": "#9aa8d6",
-  "Фиолетовый": "#bca6d6",
+  "Красный": "#d33a34",
+  "Оранжевый": "#ee8420",
+  "Жёлтый": "#f2c72f",
+  "Зелёный": "#4aa84f",
+  "Голубой": "#39b0d6",
+  "Синий": "#3559c4",
+  "Фиолетовый": "#8d2f9e",
+};
+
+/** Тёмная или белая краска цифры — по светлоте цвета чакры. */
+const COLOR_INK: Record<string, string> = {
+  "Жёлтый": "#3d3008",
 };
 
 /** Вертикальная колонка чакр: простая схема «снизу вверх», как читают матрицу. */
@@ -163,7 +169,10 @@ export function ChakrasPage() {
             <header className="flex items-start gap-3">
               <span
                 className="grid h-11 w-11 shrink-0 place-items-center rounded-full font-[family-name:var(--font-display)] text-[1.2rem] font-semibold"
-                style={{ background: COLOR_HEX[chakra.color] ?? "#cbb8c9", color: "#3f3242" }}
+                style={{
+                  background: COLOR_HEX[chakra.color] ?? "#cbb8c9",
+                  color: COLOR_INK[chakra.color] ?? "#ffffff",
+                }}
                 aria-hidden="true"
               >
                 {chakra.number}

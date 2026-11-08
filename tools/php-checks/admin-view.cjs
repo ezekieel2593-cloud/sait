@@ -781,6 +781,21 @@ async function calculateMatrix(page) {
   const chakraMatrixText = chakraMatrixDoc.body.textContent || "";
   check("на странице матрицы есть блок чакр", /Чакры по вашей дате/.test(chakraMatrixText));
   check("в блоке семь чакр", /Муладхара/.test(chakraMatrixText) && /Сахасрара/.test(chakraMatrixText));
+  // Чакры расписаны цветом, как в классических разборах: своя краска у каждой строки.
+  const chakraTable = chakraMatrixDoc.querySelector("#r-chakras table") || chakraMatrixDoc.querySelector("table");
+  check("чакры: есть цветная таблица", Boolean(chakraTable));
+  const rowStyles = [...(chakraTable?.querySelectorAll("tbody th") || [])].map(
+    (node) => node.getAttribute("style") || ""
+  );
+  check("чакры: у каждой строки свой цвет", new Set(rowStyles).size === 7, String(new Set(rowStyles).size));
+  // jsdom приводит цвета к rgb(), поэтому сверяем по значениям каналов.
+  const toRgb = (hex) => {
+    const value = Number.parseInt(hex.slice(1), 16);
+    return `rgb(${(value >> 16) & 255}, ${(value >> 8) & 255}, ${value & 255})`;
+  };
+  for (const hex of ["#d33a34", "#ee8420", "#f2c72f", "#4aa84f", "#39b0d6", "#3559c4", "#8d2f9e"]) {
+    check(`чакры: цвет ${hex}`, rowStyles.join(" ").includes(toRgb(hex)));
+  }
   // 23.06.1992: сахасрара 6, вишудха 16, аджна 22, анахата 8, манипура 10,
   // свадхистана 15, муладхара 5.
   const chakraSnippet = chakraMatrixText.slice(chakraMatrixText.indexOf("Чакры по вашей дате"));

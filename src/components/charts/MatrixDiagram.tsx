@@ -60,20 +60,20 @@ type NodeShape = {
  * кремовый, дымчатый. Цифры тёмные, поэтому читаются на любом оттенке.
  */
 const PAINT = {
-  plum: { fill: "#d6c4e4", ring: "#ab93c8" },
-  lilac: { fill: "#e2d6ec", ring: "#b8a3cf" },
-  rose: { fill: "#f0c4cd", ring: "#cd97a6" },
-  blush: { fill: "#f6d6c9", ring: "#dbaf9c" },
-  cream: { fill: "#f3e5c6", ring: "#d6c190" },
-  peach: { fill: "#f7d5b6", ring: "#dcae86" },
-  gold: { fill: "#f1debc", ring: "#cdb488" },
-  sage: { fill: "#d2dfc5", ring: "#aabf99" },
-  mint: { fill: "#c8e4d4", ring: "#96c3a9" },
-  aqua: { fill: "#c8e1e5", ring: "#95bfc5" },
-  sky: { fill: "#ccdaee", ring: "#9ab0d0" },
-  iris: { fill: "#d0cdee", ring: "#a29fd2" },
-  teal: { fill: "#c1dcd6", ring: "#93bab2" },
-  slate: { fill: "#d5d9e2", ring: "#aab0bc" },
+  plum: { fill: "#c7a6dd", ring: "#9a76bb" },
+  lilac: { fill: "#d6c2e6", ring: "#a98cc4" },
+  rose: { fill: "#f0aab9", ring: "#cc8296" },
+  blush: { fill: "#f8c6b1", ring: "#dd9c7e" },
+  cream: { fill: "#f2dda4", ring: "#cfb474" },
+  peach: { fill: "#f7c598", ring: "#db9f66" },
+  gold: { fill: "#f0d29a", ring: "#c9a86a" },
+  sage: { fill: "#bcd49a", ring: "#93b06f" },
+  mint: { fill: "#a8dcc0", ring: "#78bb98" },
+  aqua: { fill: "#a6d8e2", ring: "#74b3c2" },
+  sky: { fill: "#aec8ea", ring: "#7f9fcd" },
+  iris: { fill: "#bdb6ec", ring: "#9189cf" },
+  teal: { fill: "#9fd4ca", ring: "#6fb0a3" },
+  slate: { fill: "#c3c9d8", ring: "#969eb2" },
 } as const;
 
 type PaintKey = keyof typeof PAINT;
@@ -163,7 +163,6 @@ function ageLabel(age: number): string {
 }
 
 const SANS = "'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
-const SERIF = "'Cormorant Garamond', Georgia, serif";
 
 export function MatrixDiagram({
   chart,
@@ -439,8 +438,8 @@ export function MatrixDiagram({
         </radialGradient>
         {/* Перламутровый блик на кругах. */}
         <radialGradient id={`pearl-sheen-${idPrefix}`} cx="34%" cy="26%" r="78%">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.92" />
-          <stop offset="42%" stopColor="#ffffff" stopOpacity="0.34" />
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.62" />
+          <stop offset="42%" stopColor="#ffffff" stopOpacity="0.16" />
           <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
         </radialGradient>
         <radialGradient id={`pearl-white-${idPrefix}`} cx="36%" cy="28%" r="80%">
@@ -573,14 +572,14 @@ export function MatrixDiagram({
           <text x={CX - 156} y={CY + 106} fontSize="26" fill="#c98a96" textAnchor="middle">
             ♥
           </text>
-          <rect x={CX - 128} y={CY + 78} width="256" height="30" rx="15" fill="#fffdfa" opacity="0.92" />
+          <rect x={CX - 132} y={CY + 80} width="264" height="28" rx="14" fill="#fffdfa" opacity="0.92" />
           <text
             x={CX}
             y={CY + 100}
             textAnchor="middle"
-            fontFamily={SERIF}
-            fontSize="15"
-            letterSpacing="0.22em"
+            fontFamily={SANS}
+            fontSize="13"
+            letterSpacing="0.16em"
             fill={INK_SOFT}
           >
             ЗОНА КОМФОРТА

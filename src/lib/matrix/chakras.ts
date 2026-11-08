@@ -21,6 +21,26 @@ import { getArcanumEntry } from "../knowledge/queries";
 
 export const CHAKRA_VERSION = "chakra-22-v1";
 
+/**
+ * Цвета чакр в порядке традиции: от красной муладхары к фиолетовой сахасраре.
+ * Насыщенные, чтобы строка таблицы читалась и на печати, и на экране;
+ * для жёлтой манипуры тёмная краска текста, для остальных — белая.
+ */
+export const CHAKRA_COLORS: Record<string, { fill: string; ink: string }> = {
+  muladhara: { fill: "#d33a34", ink: "#ffffff" },
+  svadhisthana: { fill: "#ee8420", ink: "#ffffff" },
+  manipura: { fill: "#f2c72f", ink: "#3d3008" },
+  anahata: { fill: "#4aa84f", ink: "#ffffff" },
+  vishuddha: { fill: "#39b0d6", ink: "#ffffff" },
+  ajna: { fill: "#3559c4", ink: "#ffffff" },
+  sahasrara: { fill: "#8d2f9e", ink: "#ffffff" },
+};
+
+/** Цвет чакры по её id, с запасным спокойным оттенком. */
+export function chakraColor(id: string) {
+  return CHAKRA_COLORS[id] ?? { fill: "#cbb8c9", ink: "#3f3242" };
+}
+
 export interface ChakraValue {
   /** 1 — муладхара … 7 — сахасрара. */
   number: number;
