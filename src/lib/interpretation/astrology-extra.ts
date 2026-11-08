@@ -170,7 +170,12 @@ export function lunarDaySection(chart: NatalChart): InterpretationSection {
 }
 
 /** Транзиты на сегодня: медленные — подробно, быстрые — списком. */
-export function transitSections(chart: NatalChart, now: Date = new Date()): InterpretationSection[] {
+export function transitSections(
+  chart: NatalChart,
+  now: Date = new Date(),
+  /** Владельцу показываем все медленные транзиты, гостю — шесть самых точных. */
+  full = false
+): InterpretationSection[] {
   const transits = computeTransits(chart, now);
   const sections: InterpretationSection[] = [];
 
@@ -192,7 +197,8 @@ export function transitSections(chart: NatalChart, now: Date = new Date()): Inte
     premium: false,
   });
 
-  for (const aspect of transits.slow.slice(0, 6)) {
+  const slowList = full ? transits.slow : transits.slow.slice(0, 6);
+  for (const aspect of slowList) {
     const transitEntry = getEntry("planet", aspect.transitKey);
     const natalEntry = getEntry("planet", aspect.natalKey);
     const aspectEntry = getEntry("aspect", aspect.type);
@@ -225,7 +231,11 @@ export function transitSections(chart: NatalChart, now: Date = new Date()): Inte
 }
 
 /** Вторичные прогрессии: карта «день за год» на текущий возраст. */
-export function progressionSection(chart: NatalChart, now: Date = new Date()): InterpretationSection {
+export function progressionSection(
+  chart: NatalChart,
+  now: Date = new Date(),
+  full = false
+): InterpretationSection {
   const progressions = computeProgressions(chart, now);
   const progressed = progressions.chart;
   const sun = progressed.positions.find((position) => position.key === "sun")!;
@@ -253,7 +263,7 @@ export function progressionSection(chart: NatalChart, now: Date = new Date()): I
     );
   }
 
-  const top = progressions.aspects.slice(0, 4);
+  const top = full ? progressions.aspects : progressions.aspects.slice(0, 4);
   if (top.length) {
     paragraphs.push(
       `Самые точные аспекты прогрессий: ${top
@@ -281,13 +291,17 @@ export function progressionSection(chart: NatalChart, now: Date = new Date()): I
 }
 
 /** Соляр: годовая карта на момент возврата Солнца в натальную долготу. */
-export function solarReturnSection(chart: NatalChart, now: Date = new Date()): InterpretationSection {
+export function solarReturnSection(
+  chart: NatalChart,
+  now: Date = new Date(),
+  full = false
+): InterpretationSection {
   const solar = computeSolarReturn(chart, now.getFullYear());
   const asc = solar.chart.ascendant;
   const sunPosition = solar.chart.positions.find((position) => position.key === "sun");
   const saturn = solar.chart.positions.find((position) => position.key === "saturn");
   const jupiter = solar.chart.positions.find((position) => position.key === "jupiter");
-  const tight = solar.aspects.slice(0, 5);
+  const tight = full ? solar.aspects : solar.aspects.slice(0, 5);
   const sevenDays = Math.abs(solar.shiftHours) / 24;
 
   return {
@@ -347,7 +361,9 @@ const SOLAR_HOUSES: Record<number, string> = {
 export function synastrySections(
   natal: NatalChart,
   partner: NatalChart,
-  partnerName = "партнёр"
+  partnerName = "партнёр",
+  /** Владельцу — все связи двух карт, гостю — восемь самых точных. */
+  full = false
 ): InterpretationSection[] {
   const synastry = computeSynastry(natal, partner);
   const sections: InterpretationSection[] = [
@@ -381,7 +397,8 @@ export function synastrySections(
     },
   ];
 
-  for (const aspect of synastry.aspects.slice(0, 8)) {
+  const synastryList = full ? synastry.aspects : synastry.aspects.slice(0, 8);
+  for (const aspect of synastryList) {
     const transitEntry = getEntry("planet", aspect.transitKey);
     const natalEntry = getEntry("planet", aspect.natalKey);
     const aspectEntry = getEntry("aspect", aspect.type);

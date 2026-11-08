@@ -13,9 +13,7 @@ import { astrologyDetails } from "../details";
 import { AdminNote } from "../components/AdminNote";
 import { CalendarIcon, ClockIcon } from "../components/icons-extra";
 import { ArrowLeftIcon as BackIcon } from "../components/icons";
-import { ReportNav, type ReportNavItem } from "../components/ReportNav";
 import { ReportSections } from "../components/ReportSections";
-import { plainHint } from "@/lib/interpretation/plain";
 import type { TimeAccuracy } from "@/lib/types";
 
 const STEPS = ["Дата рождения", "Время и точность", "Место рождения"] as const;
@@ -347,49 +345,15 @@ function AstroResult({
     includeHouses: true,
     includePremium: admin,
     // Владелец получает расширенный вариант: технические таблицы, все аспекты
-    // каждой планеты, точные положения и куспиды. Гость видит прежний разбор.
+    // каждой планеты, все транзиты, прогрессии и соляр целиком. Гость видит
+    // прежний разбор.
     detailed: admin,
+    maxAspects: admin ? 999 : undefined,
   });
   const free = interpretation.sections.filter((section) => !section.premium);
   const locked = interpretation.sections.filter((section) => section.premium);
   const sun = chart.positions.find((position) => position.key === "sun");
   const moon = chart.positions.find((position) => position.key === "moon");
-
-  // Липкая полоса: сначала главные блоки, затем то, что реально есть на странице.
-  // У гостя открыто меньше разделов, поэтому «красивые» id подставляем только
-  // если они действительно отрисованы, иначе берём первые открытые.
-  const opened = free;
-  const curated = [
-    "sec-dominants",
-    "sec-lunar-day",
-    "sec-dignities",
-    "sec-transits-now",
-    "sec-progressions",
-    "sec-solar-return",
-  ].filter((id) => opened.some((section) => `sec-${section.id}` === id));
-  const chipIds = new Set(
-    curated.length >= 3 ? curated : opened.slice(0, 6).map((section) => `sec-${section.id}`)
-  );
-
-  const navItems: ReportNavItem[] = [
-    { id: "r-card", label: "Карта" },
-    { id: "r-report", label: "Разделы" },
-    { id: "synastry", label: "Совместимость" },
-    ...opened.map((section) => ({
-      id: `sec-${section.id}`,
-      label: section.title,
-      hint: plainHint(section.id) ?? section.subtitle,
-      secondary: !chipIds.has(`sec-${section.id}`),
-    })),
-    ...locked.slice(0, 4).map((section) => ({
-      id: `sec-${section.id}`,
-      label: section.title,
-      hint: plainHint(section.id),
-      locked: true,
-      secondary: true,
-    })),
-    ...(locked.length > 0 ? [{ id: "r-locked", label: "Что ещё видно", secondary: true }] : []),
-  ];
 
   const summary = [
     `Натальная карта: ${label}`,
@@ -401,8 +365,7 @@ function AstroResult({
 
   return (
     <div className="grid gap-4">
-      <ReportNav items={navItems} />
-      <section id="r-card" className="card gold-frame scroll-mt-28 p-4 sm:p-6">
+      <section id="r-card" className="card gold-frame p-4 sm:p-6">
         <p className="text-[0.76rem] uppercase tracking-[0.14em] text-[var(--turquoise-deep)]">Результат</p>
         <h2 className="mt-2 font-[family-name:var(--font-display)] text-[1.5rem] leading-snug text-[var(--ocean)]">
           {interpretation.headline}

@@ -371,21 +371,11 @@ async function calculateMatrix(page) {
 
   /* --------------------- навигация по разбору и подсказки ----------------- */
 
-  console.log("\n4г. Навигация по разбору и описания по клику");
-  check("липкая навигация по разбору есть", Boolean(astroDoc.querySelector('[aria-label="Содержание разбора"]')));
-  const navChips = [...(astroDoc.querySelector('[aria-label="Содержание разбора"]')?.querySelectorAll("button") || [])];
-  check("в полосе есть основные блоки", navChips.length >= 3, String(navChips.length));
-  const allSectionsButton = [...astroDoc.querySelectorAll("button")].find((node) =>
-    /Все разделы/.test(node.textContent || "")
-  );
-  check("есть кнопка «Все разделы»", Boolean(allSectionsButton));
-  allSectionsButton?.dispatchEvent(new astroPage.window.Event("click", { bubbles: true }));
-  await wait(250);
-  const navList = astroDoc.querySelector("#report-nav-list");
-  check("список всех разделов раскрылся", Boolean(navList));
-  const navListItems = navList?.querySelectorAll("button").length || 0;
-  check("в списке много разделов", navListItems >= 8, String(navListItems));
-  check("в списке есть «Наверх страницы»", /Наверх страницы/.test(navList?.textContent || ""));
+  console.log("\n4г. Разделы по клику и описания");
+  // Липкую полосу с чипами убрали: разделы открываются в списке под картой.
+  check("липкой полосы разделов больше нет", !astroDoc.querySelector('[aria-label="Содержание разбора"]'));
+  check("кнопки «Все разделы» больше нет", ![...astroDoc.querySelectorAll("button")].some((node) => /Все разделы/.test(node.textContent || "")));
+  check("у списка разделов нет вводного абзаца", !/Ниже — весь разбор по разделам/.test(astroText || ""));
 
   // Каждый раздел расшифровки имеет якорь, на который ведёт навигация.
   const anchored = [...astroDoc.querySelectorAll("[data-section-key]")].filter((node) => node.id.startsWith("sec-"));
@@ -407,6 +397,9 @@ async function calculateMatrix(page) {
   );
   const openedByDefault = reportRows.filter((row) => row.querySelector('[id^="sec-body-"]')).length;
   check("по умолчанию раскрыт один раздел", openedByDefault === 1, String(openedByDefault));
+  const titleClass = reportRows[0]?.querySelector("span span")?.className || "";
+  check("название раздела крупное и тёмное", /text-\[1\.34rem\]/.test(titleClass) && /var\(--ink\)/.test(titleClass), titleClass.slice(0, 90));
+  check("у списка нет вводного абзаца", !/Ниже — весь разбор по разделам/.test(astroText));
   const hintsInTitles = reportRows.filter((row) => /\([^)]{8,}\)/.test(row.textContent || "")).length;
   check("у названий есть пояснение в скобках", hintsInTitles >= reportRows.length - 2, String(hintsInTitles));
   const hintsText = reportRows.map((row) => row.textContent || "").join(" ");
@@ -445,19 +438,25 @@ async function calculateMatrix(page) {
     String(reportDoc.querySelectorAll('[id^="sec-body-"]').length)
   );
 
-  // Переход из полосы навигации открывает свёрнутый раздел.
-  const navListButton = [...reportDoc.querySelectorAll("button")].find((node) => /Все разделы/.test(node.textContent || ""));
-  navListButton?.dispatchEvent(new reportPage.window.Event("click", { bubbles: true }));
-  await wait(200);
-  const navItems = [...(reportDoc.querySelector("#report-nav-list")?.querySelectorAll("button") || [])];
-  const targetNav = navItems.find((node) => /Достоинства/i.test(node.textContent || ""));
-  check("в списке навигации есть пояснения простыми словами", /где у тебя сила/i.test(reportDoc.querySelector("#report-nav-list")?.textContent || ""));
-  targetNav?.dispatchEvent(new reportPage.window.Event("click", { bubbles: true }));
-  await wait(400);
+  // У владельца открыто всё: и разделы, и транзиты, и связи синастрии целиком.
+  check("владельцу открыто больше 45 разделов", reportRows.length > 45, String(reportRows.length));
+  check("у владельца нет закрытых карточек", reportDoc.querySelectorAll("#r-locked article").length === 0);
+  const slowOnly = reportRows.filter((row) => /Транзитн[а-я]+ (Юпитер|Сатурн|Уран|Нептун|Плутон)/i.test(row.textContent || ""));
+  check("у владельца все медленные транзиты", slowOnly.length >= 4, String(slowOnly.length));
+
+  // Кнопка «Читать в расшифровке» раскрывает раздел прямо в списке.
+  const dignityRow = reportRows.find((row) => /Достоинства/i.test(row.textContent || ""));
+  check("пояснение к «Достоинствам» понятное", /где у тебя сила/i.test(dignityRow?.textContent || ""));
+  dignityRow?.querySelector("button")?.dispatchEvent(new reportPage.window.Event("click", { bubbles: true }));
+  await wait(300);
   check(
-    "переход из навигации раскрывает раздел",
+    "раздел «Достоинства» раскрывается по клику",
     Boolean(reportDoc.querySelector("#sec-body-dignities")),
     String(Boolean(reportDoc.querySelector("#sec-body-dignities")))
+  );
+  check(
+    "текст стоит под своим названием, а не в конце страницы",
+    Boolean(reportDoc.querySelector("#sec-dignities #sec-body-dignities"))
   );
 
   /* ------------------------- описание всех 12 домов ----------------------- */
@@ -560,7 +559,7 @@ async function calculateMatrix(page) {
 
   console.log("\n9. Схема матрицы");
   const guestMatrixDoc = guestMatrix.window.document;
-  check("матрица: навигация по разбору есть", Boolean(guestMatrixDoc.querySelector('[aria-label="Содержание разбора"]')));
+  check("матрица: липкой полосы нет", !guestMatrixDoc.querySelector('[aria-label="Содержание разбора"]'));
   check("матрица: якорь схемы", Boolean(guestMatrixDoc.querySelector("#r-scheme")));
   check("матрица: якорь чакр", Boolean(guestMatrixDoc.querySelector("#r-chakras")));
   check("матрица: якорь расшифровки", Boolean(guestMatrixDoc.querySelector("#r-energies")));

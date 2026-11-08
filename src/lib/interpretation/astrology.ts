@@ -465,9 +465,9 @@ export function buildAstrologyInterpretation(
     lunarDaySection(chart),
     dignitySection(chart),
     ...pointsSections(chart),
-    ...transitSections(chart),
-    progressionSection(chart),
-    solarReturnSection(chart),
+    ...transitSections(chart, new Date(), detailed),
+    progressionSection(chart, new Date(), detailed),
+    solarReturnSection(chart, new Date(), detailed),
     ...aspectSections(chart, maxAspects),
     ...chart.positions
       .filter((position) => !["sun", "moon"].includes(position.key))

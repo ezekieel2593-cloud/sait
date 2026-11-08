@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import type { InterpretationSection } from "@/lib/interpretation/types";
 import { plainHint } from "@/lib/interpretation/plain";
@@ -69,19 +69,12 @@ export function ReportSections({
   const toggle = (id: string) =>
     setOpenIds((current) => (current.includes(id) ? current.filter((value) => value !== id) : [...current, id]));
 
-  const introText = useMemo(
-    () =>
-      intro ??
-      "Ниже — весь разбор по разделам. Нажмите на название, чтобы раскрыть его: под ним появится полный текст, таблицы и рекомендации. Рядом с названием в скобках — то же самое простыми словами.",
-    [intro]
-  );
-
   return (
     <section id="r-report" className="grid scroll-mt-28 gap-3">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <h2 className="h-section">
           {heading}
-          <span className="ml-2 align-middle text-[0.8rem] font-normal text-[var(--ink-faint)]">
+          <span className="ml-2 align-middle text-[0.9rem] font-normal text-[var(--ink-soft)]">
             {sections.length} {sections.length === 1 ? "раздел" : sections.length < 5 ? "раздела" : "разделов"}
           </span>
         </h2>
@@ -94,7 +87,7 @@ export function ReportSections({
           {allOpen ? "Свернуть все" : "Раскрыть все"}
         </button>
       </div>
-      <p className="max-w-[62ch] text-[0.9rem] leading-relaxed text-[var(--ink-soft)]">{introText}</p>
+      {intro ? <p className="max-w-[62ch] text-[0.9rem] leading-relaxed text-[var(--ink-soft)]">{intro}</p> : null}
 
       <ol className="grid gap-2" aria-label="Разделы разбора">
         {sections.map((section, index) => {
@@ -117,12 +110,12 @@ export function ReportSections({
               >
                 <span className="mt-0.5 w-5 shrink-0 text-right text-[0.76rem] text-[var(--ink-faint)]">{index + 1}.</span>
                 <span className="min-w-0 flex-1">
-                  <span className="block font-[family-name:var(--font-display)] text-[1.08rem] leading-snug text-[var(--ocean)]">
+                  <span className="block font-[family-name:var(--font-display)] text-[1.34rem] font-semibold leading-snug text-[var(--ink)]">
                     {section.title}
-                    {hint ? <span className="text-[var(--ink-soft)]"> ({hint})</span> : null}
+                    {hint ? <span className="text-[1.16rem] font-normal text-[var(--ink-soft)]"> ({hint})</span> : null}
                   </span>
                   {section.subtitle ? (
-                    <span className="mt-0.5 block text-[0.76rem] text-[var(--turquoise-deep)]">{section.subtitle}</span>
+                    <span className="mt-0.5 block text-[0.82rem] text-[#2f6f78]">{section.subtitle}</span>
                   ) : null}
                 </span>
                 <span className="mt-1 text-[var(--turquoise-deep)]">

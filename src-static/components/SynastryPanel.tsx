@@ -23,8 +23,8 @@ export function SynastryPanel({ chart, showAll = false }: { chart: NatalChart; s
 
   const sections = useMemo(() => {
     if (!partner) return [];
-    // Владельцу показываем все связи, гостю — первые четыре: остальное закрыто.
-    const all = synastrySections(chart, partner);
+    // Владельцу — все связи двух карт, гостю — четыре самых точных.
+    const all = synastrySections(chart, partner, "партнёр", showAll);
     return showAll ? all : all.slice(0, 4);
   }, [chart, partner, showAll]);
 
