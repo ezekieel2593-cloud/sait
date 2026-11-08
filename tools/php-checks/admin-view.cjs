@@ -602,8 +602,15 @@ async function calculateMatrix(page) {
     const width = Number((schema?.getAttribute("viewBox") || "").split(" ")[2] || 0);
     const height = Number((schema?.getAttribute("viewBox") || "").split(" ")[3] || 0);
     check("схема: подробная, крупный холст", width >= 1200 && height >= 1200, `${width}×${height}`);
-    const lines = [...(schema?.querySelectorAll("line") || [])].filter((node) => node.getAttribute("stroke") === "rgba(74,110,120,0.42)");
+    const lines = [...(schema?.querySelectorAll("line") || [])].filter((node) =>
+      (node.getAttribute("stroke") || "").startsWith("rgba(43,39,41")
+    );
     check("схема: к каждой подписи идёт линия-выноска", lines.length >= 8, String(lines.length));
+    // Линии между точками схемы — чёрные и сплошные, иначе их не видно на светлом фоне.
+    const dark = [...(schema?.querySelectorAll("line, polygon") || [])].filter((node) =>
+      ["#2f2b2e", "#3a3538", "#2b2729"].includes(node.getAttribute("stroke") || "")
+    );
+    check("схема: линии между цифрами видны", dark.length >= 9, String(dark.length));
   }
   check("по кругу подписан возраст", svgText.includes("0 лет") && svgText.includes("75 лет"));
   check("на схеме больше сорока чисел", (matrixSvg?.querySelectorAll("text").length ?? 0) >= 60,

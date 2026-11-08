@@ -339,11 +339,11 @@ export function MatrixDiagram({
               y1={from.y}
               x2={target.x}
               y2={target.y}
-              stroke="rgba(74,110,120,0.42)"
-              strokeWidth="1.1"
+              stroke="rgba(43,39,41,0.55)"
+              strokeWidth="1.2"
               strokeLinecap="round"
             />
-            <circle cx={target.x} cy={target.y} r="3.2" fill="rgba(74,110,120,0.55)" />
+            <circle cx={target.x} cy={target.y} r="3.4" fill="#2b2729" />
             <rect
               x={box.x}
               y={box.y}
@@ -514,7 +514,11 @@ export function MatrixDiagram({
         .filter((entry) => entry.kind === "vertex")
         .map((entry) => {
           const index = Math.round(entry.age / 10);
-          const spot = polar(VERTEX_ANGLES[index]!, R + 74);
+          const angle = VERTEX_ANGLES[index]!;
+          const spot = polar(angle, R + 74);
+          // Слева и справа подпись возраста стоит на линии земли — поднимаем её,
+          // чтобы чёрная линия не перечёркивала текст.
+          if (angle === 270 || angle === 90) spot.y -= 18;
           return (
             <text
               key={`age-${entry.age}`}
@@ -526,7 +530,7 @@ export function MatrixDiagram({
               fontSize="11"
               fill="#8b7d83"
               stroke="#fdf8f4"
-              strokeWidth="3.4"
+              strokeWidth="5"
               paintOrder="stroke"
               opacity={active ? 0.32 : 1}
             >
@@ -577,8 +581,8 @@ export function MatrixDiagram({
       <polygon
         points={octagon.map((p) => `${p.x},${p.y}`).join(" ")}
         fill="none"
-        stroke="rgba(122,108,112,0.38)"
-        strokeWidth="1.3"
+        stroke="#2f2b2e"
+        strokeWidth="1.8"
       />
       {squares.map((set, index) => (
         <polygon
@@ -588,20 +592,20 @@ export function MatrixDiagram({
             .map((p) => `${p.x},${p.y}`)
             .join(" ")}
           fill="none"
-          stroke="rgba(122,108,112,0.24)"
-          strokeWidth="1"
+          stroke="#3a3538"
+          strokeWidth="1.5"
         />
       ))}
-      <circle cx={CX} cy={CY} r={R * 0.62} fill="none" stroke="rgba(122,108,112,0.16)" strokeWidth="0.9" />
+      <circle cx={CX} cy={CY} r={R * 0.62} fill="none" stroke="rgba(60,54,58,0.22)" strokeWidth="1" />
 
       {/* Диагонали рода: от каждого угла к центру. */}
       {[315, 45, 135, 225].map((angle) => (
-        <g key={`diag-${angle}`}>{line(polar(angle, R), { x: CX, y: CY }, "rgba(122,108,112,0.22)", 0.9, "4 5")}</g>
+        <g key={`diag-${angle}`}>{line(polar(angle, R), { x: CX, y: CY }, "#3a3538", 1.4)}</g>
       ))}
 
       {/* Линии земли (горизонталь) и неба (вертикаль). */}
-      {line(polar(270, R), polar(90, R), "rgba(74,140,102,0.42)", 1.5)}
-      {line(polar(0, R), polar(180, R), "rgba(120,110,160,0.4)", 1.5)}
+      {line(polar(270, R), polar(90, R), "#2b2729", 1.9)}
+      {line(polar(0, R), polar(180, R), "#2b2729", 1.9)}
 
       {/* Выноски рисуем до кругов: линии уходят под подписи и обводки. */}
       {calloutEls}
