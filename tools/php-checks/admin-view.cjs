@@ -493,10 +493,19 @@ async function calculateMatrix(page) {
 
   const adminMatrix = openPage("matrix.html", { admin: true });
   check("матрица считается", await calculateMatrix(adminMatrix));
+  await expandReport(adminMatrix);
   const adminMatrixText = adminMatrix.window.document.body.textContent || "";
   check("матрица: схема всех позиций", adminMatrixText.includes("Схема расчёта: все позиции"));
   check("матрица: каналы денег и отношений", adminMatrixText.includes("Каналы денег и отношений"));
   check("матрица: параметры методики", adminMatrixText.includes("Параметры расчёта"));
+  check("матрица: предназначения разобраны", /Предназначение: личное, социальное, духовное/.test(adminMatrixText));
+  check("матрица: кармический хвост разобран", /Кармический хвост/.test(adminMatrixText));
+  const adminMatrixRows = [...adminMatrix.window.document.querySelectorAll("#r-report ol > li")];
+  check("матрица: у владельца вся схема", adminMatrixRows.length >= 30, String(adminMatrixRows.length));
+  check(
+    "матрица: у владельца все позиции схемы",
+    adminMatrixText.includes("Страхи") && adminMatrixText.includes("Родовой центр") && adminMatrixText.includes("Профессия и сфера успеха")
+  );
   check("матрица: формула и число у точки", /До редукции/.test(adminMatrixText));
   check("матрица: место точки в схеме", /Где стоит: /.test(adminMatrixText));
 
@@ -576,7 +585,7 @@ async function calculateMatrix(page) {
   const svgText = matrixSvg?.textContent || "";
   const circles = matrixSvg ? matrixSvg.querySelectorAll("circle").length : 0;
   check("схема подробная", circles >= 40, String(circles));
-  for (const label of ["таланты", "кармическая задача", "как тебя видят", "зона комфорта", "вход в деньги", "отношения", "сила рода"]) {
+  for (const label of ["таланты", "Кармическая задача", "как тебя видят", "зона комфорта", "деньги: как приходят", "готовность к отношениям", "родовой центр"]) {
     check(`на схеме подписано «${label}»`, svgText.includes(label));
   }
   check("на схеме есть легенда", svgText.includes("комфорт"));
@@ -584,7 +593,10 @@ async function calculateMatrix(page) {
     check(`схема: выноска «${callout}»`, svgText.includes(callout));
   }
   check("схема: у выносок есть пояснение простыми словами", /ресурсы и опора рода/.test(svgText) && /опыт и установки семьи/.test(svgText));
-  check("схема: подписаны точки каналов прямо на схеме", /вход в деньги/.test(svgText) && /удержание денег/.test(svgText));
+  check(
+    "схема: подписаны все внутренние точки в легенде",
+    /деньги: как приходят/.test(svgText) && /источники дохода/.test(svgText) && /духовное матери/.test(svgText)
+  );
   {
     const schema = matrixSvg;
     const width = Number((schema?.getAttribute("viewBox") || "").split(" ")[2] || 0);
