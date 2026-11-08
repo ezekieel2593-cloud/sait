@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 
 import type { MatrixChart, MatrixPoint } from "@/lib/matrix/engine";
-import { MatrixDiagram } from "@/components/charts/MatrixDiagram";
+import { MatrixDiagram, MATRIX_DIAGRAM_WIDTH } from "@/components/charts/MatrixDiagram";
 import { getArcanumEntry, getPositionEntry } from "@/lib/knowledge/queries";
 
 import { ZoomIcon } from "./icons-extra";
@@ -18,7 +18,7 @@ import { revealSection } from "./section-open";
  * закрытие — по Esc, клику по фону или кнопке «Закрыть».
  */
 
-const BASE_WIDTH = 880;
+const BASE_WIDTH = MATRIX_DIAGRAM_WIDTH;
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 3;
 

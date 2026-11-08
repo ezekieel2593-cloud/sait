@@ -580,6 +580,19 @@ async function calculateMatrix(page) {
     check(`на схеме подписано «${label}»`, svgText.includes(label));
   }
   check("на схеме есть легенда", svgText.includes("комфорт"));
+  for (const callout of ["Линия отца", "Линия матери", "Таланты от природы", "Кармическая задача", "Внутренний портрет", "Родовые программы"]) {
+    check(`схема: выноска «${callout}»`, svgText.includes(callout));
+  }
+  check("схема: у выносок есть пояснение простыми словами", /ресурсы и опора рода/.test(svgText) && /опыт и установки семьи/.test(svgText));
+  check("схема: подписаны точки каналов прямо на схеме", /вход в деньги/.test(svgText) && /удержание денег/.test(svgText));
+  {
+    const schema = matrixSvg;
+    const width = Number((schema?.getAttribute("viewBox") || "").split(" ")[2] || 0);
+    const height = Number((schema?.getAttribute("viewBox") || "").split(" ")[3] || 0);
+    check("схема: подробная, крупный холст", width >= 1200 && height >= 1200, `${width}×${height}`);
+    const lines = [...(schema?.querySelectorAll("line") || [])].filter((node) => node.getAttribute("stroke") === "rgba(74,110,120,0.42)");
+    check("схема: к каждой подписи идёт линия-выноска", lines.length >= 8, String(lines.length));
+  }
   check("по кругу подписан возраст", svgText.includes("0 лет") && svgText.includes("75 лет"));
   check("на схеме больше сорока чисел", (matrixSvg?.querySelectorAll("text").length ?? 0) >= 60,
     String(matrixSvg?.querySelectorAll("text").length ?? 0));
