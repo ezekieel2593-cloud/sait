@@ -6,11 +6,15 @@
  *   npm run deploy:ftp -- --no-build загрузить уже собранное
  *   npm run deploy:ftp -- --prune    удалить на сервере файлы, которых больше нет в сборке
  *
+ * Рассчитан на shared-хостинги с ISPmanager (Cloud4box) и на панели вроде SpaceWeb.
+ *
  * Настройки берутся из переменных окружения (или .env.deploy, который в .gitignore):
- *   FTP_HOST      хост из панели хостинга, например ftp.логин.sweb.ru
+ *   FTP_HOST      хост из панели хостинга: у Cloud4box — ваш домен или IP,
+ *                 у SpaceWeb — ftp.логин.sweb.ru
  *   FTP_USER      логин FTP
  *   FTP_PASSWORD  пароль FTP
- *   FTP_REMOTE    каталог сайта, по умолчанию public_html
+ *   FTP_REMOTE    каталог сайта: public_html (Cloud4box, ISPmanager)
+ *                 или www/ваш-домен (если public_html — симлинк)
  *   FTP_SECURE    1 — FTPS (explicit TLS), по умолчанию 0
  *   FTP_PORT      порт, по умолчанию 21 (FTPS — 21, реже 990)
  *
@@ -61,6 +65,12 @@ const host = process.env.FTP_HOST?.trim();
 const user = process.env.FTP_USER?.trim();
 const password = process.env.FTP_PASSWORD ?? "";
 const remoteRoot = (process.env.FTP_REMOTE?.trim() || "public_html").replace(/^\/+|\/+$/g, "");
+/**
+ * Веб-серверы ISPmanager (Cloud4box) и Apache на shared-хостингах не любят,
+ * когда у каталога нет прав на запись для PHP. Права выставляем после загрузки;
+ * если FTP не разрешает SITE CHMOD — просто предупреждаем.
+ */
+const setPermissions = process.env.FTP_CHMOD !== "0";
 const secure = process.env.FTP_SECURE === "1";
 const port = Number(process.env.FTP_PORT || 21);
 
@@ -197,6 +207,25 @@ async function main() {
     }
     await client.uploadFrom(path.join(releaseDir, file), remotePath);
     uploaded.push(file);
+  }
+
+  /* Права: каталоги 755, файлы 644, data/ — 775, чтобы PHP мог писать заявки. */
+  if (setPermissions) {
+    const chmodWarned = { value: false };
+    const chmod = async (remotePath: string, mode: string) => {
+      try {
+        await client.send(`SITE CHMOD ${mode} ${remotePath}`);
+      } catch (error) {
+        if (!chmodWarned.value) {
+          warn("хостинг не разрешил менять права по FTP (SITE CHMOD) — выставьте их в панели: папки 755, файлы 644");
+          chmodWarned.value = true;
+        }
+      }
+    };
+    for (const dir of dirs) await chmod(toRemote(dir), "755");
+    await chmod(toRemote(""), "755");
+    // data/ создаёт PHP при первой заявке; если каталог уже есть — даём запись.
+    await chmod(toRemote("data"), "775");
   }
 
   const localSet = new Set(uploadable);

@@ -76,7 +76,7 @@ npm run create-specialist -- --email a@b.c --reset-password
 npm run maintenance                 # обезличить старые заявки, почистить лимиты и сессии
 npm test                            # vitest: расчёты, валидация, заявки, API
 npm run build && npm start          # production-сборка
-npm run build:php                   # архив для SpaceWeb в release/ и download/ (единственная сборка в репозитории)
+npm run build:php                   # архив для хостинга в release/ и download/ (единственная сборка в репозитории)
 npx tsc --noEmit                    # проверка типов
 ```
 
@@ -92,14 +92,14 @@ npx tsc --noEmit                    # проверка типов
 Разбор не является медицинской, юридической или финансовой рекомендацией и не заменяет
 консультацию специалиста.
 
-## Версия для SpaceWeb (PHP-хостинг)
+## Версия для PHP-хостинга (Cloud4box)
 
-Сайт — это PHP-приложение для обычного shared-хостинга SpaceWeb: `public_html`, PHP 8.x,
+Сайт — это PHP-приложение для обычного shared-хостинга (сейчас Cloud4box): `public_html`, PHP 8.x,
 Apache и `.htaccess`. Node.js, Composer и MySQL не нужны: расчёты идут в браузере,
 заявки лежат в файле на сервере, уведомления уходят в Telegram и на почту, кабинет
 специалиста открывается по логину и паролю.
 
-| | SpaceWeb (PHP) |
+| | Cloud4box (PHP) |
 | --- | --- |
 | Заливка | файловый менеджер панели или FTP, `public_html` |
 | Требования | PHP 8.x + Apache, права на запись в `data/` |
@@ -110,7 +110,7 @@ Apache и `.htaccess`. Node.js, Composer и MySQL не нужны: расчёт�
 | Настройки | `config.js` + `config.php` |
 
 ```bash
-npm run build:php           # release/astra-pearl-php.zip (≈0,8 МБ) → download/ — сборка для SpaceWeb
+npm run build:php           # release/astra-pearl-php.zip (≈0,8 МБ) → download/ — сборка для хостинга
 ```
 
 > **Не заливайте на хостинг ZIP репозитория** (кнопка «Code → Download ZIP» на GitHub):
@@ -120,7 +120,7 @@ npm run build:php           # release/astra-pearl-php.zip (≈0,8 МБ) → down
 Содержимое `release/php` (архив `download/astra-pearl-php.zip`) заливается в `public_html`.
 Заявки сохраняются в файле на сервере, уведомления уходят в Telegram и на почту,
 кабинет специалиста работает по паролю. Пошаговая установка «как залить» —
-[docs/UPLOAD-SPACEWEB.md](docs/UPLOAD-SPACEWEB.md), техническое описание —
+[docs/UPLOAD-HOSTING.md](docs/UPLOAD-HOSTING.md), техническое описание —
 [docs/HOSTING-PHP.md](docs/HOSTING-PHP.md), краткая памятка лежит в архиве (`README.txt`).
 
 Обновлять сайт вручную не нужно: каждый push в `main` собирается и заливается на
@@ -173,7 +173,7 @@ docs/                      методика, API, интеграции, депл
 - [docs/API.md](docs/API.md) — эндпоинты, форматы, коды ошибок, версионирование.
 - [docs/INTEGRATIONS.md](docs/INTEGRATIONS.md) — Telegram, MAX, SMTP: настройка и проверка.
 - [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) — production-развёртывание, HTTPS, бэкапы, приватность.
-- [docs/AUTODEPLOY-FTP.md](docs/AUTODEPLOY-FTP.md) — автодеплой на SpaceWeb по FTP через GitHub Actions.
+- [docs/AUTODEPLOY-FTP.md](docs/AUTODEPLOY-FTP.md) — автодеплой на хостинг по FTP через GitHub Actions.
 
 ## Лицензия и данные
 

@@ -1,6 +1,6 @@
 name: Деплой на хостинг (FTP)
 
-# Автодеплой сайта на shared-хостинг (SpaceWeb) по FTP.
+# Автодеплой сайта на shared-хостинг (Cloud4box, панель ISPmanager) по FTP.
 #
 # Как работает:
 #  1. любой push в main → сборка пакета для PHP-хостинга;
@@ -8,7 +8,7 @@ name: Деплой на хостинг (FTP)
 #  3. загрузка release/php в public_html по FTP.
 #
 # Нужные секреты репозитория (Settings → Secrets and variables → Actions):
-#   FTP_HOST      — хост из панели, например ftp.логин.sweb.ru
+#   FTP_HOST      — хост из панели: домен сайта или IP сервера (Cloud4box)
 #   FTP_USER      — логин FTP
 #   FTP_PASSWORD  — пароль FTP
 #   FTP_REMOTE    — каталог сайта, обычно public_html

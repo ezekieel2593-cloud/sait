@@ -23,7 +23,7 @@ const version = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf
 const log = (message: string) => console.log(`· ${message}`);
 
 /**
- * STATIC_API_ENABLED=1 — пакет для PHP-хостинга (SpaceWeb и аналоги): форма шлёт POST
+ * STATIC_API_ENABLED=1 — пакет для PHP-хостинга (Cloud4box и аналоги): форма шлёт POST
  * на api/lead.php, заявки попадают в кабинет. По умолчанию версия без сервера.
  */
 const apiEnabled = process.env.STATIC_API_ENABLED === "1";
