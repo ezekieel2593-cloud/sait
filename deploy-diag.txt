@@ -1,0 +1,109 @@
+· подключение к 185.154.20.52:21
+· каталог FTP-входа (pwd): /
+· каталог сайта по секрету FTP_DIR «/www/cosmorox.ru»: 31 записей
+    d api
+    d cabinet
+    d fonts
+    d images
+    d inc
+    - .htaccess (2450 Б)
+    - 404.html (1282 Б)
+    - README.txt (7886 Б)
+    - app.js (1813461 Б)
+    - astrology.html (2917 Б)
+    - chakras.html (3086 Б)
+    - check.php (11417 Б)
+    - config.example.php (3871 Б)
+    - config.js (5535 Б)
+    - full-reading.html (2644 Б)
+    - guide.html (2992 Б)
+    - index.html (2615 Б)
+    - matrix.html (2802 Б)
+    - privacy.html (2322 Б)
+    - robots.txt (65 Б)
+    - setup.php (14611 Б)
+    - sitemap.xml (723 Б)
+    - styles.css (74904 Б)
+    - terms.html (2345 Б)
+    - blog.html (2403 Б)
+    - cabinet.html (2279 Б)
+    - forecast.html (2453 Б)
+    - store.html (2432 Б)
+    - app-e616bd1c.js (1813461 Б)
+    - styles-e616bd1c.css (74904 Б)
+    … и ещё 1
+· каталог сайта по секрету FTP_DIR: найден index.html — похоже, это и есть корень домена
+· после cd «/www/cosmorox.ru» сервер оставил нас в: /www/cosmorox.ru
+· родительский каталог «/www»: 1 записей
+    d cosmorox.ru
+· домашний каталог FTP «/»: 27 записей
+    d cgi-bin
+    - app.js (1772819 Б)
+    - styles.css (57406 Б)
+    d fonts
+    d images
+    - index.html (2667 Б)
+    - astrology.html (2828 Б)
+    - matrix.html (2716 Б)
+    - guide.html (2907 Б)
+    - chakras.html (2999 Б)
+    - full-reading.html (2552 Б)
+    - privacy.html (2235 Б)
+    - terms.html (2260 Б)
+    - 404.html (1284 Б)
+    - config.js (5535 Б)
+    - robots.txt (65 Б)
+    - sitemap.xml (556 Б)
+    - .htaccess (2458 Б)
+    - README.txt (12602 Б)
+    d api
+    d cabinet
+    d inc
+    - setup.php (14611 Б)
+    - check.php (11417 Б)
+    - config.example.php (3863 Б)
+    d data
+    d www
+· домашний каталог FTP: найден index.html — похоже, это и есть корень домена
+· типовой путь «/www»: 1 записей
+    d cosmorox.ru
+· типовой путь «www»: 1 записей
+    d cosmorox.ru
+· типовой путь «public_html»: недоступен
+· типовой путь «/public_html»: недоступен
+· типовой путь «httpdocs»: недоступен
+· типовой путь «htdocs»: недоступен
+· типовой путь «www/cosmorox.ru»: 31 записей
+    d api
+    d cabinet
+    d fonts
+    d images
+    d inc
+    - .htaccess (2450 Б)
+    - 404.html (1282 Б)
+    - README.txt (7886 Б)
+    - app.js (1813461 Б)
+    - astrology.html (2917 Б)
+    - chakras.html (3086 Б)
+    - check.php (11417 Б)
+    - config.example.php (3871 Б)
+    - config.js (5535 Б)
+    - full-reading.html (2644 Б)
+    - guide.html (2992 Б)
+    - index.html (2615 Б)
+    - matrix.html (2802 Б)
+    - privacy.html (2322 Б)
+    - robots.txt (65 Б)
+    - setup.php (14611 Б)
+    - sitemap.xml (723 Б)
+    - styles.css (74904 Б)
+    - terms.html (2345 Б)
+    - blog.html (2403 Б)
+    - cabinet.html (2279 Б)
+    - forecast.html (2453 Б)
+    - store.html (2432 Б)
+    - app-e616bd1c.js (1813461 Б)
+    - styles-e616bd1c.css (74904 Б)
+    … и ещё 1
+· типовой путь: найден index.html — похоже, это и есть корень домена
+· сравните список с корнем документов домена в панели (раздел «Сайты») и впишите этот путь в секрет FTP_DIR
