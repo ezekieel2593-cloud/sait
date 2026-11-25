@@ -8,15 +8,20 @@
  *
  * Рассчитан на shared-хостинги с ISPmanager (Cloud4box) и на панели вроде SpaceWeb.
  *
- * Настройки берутся из переменных окружения (или .env.deploy, который в .gitignore):
- *   FTP_HOST      хост из панели хостинга: у Cloud4box — ваш домен или IP,
- *                 у SpaceWeb — ftp.логин.sweb.ru
+ * Обязательных настроек всего четыре — ровно те поля, что есть в панели хостинга:
+ *   FTP_HOST      хост FTP: домен сайта или IP сервера
  *   FTP_USER      логин FTP
  *   FTP_PASSWORD  пароль FTP
- *   FTP_REMOTE    каталог сайта: public_html (Cloud4box, ISPmanager)
- *                 или www/ваш-домен (если public_html — симлинк)
- *   FTP_SECURE    1 — FTPS (explicit TLS), по умолчанию 0
- *   FTP_PORT      порт, по умолчанию 21 (FTPS — 21, реже 990)
+ *   FTP_DIR       каталог сайта на сервере (он же «директория» в панели),
+ *                 по умолчанию public_html
+ *
+ * Необязательные — нужны только если хостинг их требует:
+ *   FTP_PORT      21 по умолчанию
+ *   FTP_SECURE    1 — включить FTPS (шифрование). По умолчанию выключено,
+ *                 обычный FTP из панели работает без этой настройки.
+ *
+ * Старые имена переменных тоже понимаются: FTP_REMOTE = FTP_DIR,
+ * FTP_USERNAME = FTP_USER, FTP_PASS = FTP_PASSWORD.
  *
  * Никогда не загружаются и не удаляются:
  *   config.php  — пароль владельца и настройки живут только на сервере;
@@ -61,22 +66,41 @@ function loadEnvFile(file: string) {
 
 loadEnvFile(path.join(root, ".env.deploy"));
 
-const host = process.env.FTP_HOST?.trim();
-const user = process.env.FTP_USER?.trim();
-const password = process.env.FTP_PASSWORD ?? "";
-const remoteRoot = (process.env.FTP_REMOTE?.trim() || "public_html").replace(/^\/+|\/+$/g, "");
+/** Первое непустое значение из списка имён — чтобы работали и старые, и новые имена. */
+function env(...names: string[]): string {
+  for (const name of names) {
+    const value = process.env[name]?.trim();
+    if (value) return value;
+  }
+  return "";
+}
+
+const host = env("FTP_HOST", "FTP_SERVER", "FTP_ADDRESS");
+const user = env("FTP_USER", "FTP_USERNAME", "FTP_LOGIN");
+const password = process.env.FTP_PASSWORD ?? process.env.FTP_PASS ?? "";
+/** «Директория» из панели: public_html или www/домен. */
+const remoteRoot = (env("FTP_DIR", "FTP_DIRECTORY", "FTP_REMOTE", "FTP_PATH") || "public_html").replace(
+  /^\/+|\/+$/g,
+  ""
+);
 /**
  * Веб-серверы ISPmanager (Cloud4box) и Apache на shared-хостингах не любят,
  * когда у каталога нет прав на запись для PHP. Права выставляем после загрузки;
  * если FTP не разрешает SITE CHMOD — просто предупреждаем.
  */
 const setPermissions = process.env.FTP_CHMOD !== "0";
-const secure = process.env.FTP_SECURE === "1";
-const port = Number(process.env.FTP_PORT || 21);
+/** FTPS включается только явно: «1», «true», «yes». По умолчанию — обычный FTP. */
+const secure = ["1", "true", "yes", "on"].includes((process.env.FTP_SECURE ?? "").trim().toLowerCase());
+const port = Number(env("FTP_PORT") || 21);
 
 if (!dryRun && (!host || !user || !password)) {
+  const missing = [
+    !host ? "FTP_HOST (хост)" : null,
+    !user ? "FTP_USER (логин)" : null,
+    !password ? "FTP_PASSWORD (пароль)" : null,
+  ].filter(Boolean);
   throw new Error(
-    "не заданы FTP_HOST, FTP_USER или FTP_PASSWORD — скопируйте .env.deploy.example в .env.deploy и заполните"
+    `не заданы: ${missing.join(", ")} — скопируйте .env.deploy.example в .env.deploy и заполните, либо добавьте секреты в GitHub`
   );
 }
 
@@ -144,7 +168,7 @@ async function main() {
 
   if (dryRun) {
     log(`режим проверки (--dry-run): ни файл не будет записан`);
-    log(`хост: ${host || "(не задан)"}, каталог: ${remoteRoot}`);
+    log(`хост: ${host || "(не задан)"}, каталог: ${remoteRoot}, порт: ${port}${secure ? ", FTPS" : ""}`);
     log(`к загрузке: ${uploadable.length} файлов, под защитой: ${guarded.length}`);
     for (const file of uploadable.slice(0, 30)) console.log(`  + ${file}`);
     if (uploadable.length > 30) console.log(`  … и ещё ${uploadable.length - 30}`);

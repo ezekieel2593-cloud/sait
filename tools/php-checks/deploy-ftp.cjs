@@ -72,7 +72,7 @@ function check(name, ok, extra = "") {
     FTP_PORT: String(PORT),
     FTP_USER: USER,
     FTP_PASSWORD: PASS,
-    FTP_REMOTE: "public_html",
+    FTP_DIR: "public_html",
     FTP_SECURE: "0",
   };
   /* execFile (а не execFileSync): сервер живёт в этом же процессе и должен
@@ -97,6 +97,27 @@ function check(name, ok, extra = "") {
   });
   check("dry-run ничего не пишет на сервер", !fs.existsSync(path.join(siteDir, "index.html")));
   check("dry-run показывает защищённые файлы", /config\.php \(не трогаем\)/.test(dry));
+  check("dry-run показывает папку сайта", /каталог: public_html/.test(dry));
+
+  /* --------------------- 1б. Совместимость имён переменных ----------------- */
+  console.log("\n1б. Имена настроек");
+  const legacyEnv = { ...process.env };
+  delete legacyEnv.FTP_DIR;
+  const { stdout: oldNames } = await run_node("npx", ["tsx", "scripts/deploy-ftp.ts", "--no-build", "--dry-run"], {
+    cwd: repoRoot,
+    env: {
+      ...legacyEnv,
+      FTP_HOST: "example.test",
+      FTP_USERNAME: "site",
+      FTP_PASS: "secret",
+      FTP_REMOTE: "www/example.test",
+    },
+    encoding: "utf8",
+    maxBuffer: 16 * 1024 * 1024,
+  });
+  check("старое имя FTP_REMOTE работает как FTP_DIR", /каталог: www\/example\.test/.test(oldNames));
+  check("FTP_SECURE не требуется", /порт: 21(\s|$|,)/.test(oldNames));
+  check("обычный FTP по умолчанию", !/FTPS/.test(oldNames));
 
   /* ------------------------------ 2. Загрузка ----------------------------- */
   console.log("\n2. Загрузка");

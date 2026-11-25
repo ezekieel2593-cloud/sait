@@ -8,11 +8,13 @@ name: Деплой на хостинг (FTP)
 #  3. загрузка release/php в public_html по FTP.
 #
 # Нужные секреты репозитория (Settings → Secrets and variables → Actions):
-#   FTP_HOST      — хост из панели: домен сайта или IP сервера (Cloud4box)
+#   FTP_HOST      — хост из панели: домен сайта или IP сервера
 #   FTP_USER      — логин FTP
 #   FTP_PASSWORD  — пароль FTP
-#   FTP_REMOTE    — каталог сайта, обычно public_html
-#   FTP_SECURE    — 1, если хостинг поддерживает FTPS, иначе 0 (можно не задавать)
+#   FTP_DIR       — папка сайта (директория), обычно public_html
+#
+# Этого достаточно. FTP_PORT и FTP_SECURE добавлять не нужно — обычный FTP
+# работает по умолчанию; FTPS включается только если хостинг его требует.
 #
 # config.php, data/ и setup.php скрипт деплоя не трогает: пароль владельца
 # и заявки остаются на сервере, см. scripts/deploy-ftp.ts.
@@ -76,8 +78,7 @@ jobs:
           FTP_HOST: ${{ secrets.FTP_HOST }}
           FTP_USER: ${{ secrets.FTP_USER }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
-          FTP_REMOTE: ${{ secrets.FTP_REMOTE || 'public_html' }}
-          FTP_SECURE: ${{ secrets.FTP_SECURE || '0' }}
+          FTP_DIR: ${{ secrets.FTP_DIR || 'public_html' }}
           # --no-build: пакет уже собран шагом выше.
           # --prune включается галочкой при ручном запуске.
           DEPLOY_ARGS: ${{ inputs.prune && '--prune' || '' }}
