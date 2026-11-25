@@ -54,7 +54,7 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: read
+  contents: write # сохранение диагностики FTP в репозиторий при неудачной публикации
 
 jobs:
   deploy:
@@ -132,7 +132,7 @@ jobs:
           echo "Проверяю $SITE_URL (локальная сборка: $RELEASE_DIR)"
 
           # 1. Зонд: файл, загруженный деплоем, обязан открываться на домене.
-          probe_code=$(curl -sS -o /tmp/probe.txt -w "%{http_code}" --max-time 30 "$SITE_URL/deploy-probe-$GITHUB_SHA.txt")
+          probe_code=$(curl -sSL -o /tmp/probe.txt -w "%{http_code}" --max-time 30 "$SITE_URL/deploy-probe-$GITHUB_SHA.txt")
           echo "deploy-probe: HTTP $probe_code"
           if [ "$probe_code" != "200" ] || ! grep -q "$GITHUB_SHA" /tmp/probe.txt; then
             echo "::error::Загруженные по FTP файлы не видны на домене. Значит FTP_DIR указывает не на корень документов домена (в ISPmanager это каталог сайта, например /www/cosmorox.ru или public_html), либо домен смотрит на другой сервер. Проверьте секрет FTP_DIR и привязку домена в панели."
@@ -143,7 +143,7 @@ jobs:
           # 2. Главная должна ссылаться на бандл именно этой сборки.
           local_app=$(grep -o 'app-[0-9a-f]\{8\}\.js' "$RELEASE_DIR/index.html" | head -n 1)
           local_app=${local_app:-app.js}
-          home_code=$(curl -sS -o /tmp/home.html -w "%{http_code}" --max-time 30 "$SITE_URL/?nocache=$RANDOM$RANDOM")
+          home_code=$(curl -sSL -o /tmp/home.html -w "%{http_code}" --max-time 30 "$SITE_URL/?nocache=$RANDOM$RANDOM")
           echo "Главная: HTTP $home_code"
           test "$home_code" = "200"
           grep -qi "жемчужина" /tmp/home.html || echo "Название сайта в HTML главной не найдено"
@@ -169,7 +169,9 @@ jobs:
           echo "check.php: HTTP $check_code"
 
       # Если публикация не подтвердилась — показываем, куда реально попала
-      # загрузка: в логе будет видна структура каталогов FTP-входа.
+      # загрузка. Диагностика печатается в лог и сохраняется файлом в репозиторий
+      # (коммит с [skip ci] не вызывает повторный деплой): так структуру каталогов
+      # FTP можно посмотреть без доступа к логам Actions.
       - name: Диагностика каталогов FTP
         if: failure()
         env:
@@ -179,7 +181,23 @@ jobs:
           FTP_DIR: ${{ secrets.FTP_DIR || 'public_html' }}
           FTP_PORT: ${{ secrets.FTP_PORT || '21' }}
           FTP_SECURE: ${{ secrets.FTP_SECURE || '0' }}
-        run: npx tsx scripts/ftp-inspect.ts
+        run: |
+          npx tsx scripts/ftp-inspect.ts > deploy-diag.txt 2>&1 || true
+          cat deploy-diag.txt
+          {
+            echo "### Диагностика каталогов FTP (запуск ${{ github.run_id }})"
+            echo ""
+            echo '```'
+            cat deploy-diag.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ -s deploy-diag.txt ] && [ -n "${{ secrets.FTP_HOST }}" ]; then
+            git config user.name "deploy-diag"
+            git config user.email "actions@users.noreply.github.com"
+            git add deploy-diag.txt
+            git commit -m "Диагностика FTP: запуск ${{ github.run_id }} [skip ci]" || true
+            git push origin "HEAD:${{ github.ref_name }}" || echo "::warning::Не удалось сохранить диагностику в репозиторий (ветка защищена?)"
+          fi
 
       - name: Итог
         if: always()

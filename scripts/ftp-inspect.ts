@@ -2,11 +2,9 @@
  * Диагностика FTP: показывает, куда реально попадает загрузка.
  *
  * Запускается workflow-ом, когда проверка публикации на домене не прошла.
- * Печатает каталог FTP-входа, содержимое каталога сайта (FTP_DIR) и его
- * родителя — по этому списку сразу видно, какой путь вписать в секрет
- * FTP_DIR, чтобы файлы оказались в корне документов домена.
- *
- * Ничего не изменяет: только читает списки каталогов.
+ * Печатает каталог FTP-входа, содержимое каталога сайта (FTP_DIR), его
+ * родителя и типовые корни документов — по этому списку видно, какой путь
+ * вписать в секрет FTP_DIR. Ничего не изменяет: только читает списки.
  */
 import { Client } from "basic-ftp";
 
@@ -41,34 +39,70 @@ await client.access({ host, user, password, port, secure: secure ? "implicit" : 
 
 const base = await client.pwd();
 log(`подключение к ${host}:${port}${secure ? " (FTPS)" : ""}`);
-log(`каталог FTP-входа: ${base}`);
+log(`каталог FTP-входа (pwd): ${base}`);
 
 /** Печатает содержимое каталога, не падая на недоступных папках. */
-const show = async (dir: string, label: string) => {
+const show = async (dir: string, label: string): Promise<boolean> => {
   try {
     const entries = await client.list(dir);
     log(`${label} «${dir}»: ${entries.length} записей`);
-    for (const entry of entries.slice(0, 40)) {
+    for (const entry of entries.slice(0, 30)) {
       const mark = entry.isDirectory ? "d" : "-";
       const size = entry.isDirectory ? "" : ` (${entry.size} Б)`;
       console.log(`    ${mark} ${entry.name}${size}`);
     }
-    if (entries.length > 40) console.log(`    … и ещё ${entries.length - 40}`);
+    if (entries.length > 30) console.log(`    … и ещё ${entries.length - 30}`);
+    const hasIndex = entries.some((e) => e.name.toLowerCase() === "index.html");
+    if (hasIndex) log(`${label}: найден index.html — похоже, это и есть корень домена`);
+    return true;
   } catch {
     log(`${label} «${dir}»: недоступен`);
+    return false;
   }
 };
 
 await show(siteDir, "каталог сайта по секрету FTP_DIR");
 
+/* Chroot-проверка: если FTP-пользователь изолирован в своей домашней папке,
+   абсолютный путь «/www/...» уходит внутрь домашнего каталога. Пытаемся
+   перейти в FTP_DIR и смотрим, где сервер нас реально оставил. */
+try {
+  await client.cd(siteDir);
+  const where = await client.pwd();
+  log(`после cd «${siteDir}» сервер оставил нас в: ${where}`);
+  if (where !== siteDir) {
+    log("! путь FTP_DIR разрешился в другой каталог — проверьте домашнюю папку FTP-аккаунта в панели");
+  }
+  await client.cd(base);
+} catch {
+  log(`cd «${siteDir}»: не удалось — каталог не существует для этого FTP-аккаунта`);
+}
+
 // Родитель каталога сайта: рядом обычно лежит настоящий корень домена.
 const cut = siteDir.lastIndexOf("/");
-const parent = cut > 0 ? siteDir.slice(0, cut) : base;
-if (parent !== siteDir && parent !== base) {
-  await show(parent, "родительский каталог");
-}
-if (base !== siteDir && base !== parent) {
-  await show(base, "домашний каталог FTP");
+const parent = cut > 0 ? siteDir.slice(0, cut) : "";
+if (parent) await show(parent, "родительский каталог");
+if (base !== siteDir && base !== parent) await show(base, "домашний каталог FTP");
+
+/* Типовые корни документов на shared-хостингах: если настоящий корень
+   другой, он обычно называется одним из этих имён или лежит рядом. */
+const domain = siteDir.split("/").pop() || "";
+const candidates = [
+  ...new Set(
+    [
+      "/www",
+      "www",
+      "public_html",
+      "/public_html",
+      "httpdocs",
+      "htdocs",
+      `www/${domain}`,
+      `/www/${domain}`,
+    ].filter((dir) => dir !== siteDir),
+  ),
+];
+for (const dir of candidates) {
+  await show(dir, "типовой путь");
 }
 
 log(
