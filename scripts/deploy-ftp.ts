@@ -29,8 +29,9 @@
  *   setup.php   — только если он уже есть на сервере (после установки его удаляют,
  *                 и деплой не должен возвращать открытую установку обратно).
  *
- * Деплой идемпотентен: файлы сравниваются по размеру и дате, неизменившиеся
- * пропускаются, поэтому повторный запуск быстрый.
+ * Деплой идемпотентен: неизменившиеся файлы обычно пропускаются по размеру.
+ * HTML и главные bundles загружаются принудительно, даже если размер совпадает:
+ * FTP LIST не даёт надёжной контрольной суммы, а старый JS-кэш — критичен.
  */
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
@@ -43,7 +44,8 @@ const root = process.cwd();
  * Что загружаем: каталог сборки. По умолчанию release/php;
  * при деплое без сборки с сервера GitHub берётся распакованный архив (см. workflow).
  */
-const releaseDir = process.env.DEPLOY_SOURCE || path.join(root, "release", "php");
+const releaseDir =
+  process.env.DEPLOY_SOURCE || path.join(root, "release", "php");
 const log = (message: string) => console.log(`· ${message}`);
 const warn = (message: string) => console.warn(`! ${message}`);
 
@@ -63,7 +65,10 @@ function loadEnvFile(file: string) {
     const eq = line.indexOf("=");
     if (eq === -1) continue;
     const key = line.slice(0, eq).trim();
-    const value = line.slice(eq + 1).trim().replace(/^["']|["']$/g, "");
+    const value = line
+      .slice(eq + 1)
+      .trim()
+      .replace(/^["']|["']$/g, "");
     if (process.env[key] === undefined) process.env[key] = value;
   }
 }
@@ -83,10 +88,9 @@ const host = env("FTP_HOST", "FTP_SERVER", "FTP_ADDRESS");
 const user = env("FTP_USER", "FTP_USERNAME", "FTP_LOGIN");
 const password = process.env.FTP_PASSWORD ?? process.env.FTP_PASS ?? "";
 /** «Директория» из панели: public_html или www/домен. */
-const remoteRoot = (env("FTP_DIR", "FTP_DIRECTORY", "FTP_REMOTE", "FTP_PATH") || "public_html").replace(
-  /^\/+|\/+$/g,
-  ""
-);
+const remoteRoot = (
+  env("FTP_DIR", "FTP_DIRECTORY", "FTP_REMOTE", "FTP_PATH") || "public_html"
+).replace(/^\/+|\/+$/g, "");
 /**
  * Веб-серверы ISPmanager (Cloud4box) и Apache на shared-хостингах не любят,
  * когда у каталога нет прав на запись для PHP. Права выставляем после загрузки;
@@ -94,7 +98,9 @@ const remoteRoot = (env("FTP_DIR", "FTP_DIRECTORY", "FTP_REMOTE", "FTP_PATH") ||
  */
 const setPermissions = process.env.FTP_CHMOD !== "0";
 /** FTPS включается только явно: «1», «true», «yes». По умолчанию — обычный FTP. */
-const secure = ["1", "true", "yes", "on"].includes((process.env.FTP_SECURE ?? "").trim().toLowerCase());
+const secure = ["1", "true", "yes", "on"].includes(
+  (process.env.FTP_SECURE ?? "").trim().toLowerCase(),
+);
 const port = Number(env("FTP_PORT") || 21);
 
 if (!dryRun && (!host || !user || !password)) {
@@ -104,7 +110,7 @@ if (!dryRun && (!host || !user || !password)) {
     !password ? "FTP_PASSWORD (пароль)" : null,
   ].filter(Boolean);
   throw new Error(
-    `не заданы: ${missing.join(", ")} — скопируйте .env.deploy.example в .env.deploy и заполните, либо добавьте секреты в GitHub`
+    `не заданы: ${missing.join(", ")} — скопируйте .env.deploy.example в .env.deploy и заполните, либо добавьте секреты в GitHub`,
   );
 }
 
@@ -153,7 +159,9 @@ function listLocalFiles(dir = releaseDir, prefix = ""): string[] {
 
 function isProtected(relative: string) {
   if (PROTECTED_FILES.has(relative)) return true;
-  return PROTECTED_DIRS.some((dir) => relative === dir || relative.startsWith(`${dir}/`));
+  return PROTECTED_DIRS.some(
+    (dir) => relative === dir || relative.startsWith(`${dir}/`),
+  );
 }
 
 const localFiles = listLocalFiles();
@@ -172,10 +180,15 @@ async function main() {
 
   if (dryRun) {
     log(`режим проверки (--dry-run): ни файл не будет записан`);
-    log(`хост: ${host || "(не задан)"}, каталог: ${remoteRoot}, порт: ${port}${secure ? ", FTPS" : ""}`);
-    log(`к загрузке: ${uploadable.length} файлов, под защитой: ${guarded.length}`);
+    log(
+      `хост: ${host || "(не задан)"}, каталог: ${remoteRoot}, порт: ${port}${secure ? ", FTPS" : ""}`,
+    );
+    log(
+      `к загрузке: ${uploadable.length} файлов, под защитой: ${guarded.length}`,
+    );
     for (const file of uploadable.slice(0, 30)) console.log(`  + ${file}`);
-    if (uploadable.length > 30) console.log(`  … и ещё ${uploadable.length - 30}`);
+    if (uploadable.length > 30)
+      console.log(`  … и ещё ${uploadable.length - 30}`);
     for (const file of guarded) console.log(`  ~ ${file} (не трогаем)`);
     // Часть защищённых файлов в сборку не входит вовсе — о них сообщаем отдельно.
     for (const name of PROTECTED_FILES) console.log(`  ~ ${name} (не трогаем)`);
@@ -184,7 +197,13 @@ async function main() {
   }
 
   log(`подключение к ${host}:${port}${secure ? " (FTPS)" : ""}`);
-  await client.access({ host, user, password, port, secure: secure ? "implicit" : false });
+  await client.access({
+    host,
+    user,
+    password,
+    port,
+    secure: secure ? "implicit" : false,
+  });
   const base = await client.pwd();
   log(`каталог сайта: ${remoteRoot}`);
 
@@ -192,7 +211,13 @@ async function main() {
   await client.cd(base);
 
   /* Создаём каталоги сборки заранее — так меньше переключений. */
-  const dirs = [...new Set(uploadable.map((file) => path.posix.dirname(file)).filter((dir) => dir !== "."))];
+  const dirs = [
+    ...new Set(
+      uploadable
+        .map((file) => path.posix.dirname(file))
+        .filter((dir) => dir !== "."),
+    ),
+  ];
   for (const dir of dirs) {
     await client.ensureDir(toRemote(dir));
     await client.cd(base);
@@ -229,7 +254,10 @@ async function main() {
       continue;
     }
     const localSize = fs.statSync(path.join(releaseDir, file)).size;
-    if (remoteSizes.get(file) === localSize) {
+    const forceRefresh =
+      file.endsWith(".html") ||
+      ["app.js", "styles.css", "config.js"].includes(file);
+    if (remoteSizes.get(file) === localSize && !forceRefresh) {
       skipped.push(file);
       continue;
     }
@@ -245,7 +273,9 @@ async function main() {
         await client.send(`SITE CHMOD ${mode} ${remotePath}`);
       } catch (error) {
         if (!chmodWarned.value) {
-          warn("хостинг не разрешил менять права по FTP (SITE CHMOD) — выставьте их в панели: папки 755, файлы 644");
+          warn(
+            "хостинг не разрешил менять права по FTP (SITE CHMOD) — выставьте их в панели: папки 755, файлы 644",
+          );
           chmodWarned.value = true;
         }
       }
@@ -264,9 +294,13 @@ async function main() {
       removed.push(file);
     }
   } else {
-    const orphans = [...existing.keys()].filter((file) => !isProtected(file) && !localSet.has(file));
+    const orphans = [...existing.keys()].filter(
+      (file) => !isProtected(file) && !localSet.has(file),
+    );
     if (orphans.length > 0) {
-      warn(`на сервере ${orphans.length} файлов, которых нет в сборке (удалить можно с --prune):`);
+      warn(
+        `на сервере ${orphans.length} файлов, которых нет в сборке (удалить можно с --prune):`,
+      );
       for (const file of orphans.slice(0, 10)) console.log(`    ? ${file}`);
     }
   }
@@ -276,7 +310,9 @@ async function main() {
 
 await main();
 
-log(`загружено: ${uploaded.length}, без изменений: ${skipped.length}, удалено: ${removed.length}`);
+log(
+  `загружено: ${uploaded.length}, без изменений: ${skipped.length}, удалено: ${removed.length}`,
+);
 if (uploaded.length > 0 && uploaded.length <= 40) {
   for (const file of uploaded) console.log(`  ↑ ${file}`);
 }

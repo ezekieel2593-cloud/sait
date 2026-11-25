@@ -124,7 +124,13 @@ jobs:
           code=$(curl -sSL -o /tmp/home.html -w "%{http_code}" --max-time 30 "$SITE_URL/")
           echo "Главная: HTTP $code ($SITE_URL)"
           test "$code" = "200"
-          grep -qi "Жемчужина" /tmp/home.html && echo "Страница сайта отдаётся (название найдено)" || echo "Открылось, но название не найдено — проверьте вручную"
+          grep -qi "Жемчужина" /tmp/home.html && echo "Страница сайта отдаётся (название найдено)" || echo "Главная открылась, но название не найдено"
+          # HTTP 200 может прийти со старой страницей. Сверяем маркер нового UI в реально выданном JS.
+          app_code=$(curl -sSL -o /tmp/site-app.js -w "%{http_code}" --max-time 30 "$SITE_URL/app.js?deploy=$GITHUB_SHA")
+          echo "JS-бандл: HTTP $app_code"
+          test "$app_code" = "200"
+          grep -q "portal-landing" /tmp/site-app.js || { echo "Сервер отдаёт старый app.js: проверьте FTP_DIR или кэш хостинга"; exit 1; }
+          echo "В загруженном app.js найден маркер нового портала"
           check_code=$(curl -sS -o /tmp/check.html -w "%{http_code}" --max-time 30 "$SITE_URL/check.php")
           echo "check.php: HTTP $check_code"
 
