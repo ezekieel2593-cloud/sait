@@ -36,7 +36,7 @@
 · после cd «/www/cosmorox.ru» сервер оставил нас в: /www/cosmorox.ru
 · родительский каталог «/www»: 1 записей
     d cosmorox.ru
-· домашний каталог FTP «/»: 27 записей
+· домашний каталог FTP «/»: 28 записей
     d cgi-bin
     - app.js (1772819 Б)
     - styles.css (57406 Б)
@@ -64,6 +64,7 @@
     - config.example.php (3863 Б)
     d data
     d www
+    - deploy-probe-home-70216d0ac75b413be6999a960f5b01e157d4493a.txt (66 Б)
 · домашний каталог FTP: найден index.html — похоже, это и есть корень домена
 · типовой путь «/www»: 1 записей
     d cosmorox.ru
