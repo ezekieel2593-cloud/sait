@@ -162,15 +162,22 @@ jobs:
             exit 1
           fi
 
-          # 3. Сам бандл: внутри должна быть новая сборка (маркер портала).
+          # 3. Сам бандл: содержимое на домене должно совпадать с локальной сборкой
+          #    (первые 300 байт + размер). Маркеры интерфейса меняются при редизайне,
+          #    сравнение с локальным файлом — навсегда точный критерий.
           app_code=$(curl -sSL -o /tmp/site-app.js -w "%{http_code}" --max-time 60 "$SITE_URL/$local_app?deploy=$GITHUB_SHA")
           echo "$local_app: HTTP $app_code"
           test "$app_code" = "200"
-          if ! grep -q "portal-landing" /tmp/site-app.js; then
-            echo "::error::Файл $local_app на домене — не новая сборка. Проверьте FTP_DIR и кэширование в панели хостинга."
+          head -c 300 "$RELEASE_DIR/$local_app" > /tmp/local-head
+          head -c 300 /tmp/site-app.js > /tmp/remote-head
+          local_size=$(wc -c < "$RELEASE_DIR/$local_app")
+          remote_size=$(wc -c < /tmp/site-app.js)
+          echo "Размер: локально $local_size Б, на домене $remote_size Б"
+          if ! cmp -s /tmp/local-head /tmp/remote-head || [ "$local_size" != "$remote_size" ]; then
+            echo "::error::Файл $local_app на домене отличается от локальной сборки (кэш хостинга или старый файл). Проверьте FTP_DIR и кэширование в панели."
             exit 1
           fi
-          echo "Маркер новой сборки найден в $local_app."
+          echo "Бандл на домене совпадает с локальной сборкой."
 
           # 4. Диагностика хостинга (PHP, права, config.php) доступна.
           check_code=$(curl -sS -o /tmp/check.html -w "%{http_code}" --max-time 30 "$SITE_URL/check.php")
