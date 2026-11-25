@@ -72,7 +72,7 @@ function check(name, ok, extra = "") {
     FTP_PORT: String(PORT),
     FTP_USER: USER,
     FTP_PASSWORD: PASS,
-    FTP_DIR: "public_html",
+    FTP_DIR: "/public_html",
     FTP_SECURE: "0",
   };
   /* execFile (а не execFileSync): сервер живёт в этом же процессе и должен
@@ -97,7 +97,7 @@ function check(name, ok, extra = "") {
   });
   check("dry-run ничего не пишет на сервер", !fs.existsSync(path.join(siteDir, "index.html")));
   check("dry-run показывает защищённые файлы", /config\.php \(не трогаем\)/.test(dry));
-  check("dry-run показывает папку сайта", /каталог: public_html/.test(dry));
+  check("dry-run сохраняет абсолютный путь корня сайта", /каталог: \/public_html/.test(dry));
 
   /* --------------------- 1б. Совместимость имён переменных ----------------- */
   console.log("\n1б. Имена настроек");

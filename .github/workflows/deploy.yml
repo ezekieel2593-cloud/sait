@@ -13,7 +13,7 @@ name: Деплой на хостинг (FTP)
 #   FTP_HOST      — хост из панели: домен сайта или IP сервера
 #   FTP_USER      — логин FTP
 #   FTP_PASSWORD  — пароль FTP
-#   FTP_DIR       — папка сайта (директория), обычно public_html
+#   FTP_DIR       — корневая папка сайта из ISPmanager (например /www/cosmorox.ru)
 #
 #   SITE_URL      — необязательная замена домена для HTTP-проверки после деплоя.
 #                   По умолчанию используется https://cosmorox.ru.

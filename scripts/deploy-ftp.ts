@@ -88,9 +88,12 @@ const host = env("FTP_HOST", "FTP_SERVER", "FTP_ADDRESS");
 const user = env("FTP_USER", "FTP_USERNAME", "FTP_LOGIN");
 const password = process.env.FTP_PASSWORD ?? process.env.FTP_PASS ?? "";
 /** «Директория» из панели: public_html или www/домен. */
-const remoteRoot = (
-  env("FTP_DIR", "FTP_DIRECTORY", "FTP_REMOTE", "FTP_PATH") || "public_html"
-).replace(/^\/+|\/+$/g, "");
+const configuredRemoteRoot =
+  env("FTP_DIR", "FTP_DIRECTORY", "FTP_REMOTE", "FTP_PATH") || "public_html";
+// Keep a leading slash: ISPmanager document roots are often absolute FTP paths
+// (for example /www/example.test). Removing it silently changes the target to
+// a path relative to the FTP account's login directory.
+const remoteRoot = configuredRemoteRoot.replace(/\/+$/g, "");
 /**
  * Веб-серверы ISPmanager (Cloud4box) и Apache на shared-хостингах не любят,
  * когда у каталога нет прав на запись для PHP. Права выставляем после загрузки;
