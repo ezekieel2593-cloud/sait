@@ -64,7 +64,7 @@
     - config.example.php (3863 Б)
     d data
     d www
-    - deploy-probe-home-70216d0ac75b413be6999a960f5b01e157d4493a.txt (66 Б)
+    - deploy-probe-home-673b58d275a317fec33e59d3356ce34c28adc3b8.txt (66 Б)
 · домашний каталог FTP: найден index.html — похоже, это и есть корень домена
 · типовой путь «/www»: 1 записей
     d cosmorox.ru
