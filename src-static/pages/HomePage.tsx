@@ -1,131 +1,188 @@
-import { useState, type PointerEvent } from "react";
+import { useEffect, useRef } from "react";
 import { ArrowRightIcon } from "../components/icons";
 import { getConfig } from "../config";
 
+/**
+ * Главная — выбор между двумя мирами.
+ *
+ * Структура: заставка → МИР I (Астрология, весь экран) → 3D-развилка
+ * (пока листаешь, панели поворачиваются и сходятся; клик открывает мир)
+ * → МИР II (Матрица, весь экран) → разделы портала → манифест.
+ */
 export function HomePage() {
   const config = getConfig();
-  const [tilt, setTilt] = useState({ x: 0, y: 0 });
-  const move = (event: PointerEvent<HTMLElement>) => {
-    if (event.pointerType === "touch") return;
-    const box = event.currentTarget.getBoundingClientRect();
-    setTilt({
-      x: ((event.clientX - box.left) / box.width - 0.5) * 7,
-      y: ((event.clientY - box.top) / box.height - 0.5) * -7,
-    });
-  };
-  const reset = () => setTilt({ x: 0, y: 0 });
+  const chooserRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let frame = 0;
+    const apply = () => {
+      frame = 0;
+      const wrapper = chooserRef.current;
+      const stage = stageRef.current;
+      if (!wrapper || !stage) return;
+      const box = wrapper.getBoundingClientRect();
+      const total = box.height - window.innerHeight;
+      const progress =
+        total > 0 ? Math.min(1, Math.max(0, -box.top / total)) : 1;
+      stage.style.setProperty("--p", progress.toFixed(4));
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(apply);
+    };
+    apply();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, []);
+
   return (
     <div className="entry-world">
-      <section className="portal-landing" aria-labelledby="entry-title">
-        <div className="portal-landing__glow" aria-hidden="true" />
-        <div className="portal-landing__intro">
-          <p className="portal-kicker">
-            cosmorox.ru · два способа увидеть себя
-          </p>
+      {/* Заставка поверх ледяного фото-фона */}
+      <section className="world-hero" aria-labelledby="entry-title">
+        <div>
+          <p className="portal-kicker">cosmorox.ru · два способа увидеть себя</p>
           <h1 id="entry-title">Выберите свою вселенную</h1>
           <p>
-            Два самостоятельных пространства. Начните с того, которое
+            Два больших мира: небесная механика натальной карты и геометрия
+            пути — Матрица судьбы. Листайте вниз и выберите тот, который
             откликается сегодня.
           </p>
         </div>
-        <div
-          className="universe-grid"
-          onPointerMove={move}
-          onPointerLeave={reset}
-        >
-          <a
-            href="astrology.html"
-            className="universe-card universe-card--astro"
-            style={
-              {
-                "--tilt-x": `${tilt.x}deg`,
-                "--tilt-y": `${tilt.y}deg`,
-              } as React.CSSProperties
-            }
-          >
-            <div className="universe-card__art astro-art" aria-hidden="true">
-              <div className="astro-orbit astro-orbit--one" />
-              <div className="astro-orbit astro-orbit--two" />
-              <div className="astro-core">
-                <span />
-              </div>
-              <svg className="constellation" viewBox="0 0 360 240">
-                <path d="M35 175 95 115 142 146 193 70 244 100 300 38M95 115l21-72 77 27m51 30 44 73" />
-                <g>
-                  <circle cx="35" cy="175" r="3" />
-                  <circle cx="95" cy="115" r="4" />
-                  <circle cx="142" cy="146" r="3" />
-                  <circle cx="193" cy="70" r="4" />
-                  <circle cx="244" cy="100" r="3" />
-                  <circle cx="300" cy="38" r="4" />
-                  <circle cx="116" cy="43" r="2" />
-                  <circle cx="288" cy="173" r="2" />
-                </g>
-              </svg>
-              <span className="astro-label">NATALIS · 01</span>
-            </div>
-            <div className="universe-card__copy">
-              <p className="universe-eyebrow">Мир I · небесная механика</p>
-              <h2>
+        <span className="hero-scroll" aria-hidden="true">
+          листайте вниз
+        </span>
+      </section>
+
+      {/* МИР I — Астрология */}
+      <section
+        className="world world--astro"
+        aria-labelledby="world-astro-title"
+      >
+        <div className="world__art" aria-hidden="true">
+          <svg className="constellation" viewBox="0 0 360 240">
+            <path d="M35 175 95 115 142 146 193 70 244 100 300 38M95 115l21-72 77 27m51 30 44 73" />
+            <g>
+              <circle cx="35" cy="175" r="3" />
+              <circle cx="95" cy="115" r="4" />
+              <circle cx="142" cy="146" r="3" />
+              <circle cx="193" cy="70" r="4" />
+              <circle cx="244" cy="100" r="3" />
+              <circle cx="300" cy="38" r="4" />
+              <circle cx="116" cy="43" r="2" />
+              <circle cx="288" cy="173" r="2" />
+            </g>
+          </svg>
+          <div className="astro-orbit astro-orbit--one" />
+          <div className="astro-orbit astro-orbit--two" />
+          <div className="astro-core">
+            <span />
+          </div>
+          <span className="astro-label">NATALIS · 01</span>
+        </div>
+        <span className="world__num" aria-hidden="true">
+          01
+        </span>
+        <div className="world__copy">
+          <p className="world__kicker">Мир I · небесная механика</p>
+          <h2 className="world__title" id="world-astro-title">
+            Астрология
+            <br />
+            <em>и натальная карта</em>
+          </h2>
+          <p className="world__text">
+            Планеты, дома и аспекты — карта рождения с расчётом по времени и
+            месту. Точные эфемериды, исторические часовые пояса, честная
+            расшифровка сразу после расчёта.
+          </p>
+          <a className="world-cta" href="astrology.html">
+            Войти в космос <ArrowRightIcon className="h-4 w-4" />
+          </a>
+        </div>
+      </section>
+
+      {/* 3D-развилка: панели сходятся, пока листаешь */}
+      <div className="world-chooser" ref={chooserRef}>
+        <div className="world-chooser__stage" ref={stageRef}>
+          <div className="world-chooser__rift" aria-hidden="true" />
+          <p className="portal-kicker">Развилка пути</p>
+          <h2 className="world-chooser__title">Один вопрос — два ответа</h2>
+          <div className="chooser-panels">
+            <a
+              href="astrology.html"
+              className="chooser-panel chooser-panel--astro"
+            >
+              <span className="panel-num">01</span>
+              <strong>
                 Астрология
                 <br />
-                <em>и натальная карта</em>
-              </h2>
-              <p>
-                Планеты, дома и аспекты — карта рождения с расчётом по времени и
-                месту.
-              </p>
-              <span className="universe-link">
-                Войти в космос <ArrowRightIcon className="h-4 w-4" />
-              </span>
-            </div>
-            <span className="universe-card__number">01</span>
-          </a>
-          <a
-            href="matrix.html"
-            className="universe-card universe-card--matrix"
-            style={
-              {
-                "--tilt-x": `${-tilt.x}deg`,
-                "--tilt-y": `${-tilt.y}deg`,
-              } as React.CSSProperties
-            }
-          >
-            <div className="universe-card__art ice-art" aria-hidden="true">
-              <div className="aurora aurora--one" />
-              <div className="aurora aurora--two" />
-              <div className="ice-crystal ice-crystal--one" />
-              <div className="ice-crystal ice-crystal--two" />
-              <div className="ice-wheel">
-                <i />
-                <b />
-                <span />
-              </div>
-              <span className="ice-label">22 ENERGIES · 02</span>
-            </div>
-            <div className="universe-card__copy">
-              <p className="universe-eyebrow">Мир II · геометрия пути</p>
-              <h2>
+                <em>карта рождения</em>
+              </strong>
+              <small>Солнце, Луна, асцендент, дома и аспекты по эфемеридам</small>
+              <span className="world-cta">Открыть мир I</span>
+            </a>
+            <a
+              href="matrix.html"
+              className="chooser-panel chooser-panel--matrix"
+            >
+              <span className="panel-num">02</span>
+              <strong>
                 Матрица
                 <br />
                 <em>судьбы</em>
-              </h2>
-              <p>
-                22 энергии, родовые линии, денежный канал и отношения — в одной
-                интерактивной схеме.
-              </p>
-              <span className="universe-link">
-                Открыть матрицу <ArrowRightIcon className="h-4 w-4" />
-              </span>
-            </div>
-            <span className="universe-card__number">02</span>
+              </strong>
+              <small>22 энергии, родовые линии, деньги и отношения</small>
+              <span className="world-cta">Открыть мир II</span>
+            </a>
+          </div>
+          <p className="world-chooser__hint" aria-hidden="true">
+            листайте — панели сходятся · выберите кликом
+          </p>
+        </div>
+      </div>
+
+      {/* МИР II — Матрица */}
+      <section
+        className="world world--matrix"
+        aria-labelledby="world-matrix-title"
+      >
+        <div className="world__art" aria-hidden="true">
+          <div className="aurora aurora--one" />
+          <div className="aurora aurora--two" />
+          <div className="ice-crystal ice-crystal--one" />
+          <div className="ice-crystal ice-crystal--two" />
+          <div className="ice-wheel">
+            <i />
+            <b />
+            <span />
+          </div>
+          <span className="ice-label">22 ENERGIES · 02</span>
+        </div>
+        <span className="world__num" aria-hidden="true">
+          02
+        </span>
+        <div className="world__copy">
+          <p className="world__kicker">Мир II · геометрия пути</p>
+          <h2 className="world__title" id="world-matrix-title">
+            Матрица
+            <br />
+            <em>судьбы</em>
+          </h2>
+          <p className="world__text">
+            22 энергии, родовые линии, денежный канал и отношения — в одной
+            интерактивной схеме. Арифметика по дате рождения без случайных
+            чисел: одинаковые данные всегда дают один результат.
+          </p>
+          <a className="world-cta" href="matrix.html">
+            Открыть матрицу <ArrowRightIcon className="h-4 w-4" />
           </a>
         </div>
-        <div className="portal-landing__foot">
-          <span>Расчёты выполняются на основе введённых данных</span>
-          <span>Без регистрации для первого расчёта</span>
-        </div>
       </section>
+
       <section className="entry-shortcuts">
         <div className="container">
           <p className="portal-kicker">Исследуйте портал</p>
@@ -153,6 +210,7 @@ export function HomePage() {
           </div>
         </div>
       </section>
+
       <section className="entry-disclaimer">
         <p>
           Астрология и Матрица судьбы — символические системы интерпретации, а
@@ -160,6 +218,7 @@ export function HomePage() {
           медицинскую, финансовую или юридическую консультацию.
         </p>
       </section>
+
       <section className="section">
         <div className="container container--measure">
           <div className="manifesto">

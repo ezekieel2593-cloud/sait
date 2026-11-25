@@ -7,21 +7,21 @@
    ========================================================================= */
 
 @theme {
-  --color-pearl: #f6f0ec;
-  --color-pearl-deep: #efe6e1;
-  --color-porcelain: #ffffff;
-  --color-turquoise: #b8dde0;
-  --color-turquoise-soft: #dceef0;
-  --color-turquoise-deep: #6fa8ae;
-  --color-lilac: #dcc5d9;
-  --color-lilac-soft: #efe2ed;
-  --color-gold: #c9a777;
-  --color-gold-soft: #e6d3b6;
-  --color-ocean: #253d4b;
-  --color-ocean-deep: #1a2c37;
-  --color-ink: #473f44;
-  --color-ink-soft: #655b61;
-  --color-ink-faint: #857a80;
+  --color-pearl: #0a1526;
+  --color-pearl-deep: #0d1e35;
+  --color-porcelain: #101f35;
+  --color-turquoise: #4fc3e8;
+  --color-turquoise-soft: #16405c;
+  --color-turquoise-deep: #7fdcff;
+  --color-lilac: #9db8dd;
+  --color-lilac-soft: #1b2c47;
+  --color-gold: #d8b46a;
+  --color-gold-soft: #e8d5a8;
+  --color-ocean: #dceafa;
+  --color-ocean-deep: #a8c4e0;
+  --color-ink: #e8f1fa;
+  --color-ink-soft: #c2d3e4;
+  --color-ink-faint: #90a4bb;
 
   --font-display: "Cormorant Garamond", Georgia, "Times New Roman", serif;
   --font-sans: "Manrope Variable", "Manrope", ui-sans-serif, system-ui, sans-serif;
@@ -32,31 +32,32 @@
   --radius-lg: 1.625rem;
   --radius-xl: 2.25rem;
 
-  --shadow-soft: 0 1.125rem 3.125rem -1.75rem rgba(37, 61, 75, 0.45);
-  --shadow-card: 0 1.5rem 3.75rem -2.25rem rgba(37, 61, 75, 0.55);
-  --shadow-lift: 0 2.125rem 5rem -2.5rem rgba(37, 61, 75, 0.55);
+  --shadow-soft: 0 1.125rem 3.125rem -1.75rem rgba(1, 8, 20, 0.8);
+  --shadow-card: 0 1.5rem 3.75rem -2.25rem rgba(1, 8, 20, 0.85);
+  --shadow-lift: 0 2.125rem 5rem -2.5rem rgba(1, 8, 20, 0.85);
 }
 
 :root {
-  --pearl: #f6f0ec;
-  --pearl-deep: #efe6e1;
-  --porcelain: #ffffff;
-  --turquoise: #b8dde0;
-  --turquoise-soft: #dceef0;
-  --turquoise-deep: #6fa8ae;
-  --lilac: #dcc5d9;
-  --lilac-soft: #efe2ed;
-  --gold: #c9a777;
-  --gold-soft: #e6d3b6;
-  --ocean: #253d4b;
-  /* Текст: почти чёрный, чтобы читался на перламутровом фоне и на телефоне. */
-  --ink: #2f262b;
-  --ink-soft: #4a4046;
-  --ink-faint: #6d6268;
+  /* Ледяная палитра: глубокий синий льда, бирюза талой воды, золото звёзд. */
+  --pearl: #0a1526;
+  --pearl-deep: #0d1e35;
+  --porcelain: #101f35;
+  --turquoise: #4fc3e8;
+  --turquoise-soft: #16405c;
+  --turquoise-deep: #7fdcff;
+  --lilac: #9db8dd;
+  --lilac-soft: #1b2c47;
+  --gold: #d8b46a;
+  --gold-soft: #e8d5a8;
+  --ocean: #dceafa;
+  /* Текст: светлый, читается на тёмном льду и на телефоне. */
+  --ink: #e8f1fa;
+  --ink-soft: #c2d3e4;
+  --ink-faint: #90a4bb;
 
-  --line: rgba(37, 61, 75, 0.12);
-  --line-strong: rgba(37, 61, 75, 0.2);
-  --line-gold: rgba(201, 167, 119, 0.45);
+  --line: rgba(180, 210, 240, 0.14);
+  --line-strong: rgba(180, 210, 240, 0.28);
+  --line-gold: rgba(216, 180, 106, 0.45);
 
   --header-h: 4.75rem;
   --measure: 68ch;
@@ -277,9 +278,10 @@ textarea {
   content: "";
   position: absolute;
   inset: 0;
+  /* Тёмная ледяная вуаль: фото-фон остаётся видимым, текст читается. */
   background:
-    linear-gradient(180deg, rgba(255, 253, 250, 0.42) 0%, rgba(255, 253, 250, 0.06) 38%, rgba(255, 253, 250, 0.3) 100%),
-    radial-gradient(56% 50% at 14% 8%, rgba(255, 255, 255, 0.55) 0%, transparent 74%);
+    linear-gradient(180deg, rgba(5, 12, 24, 0.72) 0%, rgba(5, 12, 24, 0.38) 38%, rgba(5, 12, 24, 0.82) 100%),
+    radial-gradient(56% 50% at 14% 8%, rgba(8, 20, 38, 0.55) 0%, transparent 74%);
 }
 @media (max-width: 700px) {
   .page-photo {
@@ -303,9 +305,9 @@ footer {
   z-index: 1;
   pointer-events: none;
   background:
-    radial-gradient(46% 38% at 18% 4%, rgba(184, 221, 224, 0.5) 0%, transparent 68%),
-    radial-gradient(38% 34% at 84% 2%, rgba(220, 197, 217, 0.42) 0%, transparent 70%),
-    radial-gradient(30% 26% at 52% 0%, rgba(255, 255, 255, 0.85) 0%, transparent 72%);
+    radial-gradient(46% 38% at 18% 4%, rgba(79, 195, 232, 0.16) 0%, transparent 68%),
+    radial-gradient(38% 34% at 84% 2%, rgba(157, 184, 221, 0.12) 0%, transparent 70%),
+    radial-gradient(30% 26% at 52% 0%, rgba(216, 180, 106, 0.1) 0%, transparent 72%);
   filter: blur(0.375rem);
 }
 
@@ -1080,4 +1082,134 @@ footer {
   .card {
     border-radius: var(--radius-md);
   }
+}
+
+/* =========================================================================
+   ЛЕДЯНАЯ ТЕМА: тёмные поверхности общих компонентов.
+   Блок стоит в конце файла и перекрывает светлые фоны выше; страницы
+   астрологии и матрицы дополнительно перекрывают его своими темами.
+   ========================================================================= */
+
+.section--pearl {
+  background: linear-gradient(180deg, rgba(16, 31, 53, 0.5), rgba(10, 21, 38, 0));
+}
+
+.glass {
+  background: linear-gradient(150deg, rgba(16, 31, 53, 0.88), rgba(13, 30, 53, 0.7));
+  border: 1px solid rgba(180, 210, 240, 0.16);
+  box-shadow: 0 1.375rem 3.75rem -2.125rem rgba(1, 8, 20, 0.9);
+}
+
+.pearl-orb {
+  background: radial-gradient(circle at 32% 28%, #dff4ff 0%, #9ed8ee 30%, #3d97bd 62%, #1b5e83 100%);
+  box-shadow:
+    inset -0.5rem -0.75rem 1.625rem rgba(1, 12, 24, 0.5),
+    inset 0.5rem 0.625rem 1.5rem rgba(223, 244, 255, 0.5),
+    0 1.5rem 3.125rem -1.875rem rgba(1, 8, 20, 0.9);
+}
+
+.btn--secondary {
+  background: rgba(16, 31, 53, 0.9);
+  border-color: rgba(140, 184, 208, 0.55);
+  color: var(--ink);
+}
+.btn--secondary:hover:not(:disabled) {
+  border-color: rgba(127, 220, 255, 0.8);
+  background: rgba(22, 46, 74, 0.95);
+  box-shadow: 0 0.875rem 1.875rem -1.5rem rgba(1, 8, 20, 0.9);
+}
+.btn--ghost {
+  color: var(--ink);
+  background: rgba(127, 220, 255, 0.08);
+}
+.btn--ghost:hover:not(:disabled) {
+  background: rgba(127, 220, 255, 0.16);
+}
+
+.chip {
+  background: rgba(16, 31, 53, 0.7);
+}
+.chip--soft {
+  background: rgba(79, 195, 232, 0.14);
+}
+
+.icon-badge {
+  background: linear-gradient(150deg, #14263e, #0e1c30);
+  color: var(--turquoise-deep);
+}
+.icon-badge--gold {
+  background: linear-gradient(150deg, #2a2415, #1d1a0e);
+  color: var(--gold-soft);
+}
+
+.input,
+.textarea,
+.select {
+  background: #0a1728;
+  color: var(--ink);
+  border-color: rgba(120, 150, 185, 0.5);
+}
+
+.radio-card {
+  background: #0e1e33;
+}
+.radio-card:has(input:checked) {
+  background: linear-gradient(160deg, #123049, #0e2338);
+  box-shadow: 0 0.625rem 1.625rem -1.5rem rgba(1, 8, 20, 0.9);
+}
+
+.card {
+  background: linear-gradient(155deg, rgba(18, 35, 58, 0.92), rgba(13, 28, 48, 0.92));
+  box-shadow:
+    0 1px 0 rgba(127, 220, 255, 0.06) inset,
+    0 1.25rem 3rem -1.75rem rgba(1, 8, 20, 0.9);
+}
+.card--lilac {
+  background: linear-gradient(160deg, #17233c 0%, #121b30 100%);
+  border-color: rgba(157, 184, 221, 0.4);
+}
+.card--turquoise {
+  background: linear-gradient(160deg, #0f2537 0%, #0c1e30 100%);
+  border-color: rgba(79, 195, 232, 0.4);
+}
+
+.invite {
+  background: rgba(3, 9, 18, 0.6);
+}
+.invite__card {
+  background: linear-gradient(180deg, #10263e 0%, #0b1c31 100%);
+  box-shadow: 0 2.5rem 5.625rem -2.5rem rgba(1, 8, 20, 0.95);
+}
+.invite__close {
+  background: #0e1e33;
+  color: var(--ink-soft);
+}
+
+.manifesto {
+  background:
+    radial-gradient(120% 120% at 50% 0%, rgba(18, 38, 62, 0.95) 0%, rgba(13, 28, 48, 0.92) 60%,
+      rgba(10, 21, 38, 0.9) 100%);
+  box-shadow: 0 2.5rem 5.625rem -3.75rem rgba(1, 8, 20, 0.95);
+}
+
+.note {
+  background: rgba(216, 180, 106, 0.1);
+  color: var(--gold-soft);
+}
+.note--info {
+  background: rgba(79, 195, 232, 0.1);
+  color: #bfe9fb;
+}
+.note--admin {
+  background: rgba(216, 180, 106, 0.09);
+}
+.note--warn {
+  border-color: rgba(226, 131, 138, 0.4);
+  background: rgba(141, 65, 71, 0.18);
+  color: #f2b8bd;
+}
+
+.skip-link {
+  background: var(--turquoise-deep);
+  color: #06202e;
 }

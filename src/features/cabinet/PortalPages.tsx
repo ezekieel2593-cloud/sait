@@ -87,17 +87,17 @@ export function CabinetPage() {
     window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
   };
   return (
-    <div className="portal-page cabinet-shell">
+    <div className="portal-page matrix-world">
       <div className="container portal-container">
         <p className="portal-kicker">Личное пространство</p>
         <h1 className="portal-heading">Кабинет</h1>
         <p className="portal-intro">
           Ваши профили и расчёты хранятся в localStorage этого браузера. Аккаунт
-          и синхронизация между устройствами пока не подключены.
+          и синхронизация между устройствами пока не подключены. Расчёты
+          разделены по мирам: астрология — Мир I, матрица — Мир II.
         </p>
-        <div className="cabinet-grid">
-          <section className="portal-panel">
-            <h2>Мои люди</h2>
+        <section className="portal-panel">
+          <h2>Мои люди</h2>
             <form className="cabinet-form" onSubmit={addPerson}>
               <label>
                 Имя
@@ -171,41 +171,71 @@ export function CabinetPage() {
               )}
             </div>
           </section>
-          <section className="portal-panel">
-            <h2>Мои расчёты</h2>
-            <p className="portal-muted">
-              Сохраняйте результаты из калькуляторов кнопкой «Сохранить в
-              кабинете».
-            </p>
-            <div className="people-list">
-              {store.reports.map((report) => (
-                <article className="person-row" key={report.id}>
-                  <div>
-                    <strong>{report.title}</strong>
-                    <small>
-                      {report.birthday} ·{" "}
-                      {new Date(report.createdAt).toLocaleDateString("ru-RU")}
-                    </small>
-                  </div>
-                  <div className="person-actions">
-                    <a href={report.href}>Открыть</a>
-                    <button onClick={() => downloadGuide(report.title)}>
-                      Открыть макет PDF
-                    </button>
-                    <button onClick={() => removeReport(report.id)}>
-                      Удалить
-                    </button>
-                  </div>
-                </article>
-              ))}
-              {!store.reports.length && (
-                <p className="portal-muted">
-                  Здесь появятся сохранённые натальные карты и матрицы.
-                </p>
-              )}
-            </div>
-          </section>
-        </div>
+          {(
+            [
+              {
+                key: "astrology",
+                panel: "world-panel--astro",
+                kicker: "Мир I · небесная механика",
+                title: "Кабинет астрологии",
+                kind: "astrology" as const,
+                href: "astrology.html",
+                cta: "Рассчитать карту",
+                empty: "Сохранённые натальные карты появятся здесь.",
+              },
+              {
+                key: "matrix",
+                panel: "world-panel--matrix",
+                kicker: "Мир II · геометрия пути",
+                title: "Кабинет матрицы",
+                kind: "matrix" as const,
+                href: "matrix.html",
+                cta: "Рассчитать матрицу",
+                empty: "Сохранённые матрицы появятся здесь.",
+              },
+            ]
+          ).map((world) => {
+            const reports = store.reports.filter(
+              (report) => report.kind === world.kind,
+            );
+            return (
+              <section
+                key={world.key}
+                className={`portal-panel ${world.panel}`}
+              >
+                <p className="portal-kicker">{world.kicker}</p>
+                <h2>{world.title}</h2>
+                <div className="people-list">
+                  {reports.map((report) => (
+                    <article className="person-row" key={report.id}>
+                      <div>
+                        <strong>{report.title}</strong>
+                        <small>
+                          {report.birthday} ·{" "}
+                          {new Date(report.createdAt).toLocaleDateString("ru-RU")}
+                        </small>
+                      </div>
+                      <div className="person-actions">
+                        <a href={report.href}>Открыть</a>
+                        <button onClick={() => downloadGuide(report.title)}>
+                          Открыть макет PDF
+                        </button>
+                        <button onClick={() => removeReport(report.id)}>
+                          Удалить
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                  {!reports.length && (
+                    <p className="portal-muted">{world.empty}</p>
+                  )}
+                </div>
+                <a className="portal-button" href={world.href}>
+                  {world.cta}
+                </a>
+              </section>
+            );
+          })}
         <section className="portal-panel cabinet-products">
           <h2>Витрина PDF-разборов</h2>
           <div className="product-grid">
