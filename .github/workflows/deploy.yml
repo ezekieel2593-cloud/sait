@@ -168,6 +168,19 @@ jobs:
           check_code=$(curl -sS -o /tmp/check.html -w "%{http_code}" --max-time 30 "$SITE_URL/check.php")
           echo "check.php: HTTP $check_code"
 
+      # Если публикация не подтвердилась — показываем, куда реально попала
+      # загрузка: в логе будет видна структура каталогов FTP-входа.
+      - name: Диагностика каталогов FTP
+        if: failure()
+        env:
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USER: ${{ secrets.FTP_USER }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_DIR: ${{ secrets.FTP_DIR || 'public_html' }}
+          FTP_PORT: ${{ secrets.FTP_PORT || '21' }}
+          FTP_SECURE: ${{ secrets.FTP_SECURE || '0' }}
+        run: npx tsx scripts/ftp-inspect.ts
+
       - name: Итог
         if: always()
         run: |
