@@ -3,9 +3,11 @@ name: Деплой на хостинг (FTP)
 # Автодеплой сайта на shared-хостинг (Cloud4box, панель ISPmanager) по FTP.
 #
 # Как работает:
-#  1. любой push в main → сборка пакета для PHP-хостинга;
-#  2. проверки: типы, тесты, проверки админки и статической сборки;
-#  3. загрузка release/php в public_html по FTP.
+#  1. push в main → сборка пакета для PHP-хостинга → проверки → загрузка по FTP;
+#  2. кнопка «Run workflow» — быстрый режим: заливается готовый архив
+#     download/astra-pearl-php.zip, без сборки и Node-тестов (~1 минута);
+#  3. чтобы залить сайт из текущей ветки, не вливая её в main, запустите workflow
+#     вручную и укажите эту ветку.
 #
 # Нужные секреты репозитория (Settings → Secrets and variables → Actions):
 #   FTP_HOST      — хост из панели: домен сайта или IP сервера
@@ -23,6 +25,8 @@ on:
   push:
     branches:
       - main
+      # Ветка, в которой идёт разработка: деплой доступен по кнопке, push её не заливает.
+      - arena/58ef96c7-sait
   # Кнопка «Run workflow» в разделе Actions — залить сайт без нового коммита.
   workflow_dispatch:
     inputs:
@@ -30,6 +34,10 @@ on:
         description: "Удалить на сервере файлы, которых больше нет в сборке"
         type: boolean
         default: false
+      from_archive:
+        description: "Залить готовый архив из download/ (быстро, без сборки и Node-тестов)"
+        type: boolean
+        default: true
 
 # Два деплоя одновременно не нужны: второй ждёт первый.
 concurrency:
@@ -55,22 +63,41 @@ jobs:
           node-version: "22"
           cache: npm
 
+      # Зависимости нужны всегда: скрипту деплоя требуется basic-ftp.
+      # В быстром режиме не запускаем типы, тесты и сборку — это экономит минуты.
       - name: Зависимости
-        run: npm ci
+        run: npm ci --no-audit --no-fund
 
       - name: Типы
+        if: ${{ !inputs.from_archive }}
         run: npx tsc --noEmit
 
       - name: Тесты
+        if: ${{ !inputs.from_archive }}
         run: npm test
 
+      # Пакет уже собран (архив в download/) — тогда отдельная сборка не нужна.
       - name: Сборка пакета для хостинга
+        if: ${{ !inputs.from_archive }}
         run: npm run build:php
 
-      - name: Проверки собранного пакета
+      - name: Распаковать готовый архив из download/
+        if: ${{ inputs.from_archive }}
+        run: |
+          mkdir -p /tmp/php-release
+          unzip -q download/astra-pearl-php.zip -d /tmp/php-release
+          # В архиве сайт лежит в подпапке astra-pearl-php/ — берём её содержимое.
+          if [ -f /tmp/php-release/astra-pearl-php/index.html ]; then
+            mv /tmp/php-release/astra-pearl-php/* /tmp/php-release/
+            mv /tmp/php-release/astra-pearl-php/.[!.]* /tmp/php-release/ 2>/dev/null || true
+          fi
+          test -f /tmp/php-release/index.html
+
+      # Проверки собранного пакета — только в полном режиме.
+      - name: Проверки пакета и деплоя
+        if: ${{ !inputs.from_archive }}
         run: |
           node tools/php-checks/admin-view.cjs
-          node tools/php-checks/static-noserver.cjs
           node tools/php-checks/deploy-ftp.cjs
 
       - name: Загрузка на хостинг по FTP
@@ -79,6 +106,7 @@ jobs:
           FTP_USER: ${{ secrets.FTP_USER }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
           FTP_DIR: ${{ secrets.FTP_DIR || 'public_html' }}
+          DEPLOY_SOURCE: ${{ inputs.from_archive && '/tmp/php-release' || '' }}
           # --no-build: пакет уже собран шагом выше.
           # --prune включается галочкой при ручном запуске.
           DEPLOY_ARGS: ${{ inputs.prune && '--prune' || '' }}

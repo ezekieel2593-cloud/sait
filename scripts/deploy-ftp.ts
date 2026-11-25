@@ -39,7 +39,11 @@ import path from "node:path";
 import { Client } from "basic-ftp";
 
 const root = process.cwd();
-const releaseDir = path.join(root, "release", "php");
+/**
+ * Что загружаем: каталог сборки. По умолчанию release/php;
+ * при деплое без сборки с сервера GitHub берётся распакованный архив (см. workflow).
+ */
+const releaseDir = process.env.DEPLOY_SOURCE || path.join(root, "release", "php");
 const log = (message: string) => console.log(`· ${message}`);
 const warn = (message: string) => console.warn(`! ${message}`);
 

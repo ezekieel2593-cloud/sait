@@ -13,7 +13,8 @@ const path = require("path");
 const repoRoot = path.resolve(__dirname, "../..");
 const { JSDOM } = require(path.join(repoRoot, "node_modules/jsdom"));
 
-const dir = path.join(repoRoot, "release/static");
+/** Каталог сборки: по умолчанию release/static, можно переопределить (PHPCHECK_DIR). */
+const dir = process.env.PHPCHECK_DIR || path.join(repoRoot, "release/static");
 const page = path.join(dir, "matrix.html");
 
 let pass = 0;

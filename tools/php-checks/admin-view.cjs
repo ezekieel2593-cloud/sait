@@ -15,7 +15,8 @@ const path = require("path");
 const repoRoot = path.resolve(__dirname, "../..");
 const { JSDOM, VirtualConsole } = require(path.join(repoRoot, "node_modules/jsdom"));
 
-const dir = path.join(repoRoot, "release/php");
+/** Каталог сборки: по умолчанию release/php, можно переопределить (PHPCHECK_DIR). */
+const dir = process.env.PHPCHECK_DIR || path.join(repoRoot, "release/php");
 
 let pass = 0;
 let fail = 0;
