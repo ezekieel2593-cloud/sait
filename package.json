@@ -4,11 +4,11 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=22.5"
+    "node": ">=22.12.0"
   },
   "scripts": {
     "dev": "next dev -p 3000",
-    "build": "next build",
+    "build": "tsx scripts/build-web.ts",
     "start": "next start -p 3000",
     "lint": "next lint",
     "db:migrate": "tsx scripts/migrate.ts",
@@ -20,7 +20,8 @@
     "test:watch": "vitest",
     "build:static": "tsx scripts/build-static.ts",
     "build:php": "tsx scripts/build-php.ts",
-    "deploy:ftp": "tsx scripts/deploy-ftp.ts"
+    "deploy:ftp": "tsx scripts/deploy-ftp.ts",
+    "build:dist": "tsx scripts/build-web.ts"
   },
   "dependencies": {
     "@fontsource-variable/manrope": "^5.3.0",
@@ -47,6 +48,7 @@
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
+    "vite": "^8.3.8",
     "vitest": "^5.0.5"
   }
 }

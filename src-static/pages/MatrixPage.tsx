@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { computeMatrix, energyLabel, type MatrixChart } from "@/lib/matrix/engine";
+import {
+  computeMatrix,
+  energyLabel,
+  type MatrixChart,
+} from "@/features/matrix";
 import { buildMatrixInterpretation } from "@/lib/interpretation/matrix";
 import { buildMatrixGuides, guideToText } from "@/lib/interpretation/guides";
 import { buildSimpleGuide } from "@/lib/interpretation/simple";
@@ -10,11 +14,15 @@ import { LeadForm } from "../components/LeadForm";
 import { matrixDetails } from "../details";
 import { AdminNote } from "../components/AdminNote";
 import { ChakraResult } from "../components/ChakraResult";
-import { EnergyGuideCard, LockedGuideCard } from "../components/EnergyGuideCard";
+import {
+  EnergyGuideCard,
+  LockedGuideCard,
+} from "../components/EnergyGuideCard";
 import { GuidePdfPanel } from "../components/GuidePdfPanel";
 import { CalendarIcon } from "../components/icons-extra";
 import { ArrowLeftIcon } from "../components/icons";
 import { ReportSections } from "../components/ReportSections";
+import { saveReport } from "@/features/cabinet/storage";
 
 function today(): string {
   return new Date().toISOString().slice(0, 10);
@@ -27,14 +35,20 @@ export function MatrixPage() {
   const config = getConfig();
   const [date, setDate] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<{ chart: MatrixChart; date: string } | null>(null);
+  const [result, setResult] = useState<{
+    chart: MatrixChart;
+    date: string;
+  } | null>(null);
   /**
    * Параметры «гайд по человеку» (?guide=1&name=Имя) считываем до первого
    * обновления адреса: дальше в адресе остаётся только дата рождения.
    */
   const [guideRequest] = useState(() => {
     const params = new URLSearchParams(window.location.search);
-    return { auto: params.get("guide") === "1", name: params.get("name") ?? "" };
+    return {
+      auto: params.get("guide") === "1",
+      name: params.get("name") ?? "",
+    };
   });
 
   // Дата из ссылки (?d=1992-06-23) — чтобы результатом можно было поделиться.
@@ -55,7 +69,10 @@ export function MatrixPage() {
     }
     const year = Number(value.slice(0, 4));
     const parsed = new Date(`${value}T00:00:00Z`);
-    if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== value) {
+    if (
+      Number.isNaN(parsed.getTime()) ||
+      parsed.toISOString().slice(0, 10) !== value
+    ) {
       setError("Такой даты не существует");
       return;
     }
@@ -86,16 +103,42 @@ export function MatrixPage() {
     return (
       <div className="container py-6 sm:py-10">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <button type="button" className="btn btn--secondary btn--sm" onClick={backToForm}>
+          <button
+            type="button"
+            className="btn btn--secondary btn--sm"
+            onClick={backToForm}
+          >
             <ArrowLeftIcon className="h-4 w-4" />
             Назад к форме
           </button>
-          <p className="text-[0.82rem] text-[var(--ink-soft)]">
-            Дата рождения: <span className="text-[var(--ocean)]">{result.date}</span> ·{" "}
-            <button type="button" className="underline decoration-dotted" onClick={backToForm}>
-              изменить
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="text-[0.82rem] text-[var(--ink-soft)]">
+              Дата рождения:{" "}
+              <span className="text-[var(--ocean)]">{result.date}</span> ·{" "}
+              <button
+                type="button"
+                className="underline decoration-dotted"
+                onClick={backToForm}
+              >
+                изменить
+              </button>
+            </p>
+            <button
+              type="button"
+              className="btn btn--secondary btn--sm"
+              onClick={() => {
+                saveReport({
+                  title: "Матрица судьбы",
+                  kind: "matrix",
+                  birthday: result.date,
+                  href: window.location.href,
+                });
+                window.location.assign("cabinet.html");
+              }}
+            >
+              Сохранить в кабинете
             </button>
-          </p>
+          </div>
         </div>
 
         <div className="grid gap-4">
@@ -103,15 +146,25 @@ export function MatrixPage() {
             <p className="eyebrow">Матрица судьбы</p>
             <h1 className="h-display mt-2">Ваша матрица судьбы</h1>
             <p className="lead mt-3 max-w-3xl">
-              Ниже — полная схема по вашей дате рождения и расшифровка каждой энергии: личный квадрат, родовые
-              программы, деньги, отношения, чакры и линия жизни. Всё читается по порядку, а схему можно открыть крупно.
+              Ниже — полная схема по вашей дате рождения и расшифровка каждой
+              энергии: личный квадрат, родовые программы, деньги, отношения,
+              чакры и линия жизни. Всё читается по порядку, а схему можно
+              открыть крупно.
             </p>
           </div>
-          <MatrixResult result={result} guideRequest={guideRequest} onBack={backToForm} />
+          <MatrixResult
+            result={result}
+            guideRequest={guideRequest}
+            onBack={backToForm}
+          />
         </div>
 
         <div className="mt-6 flex justify-center">
-          <button type="button" className="btn btn--secondary" onClick={backToForm}>
+          <button
+            type="button"
+            className="btn btn--secondary"
+            onClick={backToForm}
+          >
             <ArrowLeftIcon className="h-4 w-4" />
             Назад к форме — посчитать другую матрицу
           </button>
@@ -127,9 +180,10 @@ export function MatrixPage() {
           <p className="eyebrow">Матрица судьбы</p>
           <h1 className="h-display mt-3">Матрица судьбы по 22 энергиям</h1>
           <p className="lead mt-4">
-            Дата рождения раскладывается на 22 энергии: личный квадрат, родовые программы, каналы денег и отношений.
-            Расчёт арифметический и детерминированный — без случайных чисел. Каждая энергия у вас своя — и читается
-            она по-своему.
+            Дата рождения раскладывается на 22 энергии: личный квадрат, родовые
+            программы, каналы денег и отношений. Расчёт арифметический и
+            детерминированный — без случайных чисел. Каждая энергия у вас своя —
+            и читается она по-своему.
           </p>
 
           <form
@@ -158,30 +212,42 @@ export function MatrixPage() {
                 />
               </div>
               {error ? <p className="field__error">{error}</p> : null}
-              <p className="field__hint">Время и место рождения для Матрицы судьбы не нужны.</p>
+              <p className="field__hint">
+                Время и место рождения для Матрицы судьбы не нужны.
+              </p>
             </div>
-            <button type="submit" className="btn btn--primary btn--lg btn--block">
+            <button
+              type="submit"
+              className="btn btn--primary btn--lg btn--block"
+            >
               Рассчитать матрицу
             </button>
           </form>
 
           <p className="mt-4 text-[0.8rem] leading-relaxed text-[var(--ink-soft)]">
-            Методика: школа Ладини, правило редукции — сложение цифр до диапазона 1–22, версия алгоритма
-            <code>matrix-22-v1</code>. Трактовки энергий — эзотерическая традиция, а не научно доказанные утверждения.
+            Методика: школа Ладини, правило редукции — сложение цифр до
+            диапазона 1–22, версия алгоритма
+            <code>matrix-22-v1</code>. Трактовки энергий — эзотерическая
+            традиция, а не научно доказанные утверждения.
           </p>
         </div>
 
         <div className="grid gap-4">
           <div className="card p-4 sm:p-5">
-            <p className="text-[0.72rem] uppercase tracking-[0.12em] text-[var(--ink-faint)]">Что будет в разборе</p>
+            <p className="text-[0.72rem] uppercase tracking-[0.12em] text-[var(--ink-faint)]">
+              Что будет в разборе
+            </p>
             <ul className="mt-2 grid gap-1.5 text-[0.86rem] leading-snug text-[var(--ink-soft)]">
-              <li>· Большая схема: личный и родовой квадраты, центр, каналы, линия жизни.</li>
+              <li>
+                · Большая схема: личный и родовой квадраты, центр, каналы, линия
+                жизни.
+              </li>
               <li>· Расшифровка каждой энергии простыми словами.</li>
               <li>· Чакры по вашей дате и гайды по 22 энергиям.</li>
             </ul>
             <p className="mt-3 text-[0.8rem] leading-relaxed text-[var(--ink-faint)]">
-              После расчёта форма убирается, а разбор открывается на всю ширину страницы — вернуться к форме можно
-              кнопкой «Назад».
+              После расчёта форма убирается, а разбор открывается на всю ширину
+              страницы — вернуться к форме можно кнопкой «Назад».
             </p>
           </div>
         </div>
@@ -225,13 +291,21 @@ function MatrixResult({
   return (
     <div className="grid gap-4">
       <section id="r-card" className="card gold-frame scroll-mt-28 p-4 sm:p-6">
-        <p className="text-[0.76rem] uppercase tracking-[0.14em] text-[var(--turquoise-deep)]">Результат</p>
+        <p className="text-[0.76rem] uppercase tracking-[0.14em] text-[var(--turquoise-deep)]">
+          Результат
+        </p>
         <h2 className="mt-2 font-[family-name:var(--font-display)] text-[1.5rem] leading-snug text-[var(--ocean)]">
           {interpretation.headline}
         </h2>
-        <p className="mt-2 text-[0.92rem] leading-relaxed text-[var(--ink)]">{interpretation.lead}</p>
+        <p className="mt-2 text-[0.92rem] leading-relaxed text-[var(--ink)]">
+          {interpretation.lead}
+        </p>
         {onBack ? (
-          <button type="button" className="btn btn--secondary btn--sm mt-3" onClick={onBack}>
+          <button
+            type="button"
+            className="btn btn--secondary btn--sm mt-3"
+            onClick={onBack}
+          >
             <ArrowLeftIcon className="h-4 w-4" />
             Изменить дату рождения
           </button>
@@ -239,23 +313,34 @@ function MatrixResult({
 
         {/* Сначала — большая схема, потом всё описание под ней. */}
         <div className="mt-4 grid gap-4">
-          <div id="r-scheme" className="mx-auto w-full max-w-[54rem] scroll-mt-28">
+          <div
+            id="r-scheme"
+            className="mx-auto w-full max-w-[54rem] scroll-mt-28"
+          >
             <MatrixFigure
-            chart={chart}
-            caption={
-              <>
-                Полная схема: личный и родовой квадраты, центр, каналы денег и отношений, талант и опора. По кругу —
-                линия жизни: возраст от 0 до 80 лет и энергия каждого периода. Номера 1–10 внутри восьмиугольника
-                расшифрованы внизу схемы. Схему можно открыть крупно — кнопка под ней. Что означает каждая энергия,
-                разобрано в{" "}
-                <a href="guide.html" className="underline decoration-dotted underline-offset-2">
-                  гайде по 22 энергиям
-                </a>
-                , а темы чакр — на странице{" "}
-                <a href="chakras.html" className="underline decoration-dotted underline-offset-2">
-                  «Чакры»
-                </a>
-                .
+              chart={chart}
+              caption={
+                <>
+                  Полная схема: личный и родовой квадраты, центр, каналы денег и
+                  отношений, талант и опора. По кругу — линия жизни: возраст от
+                  0 до 80 лет и энергия каждого периода. Номера 1–10 внутри
+                  восьмиугольника расшифрованы внизу схемы. Схему можно открыть
+                  крупно — кнопка под ней. Что означает каждая энергия,
+                  разобрано в{" "}
+                  <a
+                    href="guide.html"
+                    className="underline decoration-dotted underline-offset-2"
+                  >
+                    гайде по 22 энергиям
+                  </a>
+                  , а темы чакр — на странице{" "}
+                  <a
+                    href="chakras.html"
+                    className="underline decoration-dotted underline-offset-2"
+                  >
+                    «Чакры»
+                  </a>
+                  .
                 </>
               }
             />
@@ -263,8 +348,16 @@ function MatrixResult({
 
           <div className="grid gap-3">
             <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-              <Metric label="Центр" value={`${chart.byKey.center.arcanum}`} note="зона комфорта" />
-              <Metric label="Сила рода" value={`${chart.byKey["family-force"].arcanum}`} note="опора семьи" />
+              <Metric
+                label="Центр"
+                value={`${chart.byKey.center.arcanum}`}
+                note="зона комфорта"
+              />
+              <Metric
+                label="Сила рода"
+                value={`${chart.byKey["family-force"].arcanum}`}
+                note="опора семьи"
+              />
               <Metric
                 label="Деньги"
                 value={`${chart.byKey["money-entry"].arcanum} / ${chart.byKey["money-middle"].arcanum}`}
@@ -277,45 +370,81 @@ function MatrixResult({
               />
             </div>
             <div className="flex flex-wrap gap-2">
-              <EnergyChip value={chart.byKey["money-entry"].arcanum} label="вход в денежный канал" />
-              <EnergyChip value={chart.byKey["money-middle"].arcanum} label="середина денег" />
-              <EnergyChip value={chart.byKey["love-entry"].arcanum} label="вход в канал любви" />
-              <EnergyChip value={chart.byKey["love-middle"].arcanum} label="середина отношений" />
-              <EnergyChip value={chart.byKey.shared.arcanum} label="общая точка каналов" />
-              <EnergyChip value={chart.yearEnergy.arcanum} label={`энергия ${chart.yearEnergy.year} года`} />
+              <EnergyChip
+                value={chart.byKey["money-entry"].arcanum}
+                label="вход в денежный канал"
+              />
+              <EnergyChip
+                value={chart.byKey["money-middle"].arcanum}
+                label="середина денег"
+              />
+              <EnergyChip
+                value={chart.byKey["love-entry"].arcanum}
+                label="вход в канал любви"
+              />
+              <EnergyChip
+                value={chart.byKey["love-middle"].arcanum}
+                label="середина отношений"
+              />
+              <EnergyChip
+                value={chart.byKey.shared.arcanum}
+                label="общая точка каналов"
+              />
+              <EnergyChip
+                value={chart.yearEnergy.arcanum}
+                label={`энергия ${chart.yearEnergy.year} года`}
+              />
             </div>
             <div className="grid gap-2 lg:grid-cols-2">
-            <details className="rounded-[0.75rem] border border-[var(--line)] bg-white p-3 text-[0.84rem]">
-              <summary className="cursor-pointer text-[var(--turquoise-deep)]">Линия жизни: возраст и энергия периода</summary>
-              <ul className="mt-2 grid gap-1 sm:grid-cols-2">
-                {chart.lifeLine
-                  .filter((point) => point.kind !== "quarter")
-                  .map((point) => (
+              <details className="rounded-[0.75rem] border border-[var(--line)] bg-white p-3 text-[0.84rem]">
+                <summary className="cursor-pointer text-[var(--turquoise-deep)]">
+                  Линия жизни: возраст и энергия периода
+                </summary>
+                <ul className="mt-2 grid gap-1 sm:grid-cols-2">
+                  {chart.lifeLine
+                    .filter((point) => point.kind !== "quarter")
+                    .map((point) => (
+                      <li
+                        key={`life-${point.age}`}
+                        className="flex items-baseline justify-between gap-2 border-b border-[var(--line)] py-1"
+                      >
+                        <span className="text-[var(--ink-soft)]">
+                          {point.age} лет
+                        </span>
+                        <span className="text-[var(--ocean)]">
+                          {energyLabel(point.arcanum)}
+                        </span>
+                      </li>
+                    ))}
+                </ul>
+                <p className="mt-2 text-[0.74rem] leading-relaxed text-[var(--ink-faint)]">
+                  Промежуточные точки 2,5 и 7,5 года — суммы угла и середины
+                  десятилетия; они подписаны на схеме.
+                </p>
+              </details>
+              <details className="rounded-[0.75rem] border border-[var(--line)] bg-white p-3 text-[0.84rem]">
+                <summary className="cursor-pointer text-[var(--turquoise-deep)]">
+                  Все расчётные позиции и формулы
+                </summary>
+                <ul className="mt-2 grid gap-1">
+                  {[...chart.points, chart.yearEnergy].map((point) => (
                     <li
-                      key={`life-${point.age}`}
-                      className="flex items-baseline justify-between gap-2 border-b border-[var(--line)] py-1"
+                      key={point.key}
+                      className="flex flex-wrap items-baseline justify-between gap-2 border-b border-[var(--line)] py-1 last:border-0"
                     >
-                      <span className="text-[var(--ink-soft)]">{point.age} лет</span>
-                      <span className="text-[var(--ocean)]">{energyLabel(point.arcanum)}</span>
+                      <span className="text-[var(--ink-soft)]">
+                        {point.title}
+                      </span>
+                      <span className="text-[var(--ocean)]">
+                        {point.arcanumTitle}
+                      </span>
+                      <span className="w-full text-[0.72rem] text-[var(--ink-faint)] sm:w-auto">
+                        {point.formula}
+                      </span>
                     </li>
                   ))}
-              </ul>
-              <p className="mt-2 text-[0.74rem] leading-relaxed text-[var(--ink-faint)]">
-                Промежуточные точки 2,5 и 7,5 года — суммы угла и середины десятилетия; они подписаны на схеме.
-              </p>
-            </details>
-            <details className="rounded-[0.75rem] border border-[var(--line)] bg-white p-3 text-[0.84rem]">
-              <summary className="cursor-pointer text-[var(--turquoise-deep)]">Все расчётные позиции и формулы</summary>
-              <ul className="mt-2 grid gap-1">
-                {[...chart.points, chart.yearEnergy].map((point) => (
-                  <li key={point.key} className="flex flex-wrap items-baseline justify-between gap-2 border-b border-[var(--line)] py-1 last:border-0">
-                    <span className="text-[var(--ink-soft)]">{point.title}</span>
-                    <span className="text-[var(--ocean)]">{point.arcanumTitle}</span>
-                    <span className="w-full text-[0.72rem] text-[var(--ink-faint)] sm:w-auto">{point.formula}</span>
-                  </li>
-                ))}
-              </ul>
-            </details>
+                </ul>
+              </details>
             </div>
           </div>
         </div>
@@ -327,7 +456,11 @@ function MatrixResult({
         <ReportSections
           sections={free}
           locked={locked}
-          heading={admin ? "Полная расшифровка по разделам" : "Ваша расшифровка по разделам"}
+          heading={
+            admin
+              ? "Полная расшифровка по разделам"
+              : "Ваша расшифровка по разделам"
+          }
           lockedHeading="Что скрыто в вашей схеме"
           lockedIntro={`В вашей матрице посчитаны все энергии — открыто пока ${free.length}. За остальными ${locked.length} стоят ответы на самые частые вопросы: почему деньги приходят рывками, откуда берётся один и тот же сценарий в отношениях, что вы повторяете за родом и куда вам действительно стоит идти в этом году. Каждая энергия у вас уже есть — остаётся прочитать её про вас.`}
         />
@@ -338,13 +471,16 @@ function MatrixResult({
       <section id="r-chakras" className="card scroll-mt-28 p-4 sm:p-6">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="h-section">Чакры по вашей дате</h2>
-          <a href="chakras.html" className="text-[0.82rem] text-[var(--turquoise-deep)] underline decoration-dotted underline-offset-2">
+          <a
+            href="chakras.html"
+            className="text-[0.82rem] text-[var(--turquoise-deep)] underline decoration-dotted underline-offset-2"
+          >
             Что такое чакры
           </a>
         </div>
         <p className="mt-2 text-[0.9rem] leading-relaxed text-[var(--ink-soft)]">
-          Каждая чакра — это энергия из вашей схемы: видно, какая сила стоит за опорой, желаниями, волей, сердцем,
-          голосом, ясностью и смыслом.
+          Каждая чакра — это энергия из вашей схемы: видно, какая сила стоит за
+          опорой, желаниями, волей, сердцем, голосом, ясностью и смыслом.
         </p>
         <div className="mt-3">
           <ChakraResult chart={chart} />
@@ -376,7 +512,8 @@ function MatrixResult({
 
 /** Сколько гайдов открыто без заявки. */
 function guideFreeCount(config: ReturnType<typeof getConfig>): number {
-  const value = (config.freeResult as { matrixGuideCount?: number }).matrixGuideCount;
+  const value = (config.freeResult as { matrixGuideCount?: number })
+    .matrixGuideCount;
   return typeof value === "number" && value >= 0 ? value : 2;
 }
 
@@ -418,18 +555,24 @@ function GuidesSection({
 
   return (
     <section className="grid scroll-mt-28 gap-3" id="r-guides">
-      <h2 className="h-section">{admin ? "Гайды по энергиям" : "Гайды: что делать с вашими энергиями"}</h2>
+      <h2 className="h-section">
+        {admin ? "Гайды по энергиям" : "Гайды: что делать с вашими энергиями"}
+      </h2>
       <p className="max-w-[62ch] text-[0.94rem] leading-relaxed text-[var(--ink)]">
-        У каждой энергии есть практическая часть: как она выглядит в обычной жизни, что делать по шагам,
-        практика на неделю и признак того, что энергия работает в плюсе. Делать всё сразу не нужно —
-        выберите энергию, которая сейчас отзывается сильнее.
+        У каждой энергии есть практическая часть: как она выглядит в обычной
+        жизни, что делать по шагам, практика на неделю и признак того, что
+        энергия работает в плюсе. Делать всё сразу не нужно — выберите энергию,
+        которая сейчас отзывается сильнее.
       </p>
 
       {admin ? (
         <GuidePdfPanel
           chart={chart}
           guides={guides}
-          simple={buildSimpleGuide(chart, { freeCount: 999, includePremium: true })}
+          simple={buildSimpleGuide(chart, {
+            freeCount: 999,
+            includePremium: true,
+          })}
           birthDate={date}
           defaultName={name}
           auto={autoPdf}
@@ -457,7 +600,11 @@ function GuidesSection({
             />
           ) : (
             <div className="flex flex-wrap items-center gap-2">
-              <button type="button" className="btn btn--primary btn--sm" onClick={() => setAskGuide(true)}>
+              <button
+                type="button"
+                className="btn btn--primary btn--sm"
+                onClick={() => setAskGuide(true)}
+              >
                 Получить гайд
               </button>
               <button
@@ -512,11 +659,23 @@ function EnergyChip({ value, label }: { value: number; label: string }) {
   );
 }
 
-function Metric({ label, value, note }: { label: string; value: string; note: string }) {
+function Metric({
+  label,
+  value,
+  note,
+}: {
+  label: string;
+  value: string;
+  note: string;
+}) {
   return (
     <div className="rounded-[0.75rem] border border-[var(--line)] bg-white p-3">
-      <p className="text-[0.7rem] uppercase tracking-[0.1em] text-[var(--ink-faint)]">{label}</p>
-      <p className="mt-0.5 font-[family-name:var(--font-display)] text-[1.5rem] leading-none text-[var(--ocean)]">{value}</p>
+      <p className="text-[0.7rem] uppercase tracking-[0.1em] text-[var(--ink-faint)]">
+        {label}
+      </p>
+      <p className="mt-0.5 font-[family-name:var(--font-display)] text-[1.5rem] leading-none text-[var(--ocean)]">
+        {value}
+      </p>
       <p className="mt-1 text-[0.76rem] text-[var(--ink-soft)]">{note}</p>
     </div>
   );

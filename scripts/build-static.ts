@@ -17,9 +17,14 @@ import { DEFAULT_CONFIG } from "../src-static/config.ts";
 
 const root = process.cwd();
 const releaseDir = path.join(root, "release");
-const outName = (process.env.STATIC_OUT || "static").replace(/[^a-z0-9-]/gi, "");
+const outName = (process.env.STATIC_OUT || "static").replace(
+  /[^a-z0-9-]/gi,
+  "",
+);
 const out = path.join(releaseDir, outName);
-const version = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8")).version as string;
+const version = JSON.parse(
+  fs.readFileSync(path.join(root, "package.json"), "utf8"),
+).version as string;
 const log = (message: string) => console.log(`· ${message}`);
 
 /**
@@ -34,54 +39,70 @@ fs.mkdirSync(out, { recursive: true });
 
 /* ------------------------------- JS-бандл ------------------------------- */
 
-log("сборка JS (esbuild)");
+if (process.env.VITE_WEB_BUILD === "1") {
+  log("Vite will compile React modules and split route chunks");
+} else {
+  log("сборка JS (esbuild)");
 
-const aliasShim: esbuild.Plugin = {
-  name: "browser-shims",
-  setup(build) {
-    // В браузере нет node:sqlite — подменяем слой БД и чтение базы знаний.
-    const rules: { filter: RegExp; shim: string }[] = [
-      { filter: /knowledge[\\/]queries(\.ts)?$/, shim: "src-static/shims/knowledge.ts" },
-      { filter: /(^|\/)lib[\\/]db(\.ts)?$/, shim: "src-static/shims/db.ts" },
-      { filter: /^(\.\.?\/)+db(\.ts)?$/, shim: "src-static/shims/db.ts" },
-    ];
+  const aliasShim: esbuild.Plugin = {
+    name: "browser-shims",
+    setup(build) {
+      // В браузере нет node:sqlite — подменяем слой БД и чтение базы знаний.
+      const rules: { filter: RegExp; shim: string }[] = [
+        {
+          filter: /knowledge[\\/]queries(\.ts)?$/,
+          shim: "src-static/shims/knowledge.ts",
+        },
+        { filter: /(^|\/)lib[\\/]db(\.ts)?$/, shim: "src-static/shims/db.ts" },
+        { filter: /^(\.\.?\/)+db(\.ts)?$/, shim: "src-static/shims/db.ts" },
+      ];
 
-    build.onResolve({ filter: /.*/ }, (args) => {
-      for (const rule of rules) {
-        if (rule.filter.test(args.path)) return { path: path.join(root, rule.shim) };
-      }
-      return null;
-    });
+      build.onResolve({ filter: /.*/ }, (args) => {
+        for (const rule of rules) {
+          if (rule.filter.test(args.path))
+            return { path: path.join(root, rule.shim) };
+        }
+        return null;
+      });
+    },
+  };
 
-  },
-};
+  await esbuild.build({
+    entryPoints: [path.join(root, "src-static", "main.tsx")],
+    bundle: true,
+    minify: true,
+    sourcemap: false,
+    target: ["es2022"],
+    format: "iife",
+    jsx: "automatic",
+    outfile: path.join(out, "app.js"),
+    define: { "process.env.NODE_ENV": '"production"' },
+    plugins: [aliasShim],
+    loader: { ".woff2": "file", ".woff": "file" },
+    alias: { "@": path.join(root, "src") },
+    logLevel: "warning",
+  });
 
-await esbuild.build({
-  entryPoints: [path.join(root, "src-static", "main.tsx")],
-  bundle: true,
-  minify: true,
-  sourcemap: false,
-  target: ["es2022"],
-  format: "iife",
-  jsx: "automatic",
-  outfile: path.join(out, "app.js"),
-  define: { "process.env.NODE_ENV": '"production"' },
-  plugins: [aliasShim],
-  loader: { ".woff2": "file", ".woff": "file" },
-  alias: { "@": path.join(root, "src") },
-  logLevel: "warning",
-});
-
-const bundleSize = (fs.statSync(path.join(out, "app.js")).size / 1024).toFixed(0);
-log(`app.js: ${bundleSize} КБ`);
+  const bundleSize = (
+    fs.statSync(path.join(out, "app.js")).size / 1024
+  ).toFixed(0);
+  log(`app.js: ${bundleSize} КБ`);
+}
 
 /* --------------------------------- CSS --------------------------------- */
 
 log("сборка CSS (tailwind)");
 execFileSync(
   "npx",
-  ["@tailwindcss/cli", "-i", "src-static/static.css", "-o", path.join(out, "styles.css"), "--minify"],
-  { cwd: root, stdio: "inherit" }
+  [
+    "@tailwindcss/cli",
+    "-i",
+    "src-static/static.css",
+    "-o",
+    path.join(out, "styles.css"),
+    "--minify",
+  ],
+  { cwd: root, stdio: "inherit" },
 );
 
 /* -------------------------------- Шрифты -------------------------------- */
@@ -91,8 +112,14 @@ const fontDir = path.join(out, "fonts");
 fs.mkdirSync(fontDir, { recursive: true });
 
 const fontSources: [string, string][] = [
-  ["node_modules/@fontsource-variable/manrope/files/manrope-cyrillic-wght-normal.woff2", "manrope-cyrillic.woff2"],
-  ["node_modules/@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2", "manrope-latin.woff2"],
+  [
+    "node_modules/@fontsource-variable/manrope/files/manrope-cyrillic-wght-normal.woff2",
+    "manrope-cyrillic.woff2",
+  ],
+  [
+    "node_modules/@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2",
+    "manrope-latin.woff2",
+  ],
   ...[400, 500, 600].flatMap<[string, string]>((weight) => [
     [
       `node_modules/@fontsource/cormorant-garamond/files/cormorant-garamond-cyrillic-${weight}-normal.woff2`,
@@ -124,7 +151,12 @@ for (const [from, to] of fontSources) {
  * поэтому вес основного бандла не растёт.
  */
 const guideFontSource = path.join(root, "assets", "fonts", "guide-sans.ttf");
-const guideFontLicense = path.join(root, "assets", "fonts", "LICENSE-DejaVu.txt");
+const guideFontLicense = path.join(
+  root,
+  "assets",
+  "fonts",
+  "LICENSE-DejaVu.txt",
+);
 if (fs.existsSync(guideFontSource)) {
   fs.copyFileSync(guideFontSource, path.join(fontDir, "guide-sans.ttf"));
   if (fs.existsSync(guideFontLicense)) {
@@ -145,7 +177,11 @@ for (const file of fs.readdirSync(imageSource)) {
 
 /** Короткий отпечаток файла: меняется вместе с картинкой. */
 const fileHash = (file: string) =>
-  crypto.createHash("md5").update(fs.readFileSync(path.join(imageSource, file))).digest("hex").slice(0, 8);
+  crypto
+    .createHash("md5")
+    .update(fs.readFileSync(path.join(imageSource, file)))
+    .digest("hex")
+    .slice(0, 8);
 
 /**
  * Фон сайта отдаём со «штампом версии» в адресе: images/pearl-background.jpg?v=abc123.
@@ -156,8 +192,14 @@ const versioned = (file: string, fallback: string) => {
   const full = path.join(imageSource, file);
   return fs.existsSync(full) ? `images/${file}?v=${fileHash(file)}` : fallback;
 };
-const backgroundUrl = versioned("pearl-background.jpg", "images/pearl-background.jpg");
-const backgroundMobileUrl = versioned("pearl-background-mobile.jpg", backgroundUrl);
+const backgroundUrl = versioned(
+  "pearl-background.jpg",
+  "images/pearl-background.jpg",
+);
+const backgroundMobileUrl = versioned(
+  "pearl-background-mobile.jpg",
+  backgroundUrl,
+);
 
 /**
  * Версия сборки — попадает в адреса styles.css, app.js и config.js.
@@ -166,7 +208,13 @@ const backgroundMobileUrl = versioned("pearl-background-mobile.jpg", backgroundU
  */
 const BUILD_ID = crypto
   .createHash("md5")
-  .update(fs.readFileSync(path.join(out, "app.js")))
+  .update(
+    fs.readFileSync(
+      fs.existsSync(path.join(out, "app.js"))
+        ? path.join(out, "app.js")
+        : path.join(root, "src-static", "main.tsx"),
+    ),
+  )
   .update(fs.readFileSync(path.join(out, "styles.css")))
   .digest("hex")
   .slice(0, 8);
@@ -188,8 +236,9 @@ const pages: PageMeta[] = [
   {
     file: "index.html",
     page: "home",
-    title: `${DEFAULT_CONFIG.siteName} — ${DEFAULT_CONFIG.tagline}`,
-    description: DEFAULT_CONFIG.description,
+    title: `${DEFAULT_CONFIG.siteName} — Астрология и Матрица судьбы | cosmorox.ru`,
+    description:
+      "Натальная карта и Матрица судьбы: точные расчёты по данным рождения, личный кабинет, прогнозы и разборы на cosmorox.ru.",
     indexable: true,
   },
   {
@@ -219,10 +268,43 @@ const pages: PageMeta[] = [
   {
     file: "chakras.html",
     page: "chakras",
-    title: "Чакры: муладхара, свадхистана, манипура, анахата, вишудха, аджна, сахасрара",
+    title:
+      "Чакры: муладхара, свадхистана, манипура, анахата, вишудха, аджна, сахасрара",
     description:
       "Семь основных чакр: где расположены, за что отвечают в традиции, как выглядят в балансе и дисбалансе, что помогает и как эти темы связаны со схемой Матрицы судьбы.",
     indexable: true,
+  },
+  {
+    file: "store.html",
+    page: "store",
+    title: "Витрина разборов и консультаций | Жемчужина",
+    description:
+      "Цифровые PDF-разборы, астрологические материалы и консультации портала «Жемчужина».",
+    indexable: true,
+  },
+  {
+    file: "forecast.html",
+    page: "forecast",
+    title: "Прогноз на день и лунный ритм | Жемчужина",
+    description:
+      "Лунная фаза дня, практики и ориентиры для планирования. Без обещаний точного предсказания.",
+    indexable: true,
+  },
+  {
+    file: "blog.html",
+    page: "blog",
+    title: "Блог об астрологии и Матрице судьбы | Жемчужина",
+    description:
+      "Статьи о натальной астрологии, Матрице судьбы и практиках самонаблюдения.",
+    indexable: true,
+  },
+  {
+    file: "cabinet.html",
+    page: "cabinet",
+    title: "Личный кабинет | Жемчужина",
+    description:
+      "Локальный кабинет: сохранённые профили, близкие и расчёты на этом устройстве.",
+    indexable: false,
   },
   {
     file: "full-reading.html",
@@ -236,14 +318,16 @@ const pages: PageMeta[] = [
     file: "privacy.html",
     page: "privacy",
     title: "Политика конфиденциальности",
-    description: "Какие данные обрабатывает сайт, где выполняются расчёты и как удалить свои данные.",
+    description:
+      "Какие данные обрабатывает сайт, где выполняются расчёты и как удалить свои данные.",
     indexable: true,
   },
   {
     file: "terms.html",
     page: "terms",
     title: "Условия использования",
-    description: "Характер материалов, точность расчётов, условия полного разбора и ограничение ответственности.",
+    description:
+      "Характер материалов, точность расчётов, условия полного разбора и ограничение ответственности.",
     indexable: true,
   },
 ];
@@ -261,14 +345,14 @@ const template = (meta: PageMeta) => {
 <title>${meta.title}</title>
 <meta name="description" content="${meta.description}">
 <meta name="robots" content="${robots}">
-<meta name="theme-color" content="#f6f0ec">
+<meta name="theme-color" content="#0a1625">
 ${canonical}
 <meta property="og:type" content="website">
 <meta property="og:locale" content="ru_RU">
 <meta property="og:site_name" content="${DEFAULT_CONFIG.siteName}">
 <meta property="og:title" content="${meta.title}">
 <meta property="og:description" content="${meta.description}">
-<meta property="og:image" content="images/og-cover.svg">
+<meta property="og:image" content="${DEFAULT_CONFIG.siteUrl ? `${DEFAULT_CONFIG.siteUrl.replace(/\/$/, "")}/images/og-cover.svg` : "images/og-cover.svg"}">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="fonts/manrope-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
@@ -285,8 +369,8 @@ ${canonical}
       Включите его и обновите страницу.</p>
   </div>
 </noscript>
-<script src="config.js?v=${BUILD_ID}"></script>
-<script src="app.js?v=${BUILD_ID}" defer></script>
+<script src="/config.js?v=${BUILD_ID}"></script>
+<script type="module" src="${process.env.VITE_WEB_BUILD === "1" ? "../../src-static/main.tsx" : `app.js?v=${BUILD_ID}`}"></script>
 </body>
 </html>
 `;
@@ -323,7 +407,7 @@ fs.writeFileSync(
 </body>
 </html>
 `,
-  "utf8"
+  "utf8",
 );
 
 /* ------------------------------- config.js ------------------------------- */
@@ -425,22 +509,29 @@ fs.writeFileSync(path.join(out, "config.js"), configSource, "utf8");
 /* --------------------------- robots, sitemap, .htaccess --------------------------- */
 
 // Адрес сайта для карты: STATIC_SITE_URL=https://example.com npm run build:static
-const siteUrl = (process.env.STATIC_SITE_URL || DEFAULT_CONFIG.siteUrl || "https://example.com").replace(/\/$/, "");
+const siteUrl = (
+  process.env.STATIC_SITE_URL ||
+  DEFAULT_CONFIG.siteUrl ||
+  "https://example.com"
+).replace(/\/$/, "");
 
 fs.writeFileSync(
   path.join(out, "robots.txt"),
   `User-Agent: *\nAllow: /\n\nSitemap: ${siteUrl}/sitemap.xml\n`,
-  "utf8"
+  "utf8",
 );
 
 const sitemapUrls = pages
   .filter((meta) => meta.indexable)
-  .map((meta) => `  <url><loc>${siteUrl}/${meta.file === "index.html" ? "" : meta.file}</loc></url>`)
+  .map(
+    (meta) =>
+      `  <url><loc>${siteUrl}/${meta.file === "index.html" ? "" : meta.file}</loc></url>`,
+  )
   .join("\n");
 fs.writeFileSync(
   path.join(out, "sitemap.xml"),
   `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${sitemapUrls}\n</urlset>\n`,
-  "utf8"
+  "utf8",
 );
 
 fs.writeFileSync(
@@ -463,7 +554,7 @@ ErrorDocument 404 /404.html
 
 AddDefaultCharset UTF-8
 `,
-  "utf8"
+  "utf8",
 );
 
 /* ------------------------------ Инструкция ------------------------------ */
@@ -513,7 +604,7 @@ fs.writeFileSync(
 3. Рассчитайте натальную карту: Лондон, 01.01.2000, 12:00 — Солнце 10°22′ Козерога.
 4. Отправьте тестовую заявку — проверьте, что кнопка «Открыть Telegram» ведёт в ваш диалог.
 `,
-  "utf8"
+  "utf8",
 );
 
 /* -------------------------------- Архив -------------------------------- */
@@ -526,5 +617,7 @@ if (process.env.STATIC_NO_ZIP === "1") {
   execFileSync("zip", ["-qr", zipPath, "."], { cwd: out });
 
   const sizeMb = (fs.statSync(zipPath).size / 1024 / 1024).toFixed(1);
-  log(`готово: release/astra-pearl-${outName}.zip (${sizeMb} МБ, разворачивать содержимое в корень сайта)`);
+  log(
+    `готово: release/astra-pearl-${outName}.zip (${sizeMb} МБ, разворачивать содержимое в корень сайта)`,
+  );
 }

@@ -2,11 +2,20 @@ import { useEffect, useState } from "react";
 import { getConfig } from "../config";
 import { CloseIcon, MenuIcon } from "./icons";
 
-/** Шапка статической версии: обычные ссылки на .html, работает с любого хостинга. */
+const links = [
+  { href: "astrology.html", label: "Астрология", symbol: "✧" },
+  { href: "matrix.html", label: "Матрица судьбы", symbol: "◇" },
+  { href: "store.html", label: "Витрина разборов" },
+  { href: "forecast.html", label: "Прогноз на день" },
+  { href: "blog.html", label: "Блог" },
+  { href: "guide.html", label: "Гайд по энергиям" },
+  { href: "chakras.html", label: "Чакры" },
+  { href: "cabinet.html", label: "Личный кабинет" },
+];
+
 export function Header({ active }: { active?: string }) {
   const config = getConfig();
   const [open, setOpen] = useState(false);
-
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpen(false);
@@ -14,105 +23,79 @@ export function Header({ active }: { active?: string }) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
-
-  const links = [
-    { href: "astrology.html", label: "Астрология" },
-    { href: "matrix.html", label: "Матрица судьбы" },
-    { href: "guide.html", label: "Гайд по энергиям" },
-    { href: "chakras.html", label: "Чакры" },
-    { href: "full-reading.html", label: "Полный разбор" },
-    { href: "index.html#faq", label: "Вопросы" },
-  ];
-
   return (
-    <header className="sticky top-0 z-40 border-b border-[var(--line)] bg-[rgba(246,240,236,0.86)] backdrop-blur">
-      <div className="container flex h-[4.25rem] items-center justify-between gap-4">
-        <a href="index.html" className="flex items-center gap-2.5" aria-label={`${config.siteName} — на главную`}>
-          <span className="grid h-9 w-9 place-items-center rounded-full border border-[var(--line-gold)] bg-white/70">
-            <svg viewBox="0 0 32 32" className="h-6 w-6" aria-hidden="true">
-              <circle cx="16" cy="16" r="10.5" fill="none" stroke="#C9A777" strokeWidth="1.2" />
-              <circle cx="16" cy="16" r="6.5" fill="url(#pearlGrad)" stroke="#6FA8AE" strokeWidth="0.8" />
-              <defs>
-                <linearGradient id="pearlGrad" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0" stopColor="#BFE3E6" />
-                  <stop offset="1" stopColor="#DCC5D9" />
-                </linearGradient>
-              </defs>
-            </svg>
+    <header className="portal-header">
+      <div className="container portal-header__inner">
+        <a
+          href="index.html"
+          className="portal-brand"
+          aria-label={`${config.siteName} — главная`}
+        >
+          <span className="brand-seal" aria-hidden="true">
+            <span>Ж</span>
           </span>
-          <span className="flex flex-col">
-            <span className="brand-name">{config.logoText}</span>
-            <span className="mt-1 hidden lg:block">
-              <span className="brand-sub max-w-[11rem] uppercase tracking-[0.14em]">{config.brandTitle}</span>
-            </span>
+          <span>
+            <strong>{config.logoText}</strong>
+            <small>{config.brandTitle}</small>
           </span>
         </a>
-
-        <nav className="hidden items-center gap-0.5 lg:flex" aria-label="Основная навигация">
+        <nav className="portal-nav" aria-label="Основная навигация">
           {links.map((link) => (
             <a
               key={link.href}
               href={link.href}
-              className={`rounded-full px-2.5 py-2 text-[0.9rem] transition-colors hover:text-[var(--ocean)] ${
-                active === link.href ? "text-[var(--ocean)]" : "text-[var(--ink)]"
-              }`}
+              aria-current={active === link.href ? "page" : undefined}
             >
+              {link.symbol && <span aria-hidden="true">{link.symbol} </span>}
               {link.label}
             </a>
           ))}
         </nav>
-
-        <div className="flex items-center gap-2">
-          {/* Кабинет есть только там, где включён серверный приём заявок (PHP). */}
+        <div className="portal-header__actions">
           {config.api?.enabled ? (
-            <a href="cabinet/index.php" className="btn btn--secondary btn--sm hidden md:inline-flex" title="Кабинет специалиста">
+            <a className="portal-header__login" href="cabinet/index.php">
               Войти
             </a>
           ) : null}
-          <a href="astrology.html" className="btn btn--primary btn--sm hidden md:inline-flex">
+          <a
+            className="btn btn--primary btn--sm portal-header__cta"
+            href="astrology.html"
+          >
             Рассчитать карту
           </a>
           <button
             type="button"
-            className="grid h-11 w-11 place-items-center rounded-full border border-[var(--line-strong)] bg-white/80 text-[var(--ocean)] lg:hidden"
+            className="portal-menu-button"
             aria-expanded={open}
-            aria-controls="static-mobile-nav"
+            aria-controls="portal-mobile-nav"
             aria-label={open ? "Закрыть меню" : "Открыть меню"}
-            onClick={() => setOpen((value) => !value)}
+            onClick={() => setOpen(!open)}
           >
-            {open ? <CloseIcon className="h-5 w-5" /> : <MenuIcon className="h-5 w-5" />}
+            {open ? (
+              <CloseIcon className="h-5 w-5" />
+            ) : (
+              <MenuIcon className="h-5 w-5" />
+            )}
           </button>
         </div>
       </div>
-
-      {open ? (
-        <div id="static-mobile-nav" className="border-t border-[var(--line)] bg-[rgba(250,246,243,0.98)] lg:hidden">
-          <nav className="container flex flex-col gap-1 py-3" aria-label="Мобильная навигация">
-            {links.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="rounded-xl px-3 py-3 text-[1rem] font-medium text-[var(--ocean)] hover:bg-white/80"
-                onClick={() => setOpen(false)}
-              >
-                {link.label}
-              </a>
-            ))}
-            <a href="matrix.html" className="btn btn--primary mt-2" onClick={() => setOpen(false)}>
-              Открыть Матрицу судьбы
+      {open && (
+        <nav
+          id="portal-mobile-nav"
+          className="portal-mobile-nav"
+          aria-label="Мобильная навигация"
+        >
+          {links.map((link) => (
+            <a key={link.href} href={link.href} onClick={() => setOpen(false)}>
+              {link.symbol && <span aria-hidden="true">{link.symbol} </span>}
+              {link.label}
             </a>
-            {config.api?.enabled ? (
-              <a
-                href="cabinet/index.php"
-                className="btn btn--secondary"
-                onClick={() => setOpen(false)}
-              >
-                Войти в кабинет
-              </a>
-            ) : null}
-          </nav>
-        </div>
-      ) : null}
+          ))}
+          <a href="astrology.html" onClick={() => setOpen(false)}>
+            Рассчитать натальную карту
+          </a>
+        </nav>
+      )}
     </header>
   );
 }

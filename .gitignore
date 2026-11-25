@@ -13,6 +13,8 @@ node_modules/
 # Next.js
 .next/
 out/
+dist/
+.vite-public/
 next-env.d.ts
 tsconfig.tsbuildinfo
 
@@ -35,8 +37,8 @@ coverage/
 php/config.php
 php/data/
 
-# Готовые сборки: release/ целиком и все архивы, кроме единственной
-# нужной — astra-pearl-php.zip для SpaceWeb (она лежит в download/).
+# Готовые сборки для PHP-хостинга и локального предпросмотра не коммитятся.
+# Единственный готовый архив в Git — download/astra-pearl-php.zip.
 release/
 download/*.zip
 download/*.tar.gz
