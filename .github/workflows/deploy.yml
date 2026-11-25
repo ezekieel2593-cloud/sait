@@ -15,8 +15,8 @@ name: Деплой на хостинг (FTP)
 #   FTP_PASSWORD  — пароль FTP
 #   FTP_DIR       — папка сайта (директория), обычно public_html
 #
-#   SITE_URL      — необязательный: адрес сайта, чтобы после деплоя проверить,
-#                   что главная открывается (например https://ваш-домен.ru)
+#   SITE_URL      — необязательная замена домена для HTTP-проверки после деплоя.
+#                   По умолчанию используется https://cosmorox.ru.
 #
 # Этого достаточно. FTP_PORT и FTP_SECURE добавлять не нужно — обычный FTP
 # работает по умолчанию; FTPS включается только если хостинг его требует.
@@ -115,20 +115,15 @@ jobs:
           DEPLOY_ARGS: ${{ inputs.prune && '--prune' || '' }}
         run: npx tsx scripts/deploy-ftp.ts --no-build $DEPLOY_ARGS
 
-      # Проверка живого сайта: если задан секрет SITE_URL (например https://ваш-домен.ru),
-      # после загрузки открываем главную и смотрим код ответа. Без секрета шаг пропускается.
+      # Проверяем живую главную после загрузки; SITE_URL можно переопределить секретом.
       - name: Проверка сайта после деплоя
         if: ${{ !inputs.from_archive }}
         env:
-          SITE_URL: ${{ secrets.SITE_URL }}
+          SITE_URL: ${{ secrets.SITE_URL || 'https://cosmorox.ru' }}
         run: |
-          if [ -z "$SITE_URL" ]; then
-            echo "Секрет SITE_URL не задан — проверку сайта пропускаю."
-            exit 0
-          fi
-          code=$(curl -sS -o /tmp/home.html -w "%{http_code}" --max-time 30 "$SITE_URL/")
-          echo "Главная: HTTP $code"
-          test "$code" = "200" || test "$code" = "301" || test "$code" = "302"
+          code=$(curl -sSL -o /tmp/home.html -w "%{http_code}" --max-time 30 "$SITE_URL/")
+          echo "Главная: HTTP $code ($SITE_URL)"
+          test "$code" = "200"
           grep -qi "Жемчужина" /tmp/home.html && echo "Страница сайта отдаётся (название найдено)" || echo "Открылось, но название не найдено — проверьте вручную"
           check_code=$(curl -sS -o /tmp/check.html -w "%{http_code}" --max-time 30 "$SITE_URL/check.php")
           echo "check.php: HTTP $check_code"
