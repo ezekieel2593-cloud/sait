@@ -256,6 +256,12 @@ async function main() {
     await client.cd(base);
   }
 
+  /* Каталог данных нужен PHP сразу: заявки и сессии пишутся в data/.
+     При чистой установке его нет — создаём пустым; содержимое (заявки,
+     sessions) никогда не трогаем и не удаляем. */
+  await client.ensureDir(toRemote("data"));
+  await client.cd(base);
+
   const existing = new Map<string, { size: number }>();
   const walkRemote = async (relative: string) => {
     const remote = toRemote(relative) || base;
@@ -296,6 +302,20 @@ async function main() {
     }
     await client.uploadFrom(path.join(releaseDir, file), remotePath);
     uploaded.push(file);
+  }
+
+  /* Защитный .htaccess для data/: закрывает заявки от браузера. Кладём только
+     если его ещё нет — правила сервера деплой не перезаписывает. */
+  const dataHtaccess = "data/.htaccess";
+  if (
+    !existing.has(dataHtaccess) &&
+    fs.existsSync(path.join(releaseDir, dataHtaccess))
+  ) {
+    await client.uploadFrom(
+      path.join(releaseDir, dataHtaccess),
+      toRemote(dataHtaccess),
+    );
+    uploaded.push(dataHtaccess);
   }
 
   /* Зонд: маленький файл с номером коммита. Workflow после загрузки открывает
