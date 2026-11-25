@@ -66,6 +66,14 @@ const commitSha = (process.env.GITHUB_SHA ?? "").trim();
 const probeName = commitSha
   ? `deploy-probe-${commitSha}.txt`
   : "deploy-probe.txt";
+/**
+ * Второй зонд — в домашний каталог FTP. Панель хостинга может показывать
+ * один каталог сайта, а веб-сервер фактически отдавать домашний каталог
+ * FTP-аккаунта; этот зонд различает случаи и подсказывает верный FTP_DIR.
+ */
+const homeProbeName = commitSha
+  ? `deploy-probe-home-${commitSha}.txt`
+  : "deploy-probe-home.txt";
 /** Хешированные бандлы (app-0a1b2c3d.js) и зонды прошлых запусков. */
 const HASHED_BUNDLE = /^(?:app|styles)-[0-9a-f]{8}\.(?:js|css)$/;
 const PROBE_FILE = /^deploy-probe-.+\.txt$/;
@@ -178,8 +186,9 @@ function listLocalFiles(dir = releaseDir, prefix = ""): string[] {
 
 function isProtected(relative: string) {
   if (PROTECTED_FILES.has(relative)) return true;
-  // Текущий зонд защищён от --prune: по нему проверяется публикация.
+  // Зонды защищены от --prune: по ним проверяется публикация.
   if (relative === probeName) return true;
+  if (relative === homeProbeName) return true;
   return PROTECTED_DIRS.some(
     (dir) => relative === dir || relative.startsWith(`${dir}/`),
   );
@@ -203,7 +212,7 @@ async function main() {
   if (dryRun) {
     log(`режим проверки (--dry-run): ни файл не будет записан`);
     log(
-      `хост: ${host || "(не задан)"}, каталог: ${remoteRoot}, порт: ${port}${secure ? ", FTPS" : ""}`,
+      `хост: ${host || "(не задан)"}, каталог: ${remoteRoot || "(домашний каталог FTP)"}, порт: ${port}${secure ? ", FTPS" : ""}`,
     );
     log(
       `к загрузке: ${uploadable.length} файлов, под защитой: ${guarded.length}`,
@@ -227,9 +236,11 @@ async function main() {
     secure: secure ? "implicit" : false,
   });
   const base = await client.pwd();
-  log(`каталог сайта: ${remoteRoot}`);
+  log(`каталог сайта: ${remoteRoot || `${base} (домашний каталог FTP)`}`);
 
-  await client.ensureDir(remoteRoot);
+  if (remoteRoot) {
+    await client.ensureDir(remoteRoot);
+  }
   await client.cd(base);
 
   /* Создаём каталоги сборки заранее — так меньше переключений. */
@@ -247,7 +258,7 @@ async function main() {
 
   const existing = new Map<string, { size: number }>();
   const walkRemote = async (relative: string) => {
-    const remote = toRemote(relative);
+    const remote = toRemote(relative) || base;
     let entries;
     try {
       entries = await client.list(remote);
@@ -297,7 +308,27 @@ async function main() {
     "utf8",
   );
   await client.uploadFrom(probePath, toRemote(probeName));
+
+  /* Второй зонд — в домашний каталог FTP: если домен обслуживает домашний
+     каталог, а не каталог из панели, это станет видно сразу. */
+  await client.uploadFrom(probePath, homeProbeName);
   fs.rmSync(probePath, { force: true });
+
+  /* Зонды прежних запусков в домашнем каталоге больше не нужны. */
+  try {
+    for (const entry of await client.list(base)) {
+      if (entry.isDirectory || !entry.name.startsWith("deploy-probe-")) continue;
+      if (entry.name === probeName || entry.name === homeProbeName) continue;
+      try {
+        await client.remove(`${base}/${entry.name}`.replace(/\/+/g, "/"));
+        cleaned.push(entry.name);
+      } catch {
+        /* не критично: старый зонд останется до следующего запуска */
+      }
+    }
+  } catch {
+    /* список домашнего каталога недоступен — пропускаем чистку */
+  }
 
   /* Файлы прошлых сборок с другим отпечатком больше нигде не используются:
      страница ссылается только на текущие имена. Убираем их и зонды прежних
@@ -333,7 +364,7 @@ async function main() {
       }
     };
     for (const dir of dirs) await chmod(toRemote(dir), "755");
-    await chmod(toRemote(""), "755");
+    await chmod(toRemote("") || base, "755");
     // data/ создаёт PHP при первой заявке; если каталог уже есть — даём запись.
     await chmod(toRemote("data"), "775");
   }

@@ -132,9 +132,17 @@ jobs:
           echo "Проверяю $SITE_URL (локальная сборка: $RELEASE_DIR)"
 
           # 1. Зонд: файл, загруженный деплоем, обязан открываться на домене.
+          #    Второй зонд кладётся в домашний каталог FTP: если виден он, а не
+          #    зонд из FTP_DIR, значит домен обслуживает домашний каталог FTP.
           probe_code=$(curl -sSL -o /tmp/probe.txt -w "%{http_code}" --max-time 30 "$SITE_URL/deploy-probe-$GITHUB_SHA.txt")
           echo "deploy-probe: HTTP $probe_code"
+          home_probe_code=$(curl -sSL -o /tmp/probe-home.txt -w "%{http_code}" --max-time 30 "$SITE_URL/deploy-probe-home-$GITHUB_SHA.txt")
+          echo "deploy-probe-home: HTTP $home_probe_code"
           if [ "$probe_code" != "200" ] || ! grep -q "$GITHUB_SHA" /tmp/probe.txt; then
+            if [ "$home_probe_code" = "200" ] && grep -q "$GITHUB_SHA" /tmp/probe-home.txt; then
+              echo "::error::Зонд виден в домашнем каталоге FTP, но файлы из FTP_DIR на домене не открываются. Домен обслуживает домашний каталог FTP-аккаунта, а не каталог из панели. Впишите в секрет FTP_DIR значение / (один слэш — домашний каталог FTP) и запустите деплой снова."
+              exit 1
+            fi
             echo "::error::Загруженные по FTP файлы не видны на домене. Значит FTP_DIR указывает не на корень документов домена (в ISPmanager это каталог сайта, например /www/cosmorox.ru или public_html), либо домен смотрит на другой сервер. Проверьте секрет FTP_DIR и привязку домена в панели."
             exit 1
           fi
