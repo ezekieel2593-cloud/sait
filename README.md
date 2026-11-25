@@ -123,6 +123,9 @@ npm run build:php           # release/astra-pearl-php.zip (≈0,8 МБ) → down
 [docs/UPLOAD-SPACEWEB.md](docs/UPLOAD-SPACEWEB.md), техническое описание —
 [docs/HOSTING-PHP.md](docs/HOSTING-PHP.md), краткая памятка лежит в архиве (`README.txt`).
 
+Обновлять сайт вручную не нужно: каждый push в `main` собирается и заливается на
+хостинг по FTP — настройка в [docs/AUTODEPLOY-FTP.md](docs/AUTODEPLOY-FTP.md).
+
 Кабинет открывается кнопкой **«Войти»** в шапке сайта (рядом с «Рассчитать карту»)
 или по адресу `/cabinet/`. В карточке заявки специалист видит не только контакт клиента,
 но и **полный расчёт**: положение каждой планеты с домом и ретроградностью, куспиды домов,
@@ -170,6 +173,7 @@ docs/                      методика, API, интеграции, депл
 - [docs/API.md](docs/API.md) — эндпоинты, форматы, коды ошибок, версионирование.
 - [docs/INTEGRATIONS.md](docs/INTEGRATIONS.md) — Telegram, MAX, SMTP: настройка и проверка.
 - [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) — production-развёртывание, HTTPS, бэкапы, приватность.
+- [docs/AUTODEPLOY-FTP.md](docs/AUTODEPLOY-FTP.md) — автодеплой на SpaceWeb по FTP через GitHub Actions.
 
 ## Лицензия и данные
 

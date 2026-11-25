@@ -31,6 +31,9 @@ node tools/php-checks/check-page.cjs
 
 # 5. Статическая версия без сервера (93 проверки, jsdom)
 npm run build:static && node tools/php-checks/static-noserver.cjs
+
+# 6. Автодеплой по FTP (15 проверок, локальный FTP-сервер ftp-srv)
+npm run build:php && node tools/php-checks/deploy-ftp.cjs
 ```
 
 Если php-wasm установлен в другую папку:

@@ -1,0 +1,93 @@
+name: Деплой на хостинг (FTP)
+
+# Автодеплой сайта на shared-хостинг (SpaceWeb) по FTP.
+#
+# Как работает:
+#  1. любой push в main → сборка пакета для PHP-хостинга;
+#  2. проверки: типы, тесты, проверки админки и статической сборки;
+#  3. загрузка release/php в public_html по FTP.
+#
+# Нужные секреты репозитория (Settings → Secrets and variables → Actions):
+#   FTP_HOST      — хост из панели, например ftp.логин.sweb.ru
+#   FTP_USER      — логин FTP
+#   FTP_PASSWORD  — пароль FTP
+#   FTP_REMOTE    — каталог сайта, обычно public_html
+#   FTP_SECURE    — 1, если хостинг поддерживает FTPS, иначе 0 (можно не задавать)
+#
+# config.php, data/ и setup.php скрипт деплоя не трогает: пароль владельца
+# и заявки остаются на сервере, см. scripts/deploy-ftp.ts.
+
+on:
+  push:
+    branches:
+      - main
+  # Кнопка «Run workflow» в разделе Actions — залить сайт без нового коммита.
+  workflow_dispatch:
+    inputs:
+      prune:
+        description: "Удалить на сервере файлы, которых больше нет в сборке"
+        type: boolean
+        default: false
+
+# Два деплоя одновременно не нужны: второй ждёт первый.
+concurrency:
+  group: deploy-ftp
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Сборка и загрузка
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Получить код
+        uses: actions/checkout@v4
+
+      - name: Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Зависимости
+        run: npm ci
+
+      - name: Типы
+        run: npx tsc --noEmit
+
+      - name: Тесты
+        run: npm test
+
+      - name: Сборка пакета для хостинга
+        run: npm run build:php
+
+      - name: Проверки собранного пакета
+        run: |
+          node tools/php-checks/admin-view.cjs
+          node tools/php-checks/static-noserver.cjs
+          node tools/php-checks/deploy-ftp.cjs
+
+      - name: Загрузка на хостинг по FTP
+        env:
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USER: ${{ secrets.FTP_USER }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_REMOTE: ${{ secrets.FTP_REMOTE || 'public_html' }}
+          FTP_SECURE: ${{ secrets.FTP_SECURE || '0' }}
+          # --no-build: пакет уже собран шагом выше.
+          # --prune включается галочкой при ручном запуске.
+          DEPLOY_ARGS: ${{ inputs.prune && '--prune' || '' }}
+        run: npx tsx scripts/deploy-ftp.ts --no-build $DEPLOY_ARGS
+
+      - name: Итог
+        if: always()
+        run: |
+          {
+            echo "### Деплой: ${{ job.status }}"
+            echo ""
+            echo "Ветка: \`${{ github.ref_name }}\`, коммит: \`${{ github.sha }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
