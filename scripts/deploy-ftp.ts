@@ -32,6 +32,13 @@
  * Деплой идемпотентен: неизменившиеся файлы обычно пропускаются по размеру.
  * HTML и главные bundles загружаются принудительно, даже если размер совпадает:
  * FTP LIST не даёт надёжной контрольной суммы, а старый JS-кэш — критичен.
+ *
+ * Ещё две вещи, которые делает скрипт:
+ *   • кладёт рядом файл-зонд deploy-probe-<коммит>.txt — workflow после загрузки
+ *     открывает его по HTTP и так убеждается, что файлы попали именно в корень
+ *     домена (а не в соседний каталог панели);
+ *   • удаляет с сервера хешированные бандлы прошлых сборок (app-<старый>.js)
+ *     и зонды прежних запусков — они больше нигде не используются.
  */
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
@@ -53,6 +60,15 @@ const args = new Set(process.argv.slice(2));
 const dryRun = args.has("--dry-run");
 const skipBuild = args.has("--no-build");
 const prune = args.has("--prune");
+
+/** Файл-зонд: по нему workflow проверяет, что загрузка видна на домене. */
+const commitSha = (process.env.GITHUB_SHA ?? "").trim();
+const probeName = commitSha
+  ? `deploy-probe-${commitSha}.txt`
+  : "deploy-probe.txt";
+/** Хешированные бандлы (app-0a1b2c3d.js) и зонды прошлых запусков. */
+const HASHED_BUNDLE = /^(?:app|styles)-[0-9a-f]{8}\.(?:js|css)$/;
+const PROBE_FILE = /^deploy-probe-.+\.txt$/;
 
 /* --------------------------- 0. Переменные окружения --------------------- */
 
@@ -134,7 +150,7 @@ if (!fs.existsSync(path.join(releaseDir, "index.html"))) {
 
 /** Файлы, которые принадлежат серверу, а не сборке. */
 const PROTECTED_FILES = new Set(["config.php"]);
-/** Каталоги, которые деплой не трогает вовсе. */
+/** Каталоги, которые деплой не трогают вовсе. */
 const PROTECTED_DIRS = ["data"];
 /**
  * Файлы, которые обновляются только если их ещё нет на сервере:
@@ -162,6 +178,8 @@ function listLocalFiles(dir = releaseDir, prefix = ""): string[] {
 
 function isProtected(relative: string) {
   if (PROTECTED_FILES.has(relative)) return true;
+  // Текущий зонд защищён от --prune: по нему проверяется публикация.
+  if (relative === probeName) return true;
   return PROTECTED_DIRS.some(
     (dir) => relative === dir || relative.startsWith(`${dir}/`),
   );
@@ -176,6 +194,7 @@ const uploadable = localFiles.filter((file) => !isProtected(file));
 const uploaded: string[] = [];
 const skipped: string[] = [];
 const removed: string[] = [];
+const cleaned: string[] = [];
 
 async function main() {
   const client = new Client(60_000);
@@ -268,6 +287,36 @@ async function main() {
     uploaded.push(file);
   }
 
+  /* Зонд: маленький файл с номером коммита. Workflow после загрузки открывает
+     его по HTTP — так мы узнаём, что файлы попали в корень домена, а не в
+     соседний каталог панели. */
+  const probePath = path.join(releaseDir, probeName);
+  fs.writeFileSync(
+    probePath,
+    `${commitSha || "local"}\n${new Date().toISOString()}\n`,
+    "utf8",
+  );
+  await client.uploadFrom(probePath, toRemote(probeName));
+  fs.rmSync(probePath, { force: true });
+
+  /* Файлы прошлых сборок с другим отпечатком больше нигде не используются:
+     страница ссылается только на текущие имена. Убираем их и зонды прежних
+     запусков, чтобы на сервере не копились app-<старый>.js. */
+  const currentBundles = new Set(
+    localFiles.filter((file) => HASHED_BUNDLE.test(file)),
+  );
+  for (const file of existing.keys()) {
+    const staleBundle = HASHED_BUNDLE.test(file) && !currentBundles.has(file);
+    const staleProbe = PROBE_FILE.test(file) && file !== probeName;
+    if ((!staleBundle && !staleProbe) || isProtected(file)) continue;
+    try {
+      await client.remove(toRemote(file));
+      cleaned.push(file);
+    } catch {
+      warn(`не удалось убрать файл прошлой сборки: ${file}`);
+    }
+  }
+
   /* Права: каталоги 755, файлы 644, data/ — 775, чтобы PHP мог писать заявки. */
   if (setPermissions) {
     const chmodWarned = { value: false };
@@ -316,6 +365,10 @@ await main();
 log(
   `загружено: ${uploaded.length}, без изменений: ${skipped.length}, удалено: ${removed.length}`,
 );
+if (cleaned.length > 0) {
+  log(`убраны файлы прошлых сборок: ${cleaned.length}`);
+  for (const file of cleaned.slice(0, 10)) console.log(`  × ${file}`);
+}
 if (uploaded.length > 0 && uploaded.length <= 40) {
   for (const file of uploaded) console.log(`  ↑ ${file}`);
 }

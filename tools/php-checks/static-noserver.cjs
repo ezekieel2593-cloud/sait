@@ -94,8 +94,10 @@ async function run() {
   // иначе после загрузки нового архива посетитель видит старое.
   const htmlSource = fs.readFileSync(path.join(dir, "index.html"), "utf8");
   const cssSource = fs.readFileSync(path.join(dir, "styles.css"), "utf8");
-  check("стили подключены с версией", /styles\.css\?v=[0-9a-f]{6,}/.test(htmlSource), htmlSource.match(/styles\.css[^"]*/)?.[0]);
-  check("скрипт подключён с версией", /app\.js\?v=[0-9a-f]{6,}/.test(htmlSource), htmlSource.match(/app\.js[^"]*/)?.[0]);
+  // Главные бандлы подключаются именем с отпечатком сборки (styles-e616bd1c.css):
+  // кэш хостинга и браузера не может отдать прежнюю версию файла.
+  check("стили подключены с версией", /styles-[0-9a-f]{8}\.css/.test(htmlSource), htmlSource.match(/styles[^"]*\.css[^"]*/)?.[0]);
+  check("скрипт подключён с версией", /app-[0-9a-f]{8}\.js/.test(htmlSource), htmlSource.match(/app[^"]*\.js[^"]*/)?.[0]);
   check("настройки подключены с версией", /config\.js\?v=[0-9a-f]{6,}/.test(htmlSource));
   check("фон подключён с версией файла", /pearl-background\.jpg\?v=[0-9a-f]{6,}/.test(photo?.getAttribute("style") || ""), photo?.getAttribute("style")?.slice(0, 160));
   check("у фонового слоя нет отрицательного z-index", !/\.page-photo\{[^}]*z-index:-/.test(cssSource));

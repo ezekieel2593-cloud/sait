@@ -23,13 +23,19 @@ name: Деплой на хостинг (FTP)
 #
 # config.php, data/ и setup.php скрипт деплоя не трогает: пароль владельца
 # и заявки остаются на сервере, см. scripts/deploy-ftp.ts.
+#
+# После загрузки workflow проверяет публикацию: деплой кладёт файл-зонд
+# deploy-probe-<коммит>.txt, и если он не открывается на домене — значит
+# FTP_DIR указывает не на корень документов домена (или домен смотрит на
+# другой сервер). Главные бандлы собираются с отпечатком в имени
+# (app-<id>.js), поэтому кэш хостинга не может отдать прежнюю версию.
 
 on:
   push:
     branches:
       - main
-      # Ветка, в которой идёт разработка: деплой доступен по кнопке, push её не заливает.
-      - arena/58ef96c7-sait
+      # Рабочая ветка проекта: каждый push в неё публикуется автоматически.
+      - arena/46865502-sait
   # Кнопка «Run workflow» в разделе Actions — залить сайт без нового коммита.
   workflow_dispatch:
     inputs:
@@ -115,33 +121,52 @@ jobs:
           DEPLOY_ARGS: ${{ inputs.prune && '--prune' || '' }}
         run: npx tsx scripts/deploy-ftp.ts --no-build $DEPLOY_ARGS
 
-      # Проверяем, что домен открывает страницу после FTP-загрузки.
-      - name: HTTP-проверка домена
-        if: ${{ !inputs.from_archive }}
+      # Проверяем домен после FTP-загрузки: зонд, версия страницы, версия бандла.
+      # Проверка работает и в быстром режиме (архив из download/), и в полном.
+      - name: Проверка публикации на домене
         env:
           SITE_URL: ${{ secrets.SITE_URL || 'https://cosmorox.ru' }}
+          RELEASE_DIR: ${{ inputs.from_archive && '/tmp/php-release' || 'release/php' }}
         run: |
-          code=$(curl -sSL -o /tmp/home.html -w "%{http_code}" --max-time 30 "$SITE_URL/")
-          echo "Главная: HTTP $code ($SITE_URL)"
-          test "$code" = "200"
-          grep -qi "Жемчужина" /tmp/home.html || echo "Главная открылась, но название не найдено"
-          check_code=$(curl -sS -o /tmp/check.html -w "%{http_code}" --max-time 30 "$SITE_URL/check.php")
-          echo "check.php: HTTP $check_code"
+          set -e
+          echo "Проверяю $SITE_URL (локальная сборка: $RELEASE_DIR)"
 
-      # Отдельно проверяем, что домен отдал именно новую сборку, а не прежний JS с HTTP 200.
-      - name: Проверка версии портала на домене
-        if: ${{ !inputs.from_archive }}
-        env:
-          SITE_URL: ${{ secrets.SITE_URL || 'https://cosmorox.ru' }}
-        run: |
-          app_code=$(curl -sSL -o /tmp/site-app.js -w "%{http_code}" --max-time 30 "$SITE_URL/app.js?deploy=$GITHUB_SHA")
-          echo "app.js: HTTP $app_code"
-          test "$app_code" = "200"
-          if ! grep -q "portal-landing" /tmp/site-app.js; then
-            echo "::error::Сайт отдаёт старый app.js. Проверьте FTP_DIR: он должен быть корнем документов домена в ISPmanager."
+          # 1. Зонд: файл, загруженный деплоем, обязан открываться на домене.
+          probe_code=$(curl -sS -o /tmp/probe.txt -w "%{http_code}" --max-time 30 "$SITE_URL/deploy-probe-$GITHUB_SHA.txt")
+          echo "deploy-probe: HTTP $probe_code"
+          if [ "$probe_code" != "200" ] || ! grep -q "$GITHUB_SHA" /tmp/probe.txt; then
+            echo "::error::Загруженные по FTP файлы не видны на домене. Значит FTP_DIR указывает не на корень документов домена (в ISPmanager это каталог сайта, например /www/cosmorox.ru или public_html), либо домен смотрит на другой сервер. Проверьте секрет FTP_DIR и привязку домена в панели."
             exit 1
           fi
-          echo "Маркер нового портала найден в app.js."
+          echo "Зонд найден на домене — загрузка попала в корень сайта."
+
+          # 2. Главная должна ссылаться на бандл именно этой сборки.
+          local_app=$(grep -o 'app-[0-9a-f]\{8\}\.js' "$RELEASE_DIR/index.html" | head -n 1)
+          local_app=${local_app:-app.js}
+          home_code=$(curl -sS -o /tmp/home.html -w "%{http_code}" --max-time 30 "$SITE_URL/?nocache=$RANDOM$RANDOM")
+          echo "Главная: HTTP $home_code"
+          test "$home_code" = "200"
+          grep -qi "жемчужина" /tmp/home.html || echo "Название сайта в HTML главной не найдено"
+          live_app=$(grep -o 'app-[0-9a-f]\{8\}\.js' /tmp/home.html | head -n 1)
+          echo "Бандл локальной сборки: $local_app, бандл на домене: ${live_app:-не найден}"
+          if [ "$live_app" != "$local_app" ]; then
+            echo "::error::Домен отдаёт прежнюю версию страницы (${live_app:-старая} вместо $local_app). HTML на сервере не обновился: проверьте FTP_DIR и кэширование статики в панели хостинга."
+            exit 1
+          fi
+
+          # 3. Сам бандл: внутри должна быть новая сборка (маркер портала).
+          app_code=$(curl -sSL -o /tmp/site-app.js -w "%{http_code}" --max-time 60 "$SITE_URL/$local_app?deploy=$GITHUB_SHA")
+          echo "$local_app: HTTP $app_code"
+          test "$app_code" = "200"
+          if ! grep -q "portal-landing" /tmp/site-app.js; then
+            echo "::error::Файл $local_app на домене — не новая сборка. Проверьте FTP_DIR и кэширование в панели хостинга."
+            exit 1
+          fi
+          echo "Маркер новой сборки найден в $local_app."
+
+          # 4. Диагностика хостинга (PHP, права, config.php) доступна.
+          check_code=$(curl -sS -o /tmp/check.html -w "%{http_code}" --max-time 30 "$SITE_URL/check.php")
+          echo "check.php: HTTP $check_code"
 
       - name: Итог
         if: always()

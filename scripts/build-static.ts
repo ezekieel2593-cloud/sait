@@ -202,9 +202,7 @@ const backgroundMobileUrl = versioned(
 );
 
 /**
- * Версия сборки — попадает в адреса styles.css, app.js и config.js.
- * Браузер видит новый адрес и забирает свежие файлы: в .htaccess у них
- * стоит кэш «7 дней», без этой метки правки выглядели бы «не применились».
+ * Версия сборки — отпечаток главных бандлов, попадает в их имена и в адрес config.js.
  */
 const BUILD_ID = crypto
   .createHash("md5")
@@ -218,6 +216,32 @@ const BUILD_ID = crypto
   .update(fs.readFileSync(path.join(out, "styles.css")))
   .digest("hex")
   .slice(0, 8);
+
+/** Vite-вариант (build-web) версионирует ресурсы сам — там имена не трогаем. */
+const isViteWeb = process.env.VITE_WEB_BUILD === "1";
+
+/**
+ * Главные бандлы получают имя с отпечатком сборки: app-e616bd1c.js.
+ * Хостинги (ISPmanager/Cloud4box, CDN) нередко кэшируют статику по адресу,
+ * игнорируя «?v=...», — тогда страница обновилась, а скрипты и стили остались
+ * прежними. Файл с новым именем кэш отдать не может. Обычные app.js и
+ * styles.css остаются рядом: на них смотрят check.php и кабинет.
+ */
+const appBundleName = `app-${BUILD_ID}.js`;
+const stylesBundleName = `styles-${BUILD_ID}.css`;
+if (!isViteWeb) {
+  if (fs.existsSync(path.join(out, "app.js"))) {
+    fs.copyFileSync(path.join(out, "app.js"), path.join(out, appBundleName));
+  }
+  if (fs.existsSync(path.join(out, "styles.css"))) {
+    fs.copyFileSync(
+      path.join(out, "styles.css"),
+      path.join(out, stylesBundleName),
+    );
+  }
+}
+const stylesRef = isViteWeb ? `styles.css?v=${BUILD_ID}` : stylesBundleName;
+const appRef = isViteWeb ? "../../src-static/main.tsx" : appBundleName;
 
 /* ------------------------------- HTML-страницы ------------------------------- */
 
@@ -357,7 +381,7 @@ ${canonical}
 <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="fonts/manrope-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/cormorant-cyrillic-400.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="styles.css?v=${BUILD_ID}">
+<link rel="stylesheet" href="${stylesRef}">
 </head>
 <body data-page="${meta.page}" data-title="${meta.title}">
 <div id="root"></div>
@@ -370,7 +394,7 @@ ${canonical}
   </div>
 </noscript>
 <script src="/config.js?v=${BUILD_ID}"></script>
-<script type="module" src="${process.env.VITE_WEB_BUILD === "1" ? "../../src-static/main.tsx" : `app.js?v=${BUILD_ID}`}"></script>
+<script type="module" src="${appRef}"></script>
 </body>
 </html>
 `;
@@ -391,7 +415,7 @@ fs.writeFileSync(
 <title>Страница не найдена — ${DEFAULT_CONFIG.siteName}</title>
 <meta name="robots" content="noindex">
 <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="styles.css?v=${BUILD_ID}">
+<link rel="stylesheet" href="${stylesRef}">
 </head>
 <body>
 <div class="container container--measure" style="padding:5rem 0;text-align:center">
