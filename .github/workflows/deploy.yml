@@ -115,8 +115,8 @@ jobs:
           DEPLOY_ARGS: ${{ inputs.prune && '--prune' || '' }}
         run: npx tsx scripts/deploy-ftp.ts --no-build $DEPLOY_ARGS
 
-      # Проверяем живую главную после загрузки; SITE_URL можно переопределить секретом.
-      - name: Проверка сайта после деплоя
+      # Проверяем, что домен открывает страницу после FTP-загрузки.
+      - name: HTTP-проверка домена
         if: ${{ !inputs.from_archive }}
         env:
           SITE_URL: ${{ secrets.SITE_URL || 'https://cosmorox.ru' }}
@@ -124,15 +124,24 @@ jobs:
           code=$(curl -sSL -o /tmp/home.html -w "%{http_code}" --max-time 30 "$SITE_URL/")
           echo "Главная: HTTP $code ($SITE_URL)"
           test "$code" = "200"
-          grep -qi "Жемчужина" /tmp/home.html && echo "Страница сайта отдаётся (название найдено)" || echo "Главная открылась, но название не найдено"
-          # HTTP 200 может прийти со старой страницей. Сверяем маркер нового UI в реально выданном JS.
-          app_code=$(curl -sSL -o /tmp/site-app.js -w "%{http_code}" --max-time 30 "$SITE_URL/app.js?deploy=$GITHUB_SHA")
-          echo "JS-бандл: HTTP $app_code"
-          test "$app_code" = "200"
-          grep -q "portal-landing" /tmp/site-app.js || { echo "Сервер отдаёт старый app.js: проверьте FTP_DIR или кэш хостинга"; exit 1; }
-          echo "В загруженном app.js найден маркер нового портала"
+          grep -qi "Жемчужина" /tmp/home.html || echo "Главная открылась, но название не найдено"
           check_code=$(curl -sS -o /tmp/check.html -w "%{http_code}" --max-time 30 "$SITE_URL/check.php")
           echo "check.php: HTTP $check_code"
+
+      # Отдельно проверяем, что домен отдал именно новую сборку, а не прежний JS с HTTP 200.
+      - name: Проверка версии портала на домене
+        if: ${{ !inputs.from_archive }}
+        env:
+          SITE_URL: ${{ secrets.SITE_URL || 'https://cosmorox.ru' }}
+        run: |
+          app_code=$(curl -sSL -o /tmp/site-app.js -w "%{http_code}" --max-time 30 "$SITE_URL/app.js?deploy=$GITHUB_SHA")
+          echo "app.js: HTTP $app_code"
+          test "$app_code" = "200"
+          if ! grep -q "portal-landing" /tmp/site-app.js; then
+            echo "::error::Сайт отдаёт старый app.js. Проверьте FTP_DIR: он должен быть корнем документов домена в ISPmanager."
+            exit 1
+          fi
+          echo "Маркер нового портала найден в app.js."
 
       - name: Итог
         if: always()
