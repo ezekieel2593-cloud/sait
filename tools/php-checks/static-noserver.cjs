@@ -69,10 +69,10 @@ async function run() {
   check("без сервера нет кнопки «Войти»", !doc.querySelector('header a[href="cabinet/index.php"]'));
 
   const header = doc.querySelector("header");
-  check("название бренда — «Жемчужина»", /Жемчужина/.test(header?.textContent || ""), header?.textContent?.slice(0, 80));
+  check("название бренда — COSMOROX", /COSMOROX/.test(header?.textContent || ""), header?.textContent?.slice(0, 80));
   check(
-    "под названием — «Драгоценная жемчужина души»",
-    /Драгоценная жемчужина души/.test(header?.textContent || "")
+    "под названием — «Астрология и Матрица судьбы»",
+    /Астрология и Матрица судьбы/.test(header?.textContent || "")
   );
 
   const photo = doc.querySelector(".page-photo");
@@ -291,6 +291,12 @@ async function run() {
   check("на старте нет манифеста", !/В каждой женщине живёт своя драгоценная/.test(homeText));
   check("на старте нет раздела портала с простынями", !/Исследуйте портал/.test(homeText));
   check("карточки ведут в миры", startWindow.document.querySelector("a.portal-card--astro")?.getAttribute("href") === "astrology.html" && startWindow.document.querySelector("a.portal-card--matrix")?.getAttribute("href") === "matrix.html");
+  check("заголовок «Выбери свою вселенную»", /Выбери свою вселенную/.test(homeText));
+  check("подзаголовок про звёзды и код даты", /подсказки звёзд или расшифруй код/.test(homeText));
+  check("иллюстрация портала астрологии", startWindow.document.querySelector("a.portal-card--astro img")?.getAttribute("src") === "images/portal-astro.jpg");
+  check("иллюстрация портала матрицы", startWindow.document.querySelector("a.portal-card--matrix img")?.getAttribute("src") === "images/portal-matrix.jpg");
+  check("стартовый бренд — COSMOROX", /COSMOROX/.test(homeText));
+  check("на старте нет слова «Жемчужина»", !/жемчужин/i.test(homeText));
   check("на главной нет блока о специалисте", !/Фотография специалиста/.test(homeText));
   check("текст про кабинет специалиста убран", !/появляется в кабинете специалиста|ответ придёт в выбранный/.test(homeText));
   // Текст для серверной версии лежит в бандле: на статике показывается ветка без сервера.

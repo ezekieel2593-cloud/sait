@@ -1,25 +1,36 @@
 import { getConfig } from "../config";
 
 /**
- * Стартовый экран — два живых 3D-портала.
+ * Стартовый экран — ледяной космос и два портала-иллюстрации.
  *
- * Canvas с рендером Three.js подставляет отдельный бандл portals.js
- * в контейнеры [data-portal-scene]: вращающаяся Луна в золотых кольцах
- * и ледяная октаграмма с цифрами Арканов. Клик — плавный перелёт камеры
- * внутрь портала и сразу рабочий раздел, без промежуточных экранов.
+ * Арт — эксклюзивные 2D-иллюстрации (public/images/portal-*.jpg) с
+ * плавным 3D-параллаксом и свечением при наведении. Поверх картинки
+ * лёгкий слой мерцающих частиц рисует бандл portals.js (Three.js,
+ * контейнеры [data-portal-scene]). Клик — плавное погружение внутрь
+ * портала и сразу рабочий раздел, без промежуточных экранов.
  */
 export function HomePage() {
   const config = getConfig();
 
   return (
     <div className="start-portal">
+      <span className="start-sparkles" aria-hidden="true" />
+      <span className="start-sparkles start-sparkles--b" aria-hidden="true" />
+
       <header className="start-brand">
         <span className="brand-seal" aria-hidden="true">
-          <span>Ж</span>
+          <span>C</span>
         </span>
         <span className="start-brand__name">{config.logoText}</span>
-        <span className="start-brand__tag">выбери свою вселенную</span>
+        <span className="start-brand__tag">cosmorox.ru</span>
       </header>
+
+      <div className="start-head">
+        <h1 className="start-title">Выбери свою вселенную</h1>
+        <p className="start-subtitle">
+          Открой подсказки звёзд или расшифруй код своей даты рождения
+        </p>
+      </div>
 
       <div className="portal-stage">
         <a
@@ -28,6 +39,14 @@ export function HomePage() {
           data-portal-scene="astro"
           aria-label="Астрология — открыть мою карту"
         >
+          <span className="portal-card__art" aria-hidden="true">
+            <img
+              className="portal-card__image"
+              src="images/portal-astro.jpg"
+              alt=""
+              loading="eager"
+            />
+          </span>
           <span className="portal-card__grain" aria-hidden="true" />
           <div className="portal-card__copy">
             <span className="portal-card__kicker">Портал 1 · Ночной космос</span>
@@ -48,6 +67,14 @@ export function HomePage() {
           data-portal-scene="matrix"
           aria-label="Матрица судьбы и Чакры — открыть мою матрицу"
         >
+          <span className="portal-card__art" aria-hidden="true">
+            <img
+              className="portal-card__image"
+              src="images/portal-matrix.jpg"
+              alt=""
+              loading="eager"
+            />
+          </span>
           <span className="portal-card__grain" aria-hidden="true" />
           <div className="portal-card__copy">
             <span className="portal-card__kicker">Портал 2 · Голубые ледники</span>

@@ -1,25 +1,17 @@
 /**
- * Стартовый портал: два живых 3D-окна на Three.js.
+ * Стартовый экран: лёгкий живой слой частиц поверх 2D-иллюстраций порталов.
  *
- * Левое — «Астрология»: перламутровая Луна в золотых орбитальных кольцах,
- * знаки зодиака по орбите, звёздный туман в глубоком космосе.
- * Правое — «Матрица судьбы»: ледяная октаграмма-кристалл, внутри которой
- * вращаются светящиеся цифры Арканов; северное сияние и ледники на фоне.
- *
- * Реакция: движение мыши — параллакс камеры; наведение — приближение камеры,
- * ускорение орбит, подсветка кнопки; клик — плавный 3D-перелёт внутрь портала
- * и переход в рабочий раздел. На телефоне — тач-параллакс и пауза вне экрана.
- *
- * Сборка: отдельный бандл portals.js — грузится только на главной,
- * на скорость остальных страниц не влияет. Без WebGL остаётся красивый
- * статичный постер (CSS-градиент класса .portal-card--flat).
+ * Three.js рисует только мерцающую звёздную пыль и светящиеся сферы
+ * (канвас с mix-blend-mode: screen), арт — эксклюзивные 2D-иллюстрации
+ * images/portal-astro.jpg и images/portal-matrix.jpg. Слой реагирует на
+ * движение мыши/тача (параллакс сцены + параллакс самой картинки), при
+ * наведении частицы ускоряются и ярче светятся, клик — плавное погружение
+ * внутрь портала и переход в рабочий раздел. Пауза вне экрана; без WebGL
+ * остаётся чистая иллюстрация с CSS-анимацией.
  */
 import * as THREE from "three";
 
 type HotState = { hot: boolean };
-
-const ZODIAC = ["♈", "♉", "♊", "♋", "♌", "♍", "♎", "♏", "♐", "♑", "♒", "♓"];
-const ARCANUM = Array.from({ length: 22 }, (_, index) => String(index + 1));
 
 function prefersReducedMotion(): boolean {
   try {
@@ -29,7 +21,7 @@ function prefersReducedMotion(): boolean {
   }
 }
 
-/** Радиальная мягкая «туманность» на canvas — без внешних файлов. */
+/** Радиальное свечение на canvas — без внешних файлов. */
 function glowTexture(inner: string, outer: string): THREE.Texture {
   const size = 256;
   const canvas = document.createElement("canvas");
@@ -42,29 +34,6 @@ function glowTexture(inner: string, outer: string): THREE.Texture {
   gradient.addColorStop(1, outer);
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, size, size);
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  return texture;
-}
-
-function dissolveTexture(): THREE.Texture {
-  return glowTexture("#ffe9b8", "rgba(255,233,184,0)");
-}
-
-/** Текст с свечением (знак зодиака, цифра аркана) на canvas. */
-function glyphTexture(glyph: string, color: string, glow: string): THREE.Texture {
-  const size = 160;
-  const canvas = document.createElement("canvas");
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext("2d")!;
-  ctx.font = "600 92px 'Cormorant Garamond', Georgia, serif";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.shadowColor = glow;
-  ctx.shadowBlur = 26;
-  ctx.fillStyle = color;
-  ctx.fillText(glyph, size / 2, size / 2 + 4);
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   return texture;
@@ -108,230 +77,92 @@ function octagramShape(radius: number): THREE.Shape {
   return shape;
 }
 
-/* ------------------------- Портал «Астрология» --------------------------- */
+/* --------------------- Лёгкий амбиентный слой ---------------------------- */
 
-function buildAstroScene(scene: THREE.Scene): { tick: (dt: number, hot: number) => void } {
-  const ringGroup = new THREE.Group();
-  const moonGroup = new THREE.Group();
+/**
+ * Частицы поверх иллюстрации: у астрологии — золотая звёздная пыль и
+ * медленные светлячки с тонким орбитальным кольцом, у матрицы — ледяные
+ * искры и парящие светящиеся сферы. Интенсивность растёт при наведении.
+ */
+function buildAmbientScene(
+  scene: THREE.Scene,
+  kind: "astro" | "matrix",
+): { tick: (dt: number, hot: number) => void } {
+  const gold = kind === "astro";
+  const colors = gold ? ["#ffe9b8", "#f2dd9e", "#ffffff"] : ["#bfe9ff", "#7fd4f7", "#eafaff"];
 
-  // Луна: перламутровая сфера с мягким свечением.
-  const moon = new THREE.Mesh(
-    new THREE.SphereGeometry(1.5, 56, 40),
-    new THREE.MeshStandardMaterial({
-      color: new THREE.Color("#efe6d8"),
-      roughness: 0.5,
-      metalness: 0.18,
-      emissive: new THREE.Color("#2a2547"),
-      emissiveIntensity: 0.55,
+  // Далёкая пыль: медленно вращается.
+  const dustCount = gold ? 700 : 620;
+  const positions = new Float32Array(dustCount * 3);
+  for (let index = 0; index < dustCount; index += 1) {
+    positions[index * 3] = (Math.random() - 0.5) * 18;
+    positions[index * 3 + 1] = (Math.random() - 0.5) * 11;
+    positions[index * 3 + 2] = -2 - Math.random() * 6;
+  }
+  const dustGeometry = new THREE.BufferGeometry();
+  dustGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  const dust = new THREE.Points(
+    dustGeometry,
+    new THREE.PointsMaterial({
+      color: new THREE.Color(colors[0]),
+      size: 0.045,
+      transparent: true,
+      opacity: 0.75,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
     }),
   );
-  moonGroup.add(moon);
-  scene.add(moonGroup);
+  scene.add(dust);
 
-  // Свет: тёплое «шампань» солнце + глубокий синий фон.
-  const key = new THREE.DirectionalLight(new THREE.Color("#f6e6bd"), 2.2);
-  key.position.set(4, 3, 5);
-  scene.add(key, new THREE.AmbientLight(new THREE.Color("#4a5488"), 1.15));
-
-  // Золотые орбитальные кольца.
-  const ringMaterials: THREE.MeshBasicMaterial[] = [];
-  const radii = [2.35, 2.95, 3.55];
-  radii.forEach((radius, index) => {
-    const material = new THREE.MeshBasicMaterial({
-      color: new THREE.Color(index === 1 ? "#ecd094" : "#c9a45a"),
-      transparent: true,
-      opacity: 0.62 - index * 0.14,
-      depthWrite: false,
-    });
-    ringMaterials.push(material);
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(radius, 0.014, 8, 140), material);
-    ring.rotation.x = Math.PI / 2 + (index - 1) * 0.16;
-    ring.rotation.y = (index - 1) * 0.1;
-    ringGroup.add(ring);
-  });
-
-  // Знаки зодиака по внешней орбите.
-  const zodiacGroup = new THREE.Group();
-  ZODIAC.forEach((glyph, index) => {
-    const angle = (index / ZODIAC.length) * Math.PI * 2;
-    const sprite = spriteFrom(glyphTexture(glyph, "#f2dd9e", "#b98f2e"), 0.52, 0.95);
-    sprite.position.set(Math.cos(angle) * 3.55, Math.sin(angle) * 0.12, Math.sin(angle) * 3.55);
-    zodiacGroup.add(sprite);
-  });
-  zodiacGroup.rotation.x = Math.PI / 2;
-  ringGroup.add(zodiacGroup);
-  scene.add(ringGroup);
-
-  // Звёздный туман: две россыпи точек и мягкие переливы.
-  const starFields: THREE.Points[] = [];
-  const makeStars = (count: number, color: string, size: number, radius: [number, number]) => {
-    const positions = new Float32Array(count * 3);
-    for (let index = 0; index < count; index += 1) {
-      const r = radius[0] + Math.random() * (radius[1] - radius[0]);
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(2 * Math.random() - 1);
-      positions[index * 3] = r * Math.sin(phi) * Math.cos(theta);
-      positions[index * 3 + 1] = r * Math.cos(phi) * 0.6;
-      positions[index * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
-    }
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-    const points = new THREE.Points(
-      geometry,
-      new THREE.PointsMaterial({
-        color: new THREE.Color(color),
-        size,
-        transparent: true,
-        opacity: 0.85,
-        depthWrite: false,
-      }),
+  // Ближние светлячки: крупнее, дрейфуют вверх с покачиванием.
+  const nearGroup = new THREE.Group();
+  const nearCount = gold ? 26 : 22;
+  const orbTextures = colors.map((color) => glowTexture(color, "rgba(255,255,255,0)"));
+  const orbs: { sprite: THREE.Sprite; speed: number; sway: number; phase: number }[] = [];
+  for (let index = 0; index < nearCount; index += 1) {
+    const sprite = spriteFrom(
+      orbTextures[index % orbTextures.length],
+      gold ? 0.18 + Math.random() * 0.2 : 0.14 + Math.random() * 0.3,
+      0.8,
     );
-    starFields.push(points);
-    scene.add(points);
-  };
-  makeStars(1300, "#ffffff", 0.035, [6, 15]);
-  makeStars(260, "#f2dd9e", 0.05, [5, 12]);
-
-  const nebulaA = spriteFrom(glowTexture("#e9c87c", "rgba(30,26,64,0)"), 11, 0.4);
-  nebulaA.position.set(-4, 2.4, -7);
-  const nebulaB = spriteFrom(glowTexture("#7f7fd1", "rgba(16,14,40,0)"), 13, 0.33);
-  nebulaB.position.set(4.5, -2, -8);
-  scene.add(nebulaA, nebulaB);
-
-  return {
-    tick(dt, hot) {
-      moonGroup.rotation.y += dt * 0.14;
-      ringGroup.rotation.z += dt * (0.1 + hot * 0.5);
-      zodiacGroup.rotation.z -= dt * (0.06 + hot * 0.3);
-      starFields.forEach((field, index) => {
-        field.rotation.y += dt * 0.012 * (index + 1) * (1 + hot);
-      });
-      nebulaA.material.rotation += dt * 0.02;
-      nebulaB.material.rotation -= dt * 0.015;
-      const glow = 0.55 + hot * 0.6;
-      (moon.material as THREE.MeshStandardMaterial).emissiveIntensity = glow;
-      ringMaterials.forEach((material, index) => {
-        material.opacity = (0.62 - index * 0.14) * (1 + hot * 0.7);
-      });
-    },
-  };
-}
-
-/* ---------------------- Портал «Матрица судьбы» -------------------------- */
-
-function buildMatrixScene(scene: THREE.Scene): { tick: (dt: number, hot: number) => void } {
-  // Северное сияние: три переливающиеся вуали.
-  const auroraColors: [string, string][] = [
-    ["#3fe0c9", "rgba(20,40,60,0)"],
-    ["#3f9de0", "rgba(12,30,52,0)"],
-    ["#8f6fe0", "rgba(14,26,50,0)"],
-  ];
-  const veils: THREE.Sprite[] = [];
-  auroraColors.forEach(([inner, outer], index) => {
-    const veil = spriteFrom(glowTexture(inner, outer), 15 - index * 2, 0.36 - index * 0.06);
-    veil.position.set((index - 1) * 3.4, 1.6 + index * 1.1, -7.5 - index);
-    veils.push(veil);
-    scene.add(veil);
-  });
-
-  // Ледники: тёмные силуэты на заднем плане.
-  const glacierMaterial = new THREE.MeshBasicMaterial({ color: new THREE.Color("#0a2740") });
-  for (let index = 0; index < 5; index += 1) {
-    const cone = new THREE.Mesh(new THREE.ConeGeometry(1.6 + Math.random(), 3.2 + Math.random() * 2.4, 5), glacierMaterial);
-    cone.position.set(-6 + index * 3 + Math.random(), -4.6, -8.5 - Math.random() * 2);
-    cone.rotation.y = Math.random() * Math.PI;
-    scene.add(cone);
+    sprite.position.set((Math.random() - 0.5) * 14, (Math.random() - 0.5) * 9, -0.5 - Math.random() * 3);
+    orbs.push({
+      sprite,
+      speed: 0.12 + Math.random() * 0.3,
+      sway: 0.4 + Math.random(),
+      phase: Math.random() * Math.PI * 2,
+    });
+    nearGroup.add(sprite);
   }
+  scene.add(nearGroup);
 
-  // Редкие звёзды.
-  const starCount = 420;
-  const positions = new Float32Array(starCount * 3);
-  for (let index = 0; index < starCount; index += 1) {
-    positions[index * 3] = (Math.random() - 0.5) * 26;
-    positions[index * 3 + 1] = Math.random() * 12 - 1;
-    positions[index * 3 + 2] = -6 - Math.random() * 8;
-  }
-  const starGeometry = new THREE.BufferGeometry();
-  starGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-  const stars = new THREE.Points(
-    starGeometry,
-    new THREE.PointsMaterial({ color: new THREE.Color("#bfe9ff"), size: 0.05, transparent: true, opacity: 0.8, depthWrite: false }),
-  );
-  scene.add(stars);
-
-  // Ледяной кристалл-октаграмма.
-  const crystalGroup = new THREE.Group();
-  const shape = octagramShape(1.75);
-  const crystalGeometry = new THREE.ExtrudeGeometry(shape, {
-    depth: 0.85,
-    bevelEnabled: true,
-    bevelThickness: 0.12,
-    bevelSize: 0.12,
-    bevelSegments: 2,
-  });
-  crystalGeometry.center();
-  const crystal = new THREE.Mesh(
-    crystalGeometry,
-    new THREE.MeshPhongMaterial({
-      color: new THREE.Color("#8fd0f2"),
+  // Тонкое орбитальное кольцо вокруг центра композиции.
+  const halo = new THREE.Mesh(
+    new THREE.TorusGeometry(gold ? 4.6 : 4.1, 0.012, 6, 120),
+    new THREE.MeshBasicMaterial({
+      color: new THREE.Color(gold ? "#e2cf96" : "#8fe4ff"),
       transparent: true,
-      opacity: 0.24,
-      shininess: 90,
-      specular: new THREE.Color("#cdeeff"),
-      side: THREE.DoubleSide,
+      opacity: 0.4,
       depthWrite: false,
     }),
   );
-  const edges = new THREE.LineSegments(
-    new THREE.EdgesGeometry(crystalGeometry),
-    new THREE.LineBasicMaterial({ color: new THREE.Color("#aee6ff"), transparent: true, opacity: 0.85 }),
-  );
-  crystalGroup.add(crystal, edges);
-  scene.add(crystalGroup);
-
-  const key = new THREE.DirectionalLight(new THREE.Color("#bfe9ff"), 1.8);
-  key.position.set(3, 4, 6);
-  scene.add(key, new THREE.AmbientLight(new THREE.Color("#1a3a55"), 1.4));
-
-  // Цифры Арканов: два встречных кольца внутри кристалла.
-  const digitsInner = new THREE.Group();
-  const digitsOuter = new THREE.Group();
-  ARCANUM.forEach((digits, index) => {
-    const sprite = spriteFrom(glyphTexture(digits, "#d8f4ff", "#2ea8d8"), index % 2 === 0 ? 0.34 : 0.3, 0.95);
-    const radius = index % 2 === 0 ? 1.02 : 1.5;
-    const angle = (index / ARCANUM.length) * Math.PI * 2;
-    sprite.position.set(Math.cos(angle) * radius, Math.sin(angle * 2) * 0.16, Math.sin(angle) * radius);
-    (index % 2 === 0 ? digitsInner : digitsOuter).add(sprite);
-  });
-  const digitsGroup = new THREE.Group();
-  digitsGroup.add(digitsInner, digitsOuter);
-  scene.add(digitsGroup);
-
-  // Ледяные лучи от центра к вершинам звезды.
-  const rayMaterial = new THREE.LineBasicMaterial({ color: new THREE.Color("#7fd4ff"), transparent: true, opacity: 0.3 });
-  for (let index = 0; index < 8; index += 1) {
-    const angle = (index / 8) * Math.PI * 2;
-    const geometry = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3(Math.cos(angle) * 1.72, Math.sin(angle) * 1.72, 0),
-    ]);
-    digitsGroup.add(new THREE.Line(geometry, rayMaterial));
-  }
+  halo.rotation.x = gold ? Math.PI / 2.2 : Math.PI / 2.6;
+  halo.rotation.y = gold ? 0.4 : -0.3;
+  scene.add(halo);
 
   return {
     tick(dt, hot) {
-      crystalGroup.rotation.y += dt * (0.22 + hot * 0.6);
-      crystalGroup.rotation.x = Math.sin(performance.now() * 0.0004) * 0.16 + hot * 0.1;
-      digitsInner.rotation.y -= dt * (0.5 + hot * 1.1);
-      digitsOuter.rotation.y += dt * (0.36 + hot * 0.9);
-      digitsGroup.rotation.y = crystalGroup.rotation.y * 0.35;
-      veils.forEach((veil, index) => {
-        veil.material.rotation += dt * (0.03 + index * 0.01) * (1 + hot);
-        veil.position.x = (index - 1) * 3.4 + Math.sin(performance.now() * 0.0002 + index) * 0.8;
-      });
-      edges.material.opacity = 0.7 + hot * 0.3;
-      (crystal.material as THREE.MeshPhongMaterial).opacity = 0.22 + hot * 0.14;
-      stars.rotation.y += dt * 0.01 * (1 + hot);
+      dust.rotation.y += dt * (0.02 + hot * 0.06);
+      const time = performance.now() * 0.001;
+      for (const orb of orbs) {
+        orb.sprite.position.y += dt * orb.speed * (1 + hot);
+        orb.sprite.position.x += Math.sin(time * 0.6 + orb.phase) * dt * orb.sway * 0.3;
+        if (orb.sprite.position.y > 5.6) orb.sprite.position.y = -5.4;
+        orb.sprite.material.opacity =
+          0.45 + Math.abs(Math.sin(time * 1.4 + orb.phase)) * (0.4 + hot * 0.5);
+      }
+      halo.rotation.z += dt * (0.05 + hot * 0.25);
+      (halo.material as THREE.MeshBasicMaterial).opacity = 0.3 + hot * 0.35;
     },
   };
 }
@@ -356,6 +187,8 @@ function initPortal(container: HTMLElement, kind: "astro" | "matrix"): void {
   renderer.setSize(container.clientWidth || 300, container.clientHeight || 300);
   renderer.domElement.className = "portal-card__canvas";
   container.prepend(renderer.domElement);
+  // Иллюстрация получает мягкий параллакс от курсора (в цикле рендера).
+  const art = container.querySelector<HTMLElement>(".portal-card__art");
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(
@@ -366,7 +199,7 @@ function initPortal(container: HTMLElement, kind: "astro" | "matrix"): void {
   );
   camera.position.set(0, 0.15, 7.4);
 
-  const tickScene = kind === "astro" ? buildAstroScene(scene) : buildMatrixScene(scene);
+  const tickScene = buildAmbientScene(scene, kind);
   const state: HotState & { pointer: { x: number; y: number }; target: { x: number; y: number; z: number }; diving: boolean } = {
     hot: false,
     pointer: { x: 0, y: 0 },
@@ -453,6 +286,10 @@ function initPortal(container: HTMLElement, kind: "astro" | "matrix"): void {
     camera.position.y += (0.15 + state.pointer.y * -0.4 + scrollTarget - camera.position.y) * 0.06;
     camera.position.z += (state.target.z - camera.position.z) * 0.05;
     camera.lookAt(0, 0, 0);
+    if (art) {
+      // 3D-параллакс иллюстрации: картинка чуть плывёт за курсором.
+      art.style.transform = `translate3d(${(-state.pointer.x * 10).toFixed(2)}px, ${(-state.pointer.y * 8).toFixed(2)}px, 0)`;
+    }
     renderer.render(scene, camera);
   };
 

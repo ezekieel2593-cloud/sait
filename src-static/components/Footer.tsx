@@ -9,7 +9,7 @@ export function Footer() {
     <footer className="site-footer--slim">
       <div className="container">
         <p>
-          <strong>Жемчужина</strong> · {config.brandTagline}
+          <strong>{config.logoText}</strong> · {config.brandTagline}
         </p>
         <p>
           <a href="privacy.html">Политика данных</a>
