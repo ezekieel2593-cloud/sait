@@ -260,12 +260,15 @@ async function run() {
   }
   await wait(400); // React успевает отрисовать главную
   const homeText = inviteWindow.document.body.textContent || "";
-  check("на главной крупный заголовок-название", /Драгоценная жемчужина души/.test(homeText));
-  check("манифест: первый абзац", /В каждой женщине живёт своя драгоценная жемчужина/.test(homeText));
-  check("манифест: абзац про страхи и ожидания", /Иногда она скрыта за страхами/.test(homeText));
-  check("манифест: акцентная строка", /Ты не должна заслуживать свою ценность/.test(homeText));
-  check("манифест: финальная строка", /каждая женщина — драгоценность/.test(homeText));
-  check("манифест: блок оформлен", Boolean(inviteWindow.document.querySelector(".manifesto")));
+  // Стартовый портал: логотип и две вселенные, без шапки, манифеста и футера.
+  check("на главной логотип-жемчужина", Boolean(inviteWindow.document.querySelector(".start-brand .brand-seal")));
+  check("стартовый портал: заголовок выбора", /Выбери свою вселенную/.test(homeText));
+  check("вселенная 1: астрология с простым подзаголовком", /сильные стороны.*восполнять энергию|Узнай свои сильные стороны/.test(homeText));
+  check("вселенная 2: матрица и чакры с простым подзаголовком", /главных талантов.*чакрам|энергетического баланса по чакрам/.test(homeText));
+  check("на старте нет манифеста", !/В каждой женщине живёт своя драгоцежная|В каждой женщине живёт своя драгоценная/.test(homeText));
+  check("на старте нет шапки-меню", !Boolean(inviteWindow.document.querySelector(".portal-header")));
+  check("на старте нет раздела портала с простынями", !/Исследуйте портал/.test(homeText));
+  check("подписи карточек ведут в миры", inviteWindow.document.querySelector("a.start-card--astro")?.getAttribute("href") === "astrology.html" && inviteWindow.document.querySelector("a.start-card--matrix")?.getAttribute("href") === "matrix.html");
   check("на главной нет блока о специалисте", !/Фотография специалиста/.test(homeText));
   check("текст про кабинет специалиста убран", !/появляется в кабинете специалиста|ответ придёт в выбранный/.test(homeText));
   // Текст для серверной версии лежит в бандле: на статике показывается ветка без сервера.

@@ -23,6 +23,7 @@ import { CalendarIcon } from "../components/icons-extra";
 import { ArrowLeftIcon } from "../components/icons";
 import { ReportSections } from "../components/ReportSections";
 import { saveReport } from "@/features/cabinet/storage";
+import { useViewer, LifeBlocks, type LifeBlock } from "../viewer";
 
 function today(): string {
   return new Date().toISOString().slice(0, 10);
@@ -256,6 +257,34 @@ export function MatrixPage() {
   );
 }
 
+const MATRIX_BLOCKS: LifeBlock[] = [
+  {
+    title: "Твоя главная суперсила и характер",
+    subtitle: "точка дня и талант от природы — что даётся легко",
+    ids: ["point-A", "point-B"],
+  },
+  {
+    title: "Карта здоровья и 7 чакр",
+    subtitle: "наглядная шкала энергии и простые советы",
+    href: "chakras.html",
+  },
+  {
+    title: "Денежный канал",
+    subtitle: "что блокирует финансы и как их открыть",
+    ids: ["point-money-entry", "point-money-middle", "point-family-core"],
+  },
+  {
+    title: "Канал отношений и идеальный партнёр",
+    subtitle: "готовность к близости и сценарии пары",
+    ids: ["point-love-entry", "point-shared"],
+  },
+  {
+    title: "Кармический хвост и родовые программы",
+    subtitle: "что тянется из рода и как это отпустить",
+    ids: ["point-D", "point-C"],
+  },
+];
+
 function MatrixResult({
   result,
   guideRequest,
@@ -269,12 +298,14 @@ function MatrixResult({
   const admin = useAdmin();
   const { chart, date } = result;
   // Владелец видит все разделы: ограничения бесплатной версии к нему не применяются.
+  const viewer = useViewer();
+  const unlimited = admin || viewer?.subscribed === true;
   const interpretation = buildMatrixInterpretation(chart, {
-    freeSections: admin ? 999 : config.freeResult.matrixPointCount,
-    includePremium: admin,
+    freeSections: unlimited ? 999 : config.freeResult.matrixPointCount,
+    includePremium: unlimited,
     // Владелец получает расширенный вариант: формула и «сырое» число у каждой
     // энергии, трактовки по всем сферам и полная схема расчёта.
-    detailed: admin,
+    detailed: unlimited,
   });
   const free = interpretation.sections.filter((section) => !section.premium);
   const locked = interpretation.sections.filter((section) => section.premium);
@@ -449,6 +480,12 @@ function MatrixResult({
           </div>
         </div>
       </section>
+
+      {/* Жизненные блоки: простые вопросы вместо эзотерических терминов. */}
+      <LifeBlocks
+        freeIds={free.map((section) => section.id)}
+        blocks={MATRIX_BLOCKS}
+      />
 
       {/* Список разделов идёт сразу под схемой: нажатие раскрывает текст под
           названием, без прыжка в конец страницы. */}

@@ -1,6 +1,6 @@
 import { StrictMode, Suspense, lazy, createElement } from "react";
 import { createRoot } from "react-dom/client";
-import { Header } from "./components/Header";
+import { Header, type World } from "./components/Header";
 import { Footer } from "./components/Footer";
 import { SoftInvite } from "./components/SoftInvite";
 import { getConfig } from "./config";
@@ -54,7 +54,23 @@ const PAGES: Record<string, React.ComponentType> = {
   ),
 };
 
+/** К какой вселенной относится страница: тема меню и оформление. */
+const PAGE_WORLDS: Record<string, World> = {
+  astrology: "astro",
+  forecast: "astro",
+  matrix: "matrix",
+  chakras: "matrix",
+  guide: "matrix",
+  store: "shared",
+  cabinet: "shared",
+  "full-reading": "shared",
+  privacy: "shared",
+  terms: "shared",
+  blog: "shared",
+};
+
 const page = document.body.dataset.page ?? "home";
+const world = PAGE_WORLDS[page] ?? "shared";
 const background =
   getConfig().assets?.background || "images/pearl-background.jpg";
 const backgroundMobile = getConfig().assets?.backgroundMobile || background;
@@ -62,6 +78,10 @@ const Page = PAGES[page] ?? PAGES.home;
 document.title = document.body.dataset.title || document.title;
 const root = document.getElementById("root");
 if (!root) throw new Error("Не найден контейнер #root");
+
+// На стартовом портале только логотип и два мира: шапка и футер появляются
+// после выбора вселенной.
+const isStartPortal = page === "home";
 
 createRoot(root).render(
   <StrictMode>
@@ -80,8 +100,8 @@ createRoot(root).render(
         }
       />
       <div className="page-aura" aria-hidden="true" />
-      <Header active={page === "home" ? undefined : `${page}.html`} />
-      <main id="main">
+      {isStartPortal ? null : <Header active={page === "home" ? undefined : `${page}.html`} world={world} />}
+      <main id="main" className={isStartPortal ? "start-main" : undefined}>
         <Suspense
           fallback={
             <div className="container py-16" role="status">
@@ -92,7 +112,7 @@ createRoot(root).render(
           {createElement(Page)}
         </Suspense>
       </main>
-      <Footer />
+      {isStartPortal ? null : <Footer />}
       <SoftInvite page={page} />
     </AdminProvider>
   </StrictMode>,

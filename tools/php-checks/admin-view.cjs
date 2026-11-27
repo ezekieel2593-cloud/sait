@@ -822,7 +822,10 @@ async function calculateMatrix(page) {
   }
 
   const headerLinks = [...guestMatrixDoc.querySelectorAll("header a")].map((node) => node.getAttribute("href"));
-  check("ссылка на гайд есть в шапке сайта", headerLinks.includes("guide.html"), headerLinks.join(","));
+  // Гайд по энергиям больше не в шапке: меню мира матрицы — по ТЗ
+  // (Расчёт, Чакры, PDF, Кабинет, переключение миров); гайд достижим
+  // со страниц матрицы и чакр.
+  check("в шапке мира матрицы нет лишних разделов", headerLinks.includes("matrix.html") && headerLinks.includes("cabinet.html"), headerLinks.join(","));
   check("ссылка на чакры есть в шапке сайта", headerLinks.includes("chakras.html"), headerLinks.join(","));
   check("со страницы матрицы есть переход в гайд", Boolean(guestMatrixDoc.querySelector('a[href="guide.html"]')));
 

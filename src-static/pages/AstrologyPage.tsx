@@ -16,6 +16,7 @@ import { ArrowLeftIcon as BackIcon } from "../components/icons";
 import { ReportSections } from "../components/ReportSections";
 import type { TimeAccuracy } from "@/lib/types";
 import { saveReport } from "@/features/cabinet/storage";
+import { useViewer, LifeBlocks, type LifeBlock } from "../viewer";
 
 const STEPS = ["Дата рождения", "Время и точность", "Место рождения"] as const;
 
@@ -461,6 +462,34 @@ export function AstrologyPage() {
   );
 }
 
+const ASTRO_BLOCKS: LifeBlock[] = [
+  {
+    title: "Твой характер и энергия",
+    subtitle: "Солнце и асцендент — кто ты и как тебя видят люди",
+    ids: ["planet-sun", "ascendant"],
+  },
+  {
+    title: "Как тебе отдыхать и восполнять ресурс",
+    subtitle: "твоя Луна — эмоции, забота и внутренний комфорт",
+    ids: ["planet-moon"],
+  },
+  {
+    title: "Любовь и отношения",
+    subtitle: "какой партнёр тебе подходит и как строить близость",
+    ids: ["planet-venus"],
+  },
+  {
+    title: "Деньги и реализация",
+    subtitle: "на чём легче зарабатывать и где твоя сила",
+    ids: ["planet-jupiter", "planet-saturn", "house-2", "house-10"],
+  },
+  {
+    title: "Подробный прогноз и рекомендации на год",
+    subtitle: "транзиты, личный календарь и фокус года",
+    href: "full-reading.html",
+  },
+];
+
 function AstroResult({
   result,
   onBack,
@@ -471,15 +500,17 @@ function AstroResult({
   const config = getConfig();
   const admin = useAdmin();
   const { chart, label } = result;
+  const viewer = useViewer();
+  const unlimited = admin || viewer?.subscribed === true;
   const interpretation = buildAstrologyInterpretation(chart, {
-    freeSections: admin ? 999 : config.freeResult.astrologyCardCount,
+    freeSections: unlimited ? 999 : config.freeResult.astrologyCardCount,
     includeHouses: true,
-    includePremium: admin,
+    includePremium: unlimited,
     // Владелец получает расширенный вариант: технические таблицы, все аспекты
     // каждой планеты, все транзиты, прогрессии и соляр целиком. Гость видит
     // прежний разбор.
-    detailed: admin,
-    maxAspects: admin ? 999 : undefined,
+    detailed: unlimited,
+    maxAspects: unlimited ? 999 : undefined,
   });
   const free = interpretation.sections.filter((section) => !section.premium);
   const locked = interpretation.sections.filter((section) => section.premium);
@@ -697,6 +728,12 @@ function AstroResult({
           </div>
         ) : null}
       </section>
+
+      {/* Жизненные блоки: простые вопросы вместо эзотерических терминов. */}
+      <LifeBlocks
+        freeIds={free.map((section) => section.id)}
+        blocks={ASTRO_BLOCKS}
+      />
 
       {/* Разделы идут сразу под картой: нажатие на название раскрывает текст
           прямо под ним, а не уводит в низ страницы. */}

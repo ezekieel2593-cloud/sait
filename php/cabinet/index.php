@@ -91,6 +91,20 @@ cabinet_head('Заявки');
   <div class="card"><span class="muted">В работе</span><b><?= (int) ($counters['in_progress'] ?? 0) ?></b></div>
   <div class="card"><span class="muted">Ожидают клиента</span><b><?= (int) ($counters['awaiting_client'] ?? 0) ?></b></div>
   <div class="card"><span class="muted">Завершены</span><b><?= (int) ($counters['done'] ?? 0) ?></b></div>
+  <?php
+  // Статистика портала: регистрации, подписки, библиотека PDF.
+  require_once __DIR__ . '/../inc/users.php';
+  $portalUsers = all_users();
+  $today = gmdate('Y-m-d');
+  $weekAgo = gmdate('Y-m-d', strtotime('-7 days'));
+  $newToday = count(array_filter($portalUsers, fn($u) => substr((string) ($u['createdAt'] ?? ''), 0, 10) === $today));
+  $newWeek = count(array_filter($portalUsers, fn($u) => substr((string) ($u['createdAt'] ?? ''), 0, 10) >= $weekAgo));
+  $activeSubs = count(array_filter($portalUsers, 'subscription_active'));
+  $libraryCount = count(is_array(data_read('library')['items'] ?? null) ? data_read('library')['items'] : []);
+  ?>
+  <div class="card"><span class="muted">Клиентов</span><b><?= count($portalUsers) ?></b><span class="muted">+<?= $newToday ?> за сутки, +<?= $newWeek ?> за неделю</span></div>
+  <div class="card"><span class="muted">Подписок активно</span><b><?= $activeSubs ?></b></div>
+  <div class="card"><span class="muted">PDF выдано</span><b><?= $libraryCount ?></b></div>
 </div>
 
 <form class="panel" method="get" action="index.php">

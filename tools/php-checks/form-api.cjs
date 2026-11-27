@@ -90,13 +90,13 @@ async function run() {
   check("название бренда — «Жемчужина»", /Жемчужина/.test(header?.textContent || ""));
   check("на главной нет блока о специалисте", !/Фотография специалиста/.test(doc.body.textContent || ""));
 
-  const loginLink = doc.querySelector('header a[href="cabinet/index.php"]');
-  check("в шапке есть кнопка «Войти»", Boolean(loginLink), doc.querySelector("header")?.innerHTML.slice(0, 200));
-  check("кнопка «Войти» подписана", /Войти/.test(loginLink?.textContent || ""), loginLink?.textContent);
+  const loginLink = doc.querySelector('header a[href="cabinet.html"]');
+  check("в шапке есть пункт «Личный кабинет»", Boolean(loginLink), doc.querySelector("header")?.innerHTML.slice(0, 200));
+  check("пункт подписан «Личный кабинет»", /Личный кабинет/.test(loginLink?.textContent || ""), loginLink?.textContent);
   check(
-    "«Войти» стоит рядом с «Рассчитать карту»",
-    Boolean(loginLink?.parentElement?.querySelector(".btn--primary")),
-    loginLink?.parentElement?.className
+    "в шапке есть кнопка входа",
+    Boolean(doc.querySelector("header .portal-header__cta")),
+    doc.querySelector("header")?.className
   );
 
   const date = doc.querySelector("#matrix-date");

@@ -108,6 +108,12 @@ Options -Indexes
 # index.html — публичные страницы, index.php — кабинет (папка cabinet/)
 DirectoryIndex index.html index.php
 
+# Панель специалиста доступна и по короткому адресу /admin.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^admin/?$ cabinet/index.php [R=302,L]
+</IfModule>
+
 ErrorDocument 404 /404.html
 # При фатальной ошибке PHP (например, на хостинге включён PHP 7.x) покажем
 # страницу диагностики вместо пустого экрана. Файл check.php работает на любом PHP.

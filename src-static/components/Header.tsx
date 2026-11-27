@@ -2,18 +2,39 @@ import { useEffect, useState } from "react";
 import { getConfig } from "../config";
 import { CloseIcon, MenuIcon } from "./icons";
 
-const links = [
-  { href: "astrology.html", label: "Астрология", symbol: "✧" },
-  { href: "matrix.html", label: "Матрица судьбы", symbol: "◇" },
-  { href: "store.html", label: "Витрина разборов" },
-  { href: "forecast.html", label: "Прогноз на день" },
-  { href: "blog.html", label: "Блог" },
-  { href: "guide.html", label: "Гайд по энергиям" },
-  { href: "chakras.html", label: "Чакры" },
-  { href: "cabinet.html", label: "Личный кабинет" },
-];
+/**
+ * Меню мира: после выбора вселенной показываются только разделы этого
+ * направления + кнопка переключения в соседний мир. Никакой путаницы.
+ */
+export type World = "astro" | "matrix" | "shared";
 
-export function Header({ active }: { active?: string }) {
+const WORLD_MENUS: Record<World, { href: string; label: string }[]> = {
+  astro: [
+    { href: "astrology.html", label: "Моя карта" },
+    { href: "forecast.html", label: "Прогноз на сегодня" },
+    { href: "store.html", label: "PDF-разборы" },
+    { href: "cabinet.html", label: "Личный кабинет" },
+  ],
+  matrix: [
+    { href: "matrix.html", label: "Расчёт Матрицы" },
+    { href: "chakras.html", label: "Карта Чакр" },
+    { href: "store.html", label: "PDF-разборы" },
+    { href: "cabinet.html", label: "Личный кабинет" },
+  ],
+  shared: [
+    { href: "astrology.html", label: "Астрология" },
+    { href: "matrix.html", label: "Матрица судьбы" },
+    { href: "store.html", label: "PDF-разборы" },
+    { href: "cabinet.html", label: "Личный кабинет" },
+  ],
+};
+
+const SWITCH: Record<Exclude<World, "shared">, { href: string; label: string }> = {
+  astro: { href: "matrix.html", label: "❄️ Перейти в Матрицу" },
+  matrix: { href: "astrology.html", label: "🌌 Перейти в Астрологию" },
+};
+
+export function Header({ active, world }: { active?: string; world: World }) {
   const config = getConfig();
   const [open, setOpen] = useState(false);
   useEffect(() => {
@@ -23,13 +44,17 @@ export function Header({ active }: { active?: string }) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
+
+  const links = WORLD_MENUS[world];
+  const switcher = world === "shared" ? null : SWITCH[world];
+
   return (
     <header className="portal-header">
       <div className="container portal-header__inner">
         <a
           href="index.html"
           className="portal-brand"
-          aria-label={`${config.siteName} — главная`}
+          aria-label={`${config.siteName} — на главную`}
         >
           <span className="brand-seal" aria-hidden="true">
             <span>Ж</span>
@@ -39,63 +64,51 @@ export function Header({ active }: { active?: string }) {
             <small>{config.brandTitle}</small>
           </span>
         </a>
-        <nav className="portal-nav" aria-label="Основная навигация">
+        <nav className="portal-nav" aria-label="Меню раздела">
           {links.map((link) => (
             <a
               key={link.href}
               href={link.href}
               aria-current={active === link.href ? "page" : undefined}
             >
-              {link.symbol && <span aria-hidden="true">{link.symbol} </span>}
               {link.label}
             </a>
           ))}
-        </nav>
-        <div className="portal-header__actions">
-          {config.api?.enabled ? (
-            <a className="portal-header__login" href="cabinet/index.php">
-              Войти
+          {switcher ? (
+            <a href={switcher.href} className="portal-switch">
+              {switcher.label}
             </a>
           ) : null}
-          <a
-            className="btn btn--primary btn--sm portal-header__cta"
-            href="astrology.html"
-          >
-            Рассчитать карту
+        </nav>
+        <div className="portal-header__actions">
+          <a className="portal-header__cta" href="cabinet.html">
+            Войти
           </a>
           <button
             type="button"
             className="portal-menu-button"
-            aria-expanded={open}
-            aria-controls="portal-mobile-nav"
             aria-label={open ? "Закрыть меню" : "Открыть меню"}
-            onClick={() => setOpen(!open)}
+            aria-expanded={open}
+            onClick={() => setOpen((value) => !value)}
           >
-            {open ? (
-              <CloseIcon className="h-5 w-5" />
-            ) : (
-              <MenuIcon className="h-5 w-5" />
-            )}
+            {open ? <CloseIcon className="h-5 w-5" /> : <MenuIcon className="h-5 w-5" />}
           </button>
         </div>
       </div>
-      {open && (
-        <nav
-          id="portal-mobile-nav"
-          className="portal-mobile-nav"
-          aria-label="Мобильная навигация"
-        >
+      {open ? (
+        <nav className="portal-mobile-nav" aria-label="Меню раздела (мобильное)">
           {links.map((link) => (
-            <a key={link.href} href={link.href} onClick={() => setOpen(false)}>
-              {link.symbol && <span aria-hidden="true">{link.symbol} </span>}
+            <a key={link.href} href={link.href}>
               {link.label}
             </a>
           ))}
-          <a href="astrology.html" onClick={() => setOpen(false)}>
-            Рассчитать натальную карту
-          </a>
+          {switcher ? (
+            <a href={switcher.href} className="portal-switch">
+              {switcher.label}
+            </a>
+          ) : null}
         </nav>
-      )}
+      ) : null}
     </header>
   );
 }

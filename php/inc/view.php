@@ -95,6 +95,8 @@ function cabinet_head(string $title, bool $withNav = true): void
     </div>
     <nav class="tabs">
       <a href="index.php" class="<?= basename($_SERVER['SCRIPT_NAME'] ?? '') === 'index.php' ? 'active' : '' ?>">Заявки</a>
+      <a href="clients.php" class="<?= basename($_SERVER['SCRIPT_NAME'] ?? '') === 'clients.php' ? 'active' : '' ?>">Клиенты</a>
+      <a href="tariffs.php" class="<?= basename($_SERVER['SCRIPT_NAME'] ?? '') === 'tariffs.php' ? 'active' : '' ?>">Тарифы</a>
       <a href="../index.html" target="_blank" rel="noopener">Сайт</a>
       <a href="../astrology.html" target="_blank" rel="noopener" title="На сайте под вашим входом открыты все разделы">Полная карта</a>
       <a href="../matrix.html" target="_blank" rel="noopener" title="На сайте под вашим входом открыты все разделы">Полная матрица</a>
