@@ -63,17 +63,14 @@ fs.writeFileSync(
 `
 );
 
-// Кабинет: адрес /cabinet/ должен открывать вход, а не отдавать 403.
+// Кабинет: файл тоже пустой от директив — работает на любом хостинге.
+// Вход в кабинет открывает cabinet/index.php (точка входа задаётся
+// панелью хостинга); страница помечена noindex кодом страницы.
 fs.writeFileSync(
   path.join(out, "cabinet", ".htaccess"),
-  `# Кабинет: /cabinet/ открывает вход, а не список файлов.
-DirectoryIndex index.php
-
-# Страницы кабинета не индексируются и не кэшируются браузером.
-<IfModule mod_headers.c>
-  Header always set X-Robots-Tag "noindex, nofollow, noarchive"
-  Header always set Cache-Control "no-store, max-age=0"
-</IfModule>
+  `# Кабинет специалиста. Файл намеренно без директив Apache:
+# корневые директивы на части хостингов запрещены и дают HTTP 500.
+# Папку data/ закрывает собственный data/.htaccess.
 `
 );
 
@@ -88,14 +85,23 @@ fs.rmSync(path.join(out, "config.php"), { force: true });
 
 fs.writeFileSync(
   path.join(out, ".htaccess"),
-  `# Настройки сайта для Apache (Cloud4box/ISPmanager, SpaceWeb и аналоги).
+  `# Файл ПУСТОЙ от директив — и это осознанно: он работает на любом хостинге
+# (Apache с любым AllowOverride, nginx-фронтенд, строгие панели).
 #
-# ВАЖНО: папку public_html перед загрузкой очистите — удалите
-# стандартные index.html и .htaccess, иначе сайт покажет заглушку хостинга.
+# Почему так: корневые директивы Apache (Options, DirectoryIndex,
+# ErrorDocument, RewriteRule, Header) на части хостингов запрещены в
+# .htaccess — и вместо сайта отдаётся HTTP 500 на ВСЕХ страницах, включая
+# картинки. Это уже случалось, поэтому директив здесь нет.
 #
-# РЕДИРЕКТ НА HTTPS ВЫКЛЮЧЕН, чтобы сайт сразу открывался после загрузки.
-# Когда в панели хостинга будет выпущен SSL-сертификат — раскомментируйте
-# четыре строки ниже (уберите символы # в начале строк).
+# Защита данных не страдает:
+#   — data/.htaccess закрывает папку данных (заявки, пользователи);
+#   — config.php и inc/*.php при прямом запросе выполняются как PHP
+#     и выводят пустоту — секреты не отдаются;
+#   — точки входа: / — index.html, /cabinet/ — index.php (настраивается
+#     панелью хостинга; на PHP-аккаунтах index.php входит в умолчание).
+#
+# РЕДИРЕКТ НА HTTPS (когда в панели выпустят SSL) добавьте в панели
+# хостинга или раскомментируйте — ТОЛЬКО если сайт открывается:
 #
 # <IfModule mod_rewrite.c>
 #   RewriteEngine On
@@ -103,52 +109,6 @@ fs.writeFileSync(
 #   RewriteCond %{HTTP:X-Forwarded-Proto} !https
 #   RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
 # </IfModule>
-
-Options -Indexes
-# index.html — публичные страницы, index.php — кабинет (папка cabinet/)
-DirectoryIndex index.html index.php
-
-# Панель специалиста доступна и по короткому адресу /admin.
-<IfModule mod_rewrite.c>
-  RewriteEngine On
-  RewriteRule ^admin/?$ cabinet/index.php [R=302,L]
-</IfModule>
-
-ErrorDocument 404 /404.html
-# При фатальной ошибке PHP (например, на хостинге включён PHP 7.x) покажем
-# страницу диагностики вместо пустого экрана. Файл check.php работает на любом PHP.
-ErrorDocument 500 /check.php
-
-# Закрываем то, что не должно отдаваться браузеру.
-<FilesMatch "^(config\\.php|config\\.example\\.php|.*\\.(lock|log|tmp|md))$">
-  <IfModule mod_authz_core.c>
-    Require all denied
-  </IfModule>
-  <IfModule !mod_authz_core.c>
-    Order allow,deny
-    Deny from all
-  </IfModule>
-</FilesMatch>
-
-<IfModule mod_headers.c>
-  Header always set X-Content-Type-Options "nosniff"
-  Header always set Referrer-Policy "strict-origin-when-cross-origin"
-  Header always set X-Frame-Options "SAMEORIGIN"
-  Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
-</IfModule>
-
-<IfModule mod_deflate.c>
-  AddOutputFilterByType DEFLATE text/html text/css application/javascript image/svg+xml application/json
-</IfModule>
-
-<IfModule mod_expires.c>
-  ExpiresActive On
-  ExpiresByType text/css "access plus 7 days"
-  ExpiresByType application/javascript "access plus 7 days"
-  ExpiresByType font/woff2 "access plus 30 days"
-  ExpiresByType image/svg+xml "access plus 30 days"
-  ExpiresByType text/html "access plus 0 seconds"
-</IfModule>
 `
 );
 
