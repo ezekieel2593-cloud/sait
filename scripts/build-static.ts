@@ -217,7 +217,9 @@ const fileHash = (file: string) =>
  */
 const versioned = (file: string, fallback: string) => {
   const full = path.join(imageSource, file);
-  return fs.existsSync(full) ? `media/${file}?v=${fileHash(file)}` : fallback;
+  // Картинки раздаёт api/image.php: на хостинге прямые запросы к image-типам
+  // отдают 500 (сломанный обработчик), PHP работает всегда.
+  return fs.existsSync(full) ? `api/image.php?name=${file}&v=${fileHash(file)}` : fallback;
 };
 const backgroundUrl = versioned(
   "pearl-background.jpg",
@@ -413,9 +415,9 @@ ${canonical}
 <meta property="og:site_name" content="${DEFAULT_CONFIG.siteName}">
 <meta property="og:title" content="${meta.title}">
 <meta property="og:description" content="${meta.description}">
-<meta property="og:image" content="${DEFAULT_CONFIG.siteUrl ? `${DEFAULT_CONFIG.siteUrl.replace(/\/$/, "")}/media/og-cover.svg` : "media/og-cover.svg"}">
+<meta property="og:image" content="${DEFAULT_CONFIG.siteUrl ? `${DEFAULT_CONFIG.siteUrl.replace(/\/$/, "")}/api/image.php?name=og-cover.svg` : "api/image.php?name=og-cover.svg"}">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="icon" href="media/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="api/image.php?name=favicon.svg" type="image/svg+xml">
 <link rel="preload" href="fonts/manrope-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/cormorant-cyrillic-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="${stylesRef}">
@@ -452,7 +454,7 @@ fs.writeFileSync(
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Страница не найдена — ${DEFAULT_CONFIG.siteName}</title>
 <meta name="robots" content="noindex">
-<link rel="icon" href="media/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="api/image.php?name=favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="${stylesRef}">
 </head>
 <body>
@@ -508,7 +510,7 @@ window.ASTRA_CONFIG = {
     name: ${JSON.stringify(DEFAULT_CONFIG.specialist.name)},
     title: ${JSON.stringify(DEFAULT_CONFIG.specialist.title)},
     bio: ${JSON.stringify(DEFAULT_CONFIG.specialist.bio)},
-    photoUrl: "media/specialist-placeholder.svg",
+    photoUrl: "api/image.php?name=specialist-placeholder.svg",
     note: ${JSON.stringify(DEFAULT_CONFIG.specialist.note)},
   },
 
@@ -635,7 +637,8 @@ fs.writeFileSync(
    - brandTitle — полное название, brandTagline — короткий девиз в подвале
    - manifesto — тексты блока «Драгоценная жемчужина души» на главной
    - фон сайта: положите свою картинку в media/pearl-background.jpg (и
-     media/pearl-background-mobile.jpg для телефона) с тем же именем
+     media/pearl-background-mobile.jpg для телефона) с тем же именем —
+     сайт отдаёт картинки через api/image.php?name=имя-файла
    - invite.delayMs — как часто показывать окно с формой (180000 = каждые 3 минуты)
    - services.priceNote — стоимость, если хотите её показать
 3. Обновите страницу в браузере с очисткой кэша (Ctrl+F5).

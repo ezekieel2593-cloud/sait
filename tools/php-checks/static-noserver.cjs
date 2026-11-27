@@ -78,8 +78,8 @@ async function run() {
   const photo = doc.querySelector(".page-photo");
   check("фон сайта — жемчужная фотография", Boolean(photo), "нет слоя .page-photo");
   check(
-    "фон подключён картинкой из media/",
-    /media\/pearl-background\.jpg/.test(photo?.getAttribute("style") || ""),
+    "фон подключён через api/image.php",
+    /api\/image\.php\?name=pearl-background\.jpg/.test(photo?.getAttribute("style") || ""),
     photo?.getAttribute("style")?.slice(0, 120)
   );
   check(
@@ -99,7 +99,7 @@ async function run() {
   check("стили подключены с версией", /styles-[0-9a-f]{8}\.css/.test(htmlSource), htmlSource.match(/styles[^"]*\.css[^"]*/)?.[0]);
   check("скрипт подключён с версией", /app-[0-9a-f]{8}\.js/.test(htmlSource), htmlSource.match(/app[^"]*\.js[^"]*/)?.[0]);
   check("настройки подключены с версией", /config\.js\?v=[0-9a-f]{6,}/.test(htmlSource));
-  check("фон подключён с версией файла", /pearl-background\.jpg\?v=[0-9a-f]{6,}/.test(photo?.getAttribute("style") || ""), photo?.getAttribute("style")?.slice(0, 160));
+  check("фон подключён через image.php с версией файла", /pearl-background\.jpg&v=[0-9a-f]{6,}/.test(photo?.getAttribute("style") || ""), photo?.getAttribute("style")?.slice(0, 160));
   check("у фонового слоя нет отрицательного z-index", !/\.page-photo\{[^}]*z-index:-/.test(cssSource));
   check("контент выше фона", /main,\s*footer\{[^}]*z-index:\s*2/.test(cssSource));
 
@@ -293,8 +293,8 @@ async function run() {
   check("карточки ведут в миры", startWindow.document.querySelector("a.portal-card--astro")?.getAttribute("href") === "astrology.html" && startWindow.document.querySelector("a.portal-card--matrix")?.getAttribute("href") === "matrix.html");
   check("заголовок «Выбери свою вселенную»", /Выбери свою вселенную/.test(homeText));
   check("подзаголовок про звёзды и код даты", /подсказки звёзд или расшифруй код/.test(homeText));
-  check("иллюстрация портала астрологии", startWindow.document.querySelector("a.portal-card--astro img")?.getAttribute("src") === "media/portal-astro.jpg");
-  check("иллюстрация портала матрицы", startWindow.document.querySelector("a.portal-card--matrix img")?.getAttribute("src") === "media/portal-matrix.jpg");
+  check("иллюстрация портала астрологии", startWindow.document.querySelector("a.portal-card--astro img")?.getAttribute("src") === "api/image.php?name=portal-astro.jpg");
+  check("иллюстрация портала матрицы", startWindow.document.querySelector("a.portal-card--matrix img")?.getAttribute("src") === "api/image.php?name=portal-matrix.jpg");
   check("стартовый бренд — COSMOROX", /COSMOROX/.test(homeText));
   check("на старте нет слова «Жемчужина»", !/жемчужин/i.test(homeText));
   check("на главной нет блока о специалисте", !/Фотография специалиста/.test(homeText));
