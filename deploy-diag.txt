@@ -1,71 +1,71 @@
 · подключение к 185.154.20.52:21
 · каталог FTP-входа (pwd): /
-· каталог сайта по секрету FTP_DIR «»: 37 записей
+· каталог сайта по секрету FTP_DIR «»: 40 записей
     d api
     d cabinet
     d fonts
     d images
     d inc
     - .htaccess (1631 Б)
-    - 404.html (1272 Б)
+    - 404.html (1284 Б)
     - README.txt (7886 Б)
-    - app.js (1847263 Б)
-    - astrology.html (2908 Б)
-    - blog.html (2354 Б)
-    - cabinet.html (2230 Б)
-    - chakras.html (3077 Б)
-    - check.php (11417 Б)
+    - app.js (1847311 Б)
+    - astrology.html (2932 Б)
+    - blog.html (2378 Б)
+    - cabinet.html (2254 Б)
+    - chakras.html (3101 Б)
+    - check.php (12605 Б)
     - config.example.php (3861 Б)
-    - config.js (5237 Б)
-    - forecast.html (2404 Б)
-    - full-reading.html (2635 Б)
-    - guide.html (2983 Б)
-    - index.html (2615 Б)
-    - matrix.html (2793 Б)
-    - privacy.html (2313 Б)
+    - config.js (5273 Б)
+    - forecast.html (2428 Б)
+    - full-reading.html (2659 Б)
+    - guide.html (3007 Б)
+    - index.html (2639 Б)
+    - matrix.html (2817 Б)
+    - privacy.html (2337 Б)
     - robots.txt (65 Б)
     - setup.php (14611 Б)
     - sitemap.xml (723 Б)
-    - store.html (2296 Б)
+    - store.html (2320 Б)
     - styles.css (94845 Б)
-    - terms.html (2336 Б)
+    - terms.html (2360 Б)
     d data
     d cgi-bin
-    … и ещё 7
+    … и ещё 10
 · каталог сайта по секрету FTP_DIR: найден index.html — похоже, это и есть корень домена
 · cd «»: не удалось — каталог не существует для этого FTP-аккаунта
-· домашний каталог FTP «/»: 37 записей
+· домашний каталог FTP «/»: 40 записей
     d api
     d cabinet
     d fonts
     d images
     d inc
     - .htaccess (1631 Б)
-    - 404.html (1272 Б)
+    - 404.html (1284 Б)
     - README.txt (7886 Б)
-    - app.js (1847263 Б)
-    - astrology.html (2908 Б)
-    - blog.html (2354 Б)
-    - cabinet.html (2230 Б)
-    - chakras.html (3077 Б)
-    - check.php (11417 Б)
+    - app.js (1847311 Б)
+    - astrology.html (2932 Б)
+    - blog.html (2378 Б)
+    - cabinet.html (2254 Б)
+    - chakras.html (3101 Б)
+    - check.php (12605 Б)
     - config.example.php (3861 Б)
-    - config.js (5237 Б)
-    - forecast.html (2404 Б)
-    - full-reading.html (2635 Б)
-    - guide.html (2983 Б)
-    - index.html (2615 Б)
-    - matrix.html (2793 Б)
-    - privacy.html (2313 Б)
+    - config.js (5273 Б)
+    - forecast.html (2428 Б)
+    - full-reading.html (2659 Б)
+    - guide.html (3007 Б)
+    - index.html (2639 Б)
+    - matrix.html (2817 Б)
+    - privacy.html (2337 Б)
     - robots.txt (65 Б)
     - setup.php (14611 Б)
     - sitemap.xml (723 Б)
-    - store.html (2296 Б)
+    - store.html (2320 Б)
     - styles.css (94845 Б)
-    - terms.html (2336 Б)
+    - terms.html (2360 Б)
     d data
     d cgi-bin
-    … и ещё 7
+    … и ещё 10
 · домашний каталог FTP: найден index.html — похоже, это и есть корень домена
 · типовой путь «/www»: недоступен
 · типовой путь «www»: недоступен
