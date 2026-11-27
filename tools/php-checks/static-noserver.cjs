@@ -240,9 +240,30 @@ async function run() {
 
   /* --------------------- всплывающее приглашение --------------------- */
 
-  // Отдельная страница: подменяем задержку окна на 100 мс, чтобы не ждать 40 секунд.
-  const inviteDom = new JSDOM(fs.readFileSync(path.join(dir, "index.html"), "utf8"), {
+  // Стартовый экран: поп-апов нет по ТЗ (сначала выбор вселенной).
+  const startDom = new JSDOM(fs.readFileSync(path.join(dir, "index.html"), "utf8"), {
     url: "https://example.com/index.html",
+    runScripts: "dangerously",
+    pretendToBeVisual: true,
+  });
+  const startWindow = startDom.window;
+  const startScripts = [...startWindow.document.querySelectorAll("script[src]")];
+  const startConfig = startScripts.find((node) => node.getAttribute("src").includes("config.js"));
+  if (startConfig) {
+    startWindow.eval(fs.readFileSync(path.join(dir, startConfig.getAttribute("src").replace(/^\//, "").split("?")[0]), "utf8"));
+  }
+  for (const script of startScripts) {
+    if (script === startConfig) continue;
+    const src = script.getAttribute("src").replace(/^\//, "").split("?")[0];
+    startWindow.eval(fs.readFileSync(path.join(dir, src), "utf8"));
+  }
+  await wait(400); // React успевает отрисовать главную
+  const homeText = startWindow.document.body.textContent || "";
+  check("на старте нет всплывающего окна", !startWindow.document.querySelector(".invite__card"));
+
+  // Приглашение живёт на страницах миров: проверяем на astrology.html.
+  const inviteDom = new JSDOM(fs.readFileSync(path.join(dir, "astrology.html"), "utf8"), {
+    url: "https://example.com/astrology.html",
     runScripts: "dangerously",
     pretendToBeVisual: true,
   });
@@ -258,17 +279,18 @@ async function run() {
     const src = script.getAttribute("src").replace(/^\//, "").split("?")[0];
     inviteWindow.eval(fs.readFileSync(path.join(dir, src), "utf8"));
   }
-  await wait(400); // React успевает отрисовать главную
-  const homeText = inviteWindow.document.body.textContent || "";
-  // Стартовый портал: логотип и две вселенные, без шапки, манифеста и футера.
-  check("на главной логотип-жемчужина", Boolean(inviteWindow.document.querySelector(".start-brand .brand-seal")));
-  check("стартовый портал: заголовок выбора", /Выбери свою вселенную/.test(homeText));
-  check("вселенная 1: астрология с простым подзаголовком", /сильные стороны.*восполнять энергию|Узнай свои сильные стороны/.test(homeText));
-  check("вселенная 2: матрица и чакры с простым подзаголовком", /главных талантов.*чакрам|энергетического баланса по чакрам/.test(homeText));
-  check("на старте нет манифеста", !/В каждой женщине живёт своя драгоцежная|В каждой женщине живёт своя драгоценная/.test(homeText));
-  check("на старте нет шапки-меню", !Boolean(inviteWindow.document.querySelector(".portal-header")));
+  await wait(400);
+  // Стартовый портал: логотип и два живых 3D-портала, без шапки и футера.
+  check("на главной логотип-жемчужина", Boolean(startWindow.document.querySelector(".start-brand .brand-seal")));
+  check("стартовый портал: подпись выбора", /выбери свою вселенную|Выбери свою вселенную/i.test(homeText));
+  check("портал 1: астрология с простым подзаголовком", /сильные стороны.*дате и времени рождения/i.test(homeText));
+  check("портал 2: матрица и чакры с простым подзаголовком", /Таланты.*баланс энергии/i.test(homeText));
+  check("контейнеры 3D-сцен на месте", Boolean(startWindow.document.querySelector('[data-portal-scene="astro"]')) && Boolean(startWindow.document.querySelector('[data-portal-scene="matrix"]')));
+  check("на старте нет шапки-меню", !Boolean(startWindow.document.querySelector(".portal-header")));
+  check("на старте нет цифр 01/02", !/Мир I · небесная механика/.test(homeText) && !Boolean(startWindow.document.querySelector(".world__num")));
+  check("на старте нет манифеста", !/В каждой женщине живёт своя драгоценная/.test(homeText));
   check("на старте нет раздела портала с простынями", !/Исследуйте портал/.test(homeText));
-  check("подписи карточек ведут в миры", inviteWindow.document.querySelector("a.start-card--astro")?.getAttribute("href") === "astrology.html" && inviteWindow.document.querySelector("a.start-card--matrix")?.getAttribute("href") === "matrix.html");
+  check("карточки ведут в миры", startWindow.document.querySelector("a.portal-card--astro")?.getAttribute("href") === "astrology.html" && startWindow.document.querySelector("a.portal-card--matrix")?.getAttribute("href") === "matrix.html");
   check("на главной нет блока о специалисте", !/Фотография специалиста/.test(homeText));
   check("текст про кабинет специалиста убран", !/появляется в кабинете специалиста|ответ придёт в выбранный/.test(homeText));
   // Текст для серверной версии лежит в бандле: на статике показывается ветка без сервера.

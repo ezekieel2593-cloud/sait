@@ -30,8 +30,8 @@ const WORLD_MENUS: Record<World, { href: string; label: string }[]> = {
 };
 
 const SWITCH: Record<Exclude<World, "shared">, { href: string; label: string }> = {
-  astro: { href: "matrix.html", label: "❄️ Перейти в Матрицу" },
-  matrix: { href: "astrology.html", label: "🌌 Перейти в Астрологию" },
+  astro: { href: "matrix.html", label: "❄️ Матрица судьбы" },
+  matrix: { href: "astrology.html", label: "🌌 Астрология" },
 };
 
 export function Header({ active, world }: { active?: string; world: World }) {

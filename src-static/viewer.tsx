@@ -88,6 +88,7 @@ export function LifeBlocks({
   freeIds: string[];
   intro?: string;
 }) {
+  const [paywall, setPaywall] = useState(false);
   return (
     <section className="life-blocks" aria-label="Разбор по жизненным вопросам">
       <p className="life-blocks__intro">{intro}</p>
@@ -115,9 +116,14 @@ export function LifeBlocks({
           );
           if (locked) {
             return (
-              <a key={block.title} className="life-block is-locked" href="cabinet.html?paywall=1">
+              <button
+                key={block.title}
+                type="button"
+                className="life-block is-locked"
+                onClick={() => setPaywall(true)}
+              >
                 {inner}
-              </a>
+              </button>
             );
           }
           if (block.href) {
@@ -134,6 +140,47 @@ export function LifeBlocks({
           );
         })}
       </div>
+      {paywall ? <PaywallModal onClose={() => setPaywall(false)} /> : null}
     </section>
+  );
+}
+/**
+ * Красивое окно при клике на замочек: подписка на все разделы
+ * или персональный PDF-гайд. Без еды текстом — два пути и закрытие.
+ */
+function PaywallModal({ onClose }: { onClose: () => void }) {
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div className="paywall-overlay" role="dialog" aria-modal="true" onClick={onClose}>
+      <div className="paywall-modal" onClick={(event) => event.stopPropagation()}>
+        <button type="button" className="paywall-modal__close" aria-label="Закрыть" onClick={onClose}>
+          ×
+        </button>
+        <span className="paywall-modal__seal" aria-hidden="true">
+          Ж
+        </span>
+        <h3>Открой полный доступ ко всем разделам и прогнозам</h3>
+        <p>
+          Подписка открывает сразу все закрытые блоки по астрологии, матрице
+          и чакрам. Или начни с персонального PDF-гайда на 20 страниц.
+        </p>
+        <div className="paywall-modal__actions">
+          <a className="paywall-modal__btn paywall-modal__btn--primary" href="cabinet.html?paywall=1">
+            Подписка — все разделы
+          </a>
+          <a className="paywall-modal__btn" href="store.html">
+            PDF-гайд на 20 страниц
+          </a>
+        </div>
+        <small>Отменить подписку можно в любой момент в личном кабинете.</small>
+      </div>
+    </div>
   );
 }

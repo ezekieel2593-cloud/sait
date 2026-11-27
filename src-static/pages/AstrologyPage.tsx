@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { computeNatalChart, type NatalChart } from "@/features/astrology";
 import { buildAstrologyInterpretation } from "@/lib/interpretation/astrology";
 import { NatalChartFigure } from "../components/NatalChartFigure";
 import { AspectGrid } from "../components/AspectGrid";
 import { SynastryPanel } from "../components/SynastryPanel";
 import { offsetLabelAt } from "@/lib/astronomy/timezone";
+import { planetLongitudesAt, describeSign } from "@/lib/astronomy/engine";
 import { getConfig } from "../config";
 import { useAdmin } from "../admin";
 import { LeadForm } from "../components/LeadForm";
@@ -229,6 +230,7 @@ export function AstrologyPage() {
 
   return (
     <div className="container py-8 sm:py-12">
+      {result ? null : <DayAtmosphere />}
       <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
         <div>
           <p className="eyebrow">Астрология</p>
@@ -464,27 +466,27 @@ export function AstrologyPage() {
 
 const ASTRO_BLOCKS: LifeBlock[] = [
   {
-    title: "Твой характер и энергия",
+    title: "Твой магнетизм и характер",
     subtitle: "Солнце и асцендент — кто ты и как тебя видят люди",
     ids: ["planet-sun", "ascendant"],
   },
   {
-    title: "Как тебе отдыхать и восполнять ресурс",
+    title: "Твой ресурс и как тебе отдыхать",
     subtitle: "твоя Луна — эмоции, забота и внутренний комфорт",
     ids: ["planet-moon"],
   },
   {
-    title: "Любовь и отношения",
+    title: "Любовь и идеальный мужчина",
     subtitle: "какой партнёр тебе подходит и как строить близость",
     ids: ["planet-venus"],
   },
   {
-    title: "Деньги и реализация",
+    title: "Деньги, карьера и реализация",
     subtitle: "на чём легче зарабатывать и где твоя сила",
     ids: ["planet-jupiter", "planet-saturn", "house-2", "house-10"],
   },
   {
-    title: "Подробный прогноз и рекомендации на год",
+    title: "Персональный прогноз на год",
     subtitle: "транзиты, личный календарь и фокус года",
     href: "full-reading.html",
   },
@@ -832,4 +834,113 @@ function parseParams(
       timezone,
     },
   };
+}
+
+/* ------------------------- Атмосфера дня ------------------------------- */
+
+const MOON_PHASE_NAMES = [
+  "Новолуние",
+  "Молодая Луна",
+  "Первая четверть",
+  "Растущая Луна",
+  "Полнолуние",
+  "Убывающая Луна",
+  "Последняя четверть",
+  "Старая Луна",
+];
+
+const PHASE_MOOD: Record<string, string> = {
+  "Новолуние": "День тишины и лёгкости — прислушайся к себе.",
+  "Молодая Луна": "Силы прибывают — хорошо начинать маленькое новое.",
+  "Первая четверть": "Энергия на подъёме — делай шаг, который откладывала.",
+  "Растущая Луна": "День роста — вкладывайся в то, что хочешь развить.",
+  "Полнолуние": "Всё чувствительнее — красиво, но береги нервы.",
+  "Убывающая Луна": "Пора отпускать лишнее — в делах и в голове.",
+  "Последняя четверть": "День итогов — закончи начатое и не начинай новое.",
+  "Старая Луна": "День восстановления — минимум обязательств, больше сна.",
+};
+
+const ELEMENT_FOCUS: Record<string, { focus: string; avoid: string }> = {
+  "Огонь": {
+    focus: "На движении и смелых шагах — тело подскажет решение.",
+    avoid: "Не спорь на эмоциях: сегодня огонь легко разжечь.",
+  },
+  "Земля": {
+    focus: "На простых вещах: еда, деньги, порядок, тело.",
+    avoid: "Не планируй на весь месяц — достаточно одного дня.",
+  },
+  "Воздух": {
+    focus: "На разговорах и письмах — сегодня слова получаются.",
+    avoid: "Не пытайся вместить десять дел: выбери два.",
+  },
+  "Вода": {
+    focus: "На близких и своих чувствах — интуиция острая.",
+    avoid: "Не решай финансовое на эмоциях — завтра будет яснее.",
+  },
+};
+
+/**
+ * Виджет «Атмосфера дня»: фаза Луны на сегодня по эфемеридам и три
+ * короткие подсказки простым языком — без эзотерических терминов.
+ */
+function DayAtmosphere() {
+  const atmosphere = useMemo(() => {
+    const longitudes = planetLongitudesAt(new Date());
+    const angle = (((longitudes.moon - longitudes.sun) % 360) + 360) % 360;
+    const phaseName = MOON_PHASE_NAMES[Math.floor(angle / 45)];
+    const illumination = (1 - Math.cos((angle * Math.PI) / 180)) / 2;
+    const moonSign = describeSign(Math.floor(longitudes.moon / 30) % 12);
+    const element = moonSign.element ?? "Земля";
+    const tips = ELEMENT_FOCUS[element] ?? ELEMENT_FOCUS["Земля"];
+    return { angle, phaseName, illumination, moonSign: moonSign.name, ...tips };
+  }, []);
+
+  return (
+    <section className="day-atmosphere" aria-label="Атмосфера дня">
+      <div className="day-atmosphere__moon">
+        <svg viewBox="0 0 80 80" role="img" aria-label={atmosphere.phaseName}>
+          <circle cx="40" cy="40" r="27" className="day-atmosphere__disc" />
+          <MoonPhaseShape angle={atmosphere.angle} />
+        </svg>
+        <p className="day-atmosphere__phase">
+          {atmosphere.phaseName}
+          <small>
+            Луна в знаке {atmosphere.moonSign} · освещено{" "}
+            {Math.round(atmosphere.illumination * 100)}%
+          </small>
+        </p>
+      </div>
+      <div className="day-atmosphere__cards">
+        <article>
+          <h3>Настроение дня</h3>
+          <p>{PHASE_MOOD[atmosphere.phaseName] ?? "Спокойный день — делай по чуть-чуть."}</p>
+        </article>
+        <article>
+          <h3>На чём сфокусироваться</h3>
+          <p>{atmosphere.focus}</p>
+        </article>
+        <article>
+          <h3>От чего лучше отказаться</h3>
+          <p>{atmosphere.avoid}</p>
+        </article>
+      </div>
+    </section>
+  );
+}
+
+/** Терминатор Луны: светлая часть по углу фазы (0 — новолуние, 180 — полнолуние). */
+function MoonPhaseShape({ angle }: { angle: number }) {
+  const radius = 27;
+  const center = 40;
+  const k = Math.cos((angle * Math.PI) / 180);
+  const waxing = angle <= 180;
+  const rx = Math.max(Math.abs(k) * radius, 0.5);
+  const sweep = waxing ? 1 : 0;
+  const d = [
+    `M ${center} ${center - radius}`,
+    `A ${radius} ${radius} 0 1 ${sweep} ${center} ${center + radius}`,
+    `A ${rx.toFixed(2)} ${radius} 0 1 ${sweep} ${center} ${center - radius}`,
+    "Z",
+  ].join(" ");
+  return <path d={d} className="day-atmosphere__lit" />;
 }

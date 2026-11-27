@@ -87,6 +87,24 @@ if (process.env.VITE_WEB_BUILD === "1") {
     fs.statSync(path.join(out, "app.js")).size / 1024
   ).toFixed(0);
   log(`app.js: ${bundleSize} КБ`);
+
+  // portals.js — 3D-стартовый экран (Three.js). Отдельный бандл: тяжёлая
+  // сцена грузится только на главной, остальные страницы — лёгкие.
+  await esbuild.build({
+    entryPoints: [path.join(root, "src-static", "start-portals.ts")],
+    bundle: true,
+    minify: true,
+    sourcemap: false,
+    target: ["es2022"],
+    format: "iife",
+    outfile: path.join(out, "portals.js"),
+    define: { "process.env.NODE_ENV": '"production"' },
+    logLevel: "warning",
+  });
+  const portalsSize = (
+    fs.statSync(path.join(out, "portals.js")).size / 1024
+  ).toFixed(0);
+  log(`portals.js: ${portalsSize} КБ`);
 }
 
 /* --------------------------------- CSS --------------------------------- */
@@ -214,6 +232,11 @@ const BUILD_ID = crypto
     ),
   )
   .update(fs.readFileSync(path.join(out, "styles.css")))
+  .update(
+    fs.existsSync(path.join(out, "portals.js"))
+      ? fs.readFileSync(path.join(out, "portals.js"))
+      : Buffer.alloc(0),
+  )
   .digest("hex")
   .slice(0, 8);
 
@@ -229,6 +252,7 @@ const isViteWeb = process.env.VITE_WEB_BUILD === "1";
  */
 const appBundleName = `app-${BUILD_ID}.js`;
 const stylesBundleName = `styles-${BUILD_ID}.css`;
+const portalsBundleName = `portals-${BUILD_ID}.js`;
 if (!isViteWeb) {
   if (fs.existsSync(path.join(out, "app.js"))) {
     fs.copyFileSync(path.join(out, "app.js"), path.join(out, appBundleName));
@@ -239,9 +263,13 @@ if (!isViteWeb) {
       path.join(out, stylesBundleName),
     );
   }
+  if (fs.existsSync(path.join(out, "portals.js"))) {
+    fs.copyFileSync(path.join(out, "portals.js"), path.join(out, portalsBundleName));
+  }
 }
 const stylesRef = isViteWeb ? `styles.css?v=${BUILD_ID}` : stylesBundleName;
 const appRef = isViteWeb ? "../../src-static/main.tsx" : appBundleName;
+const portalsRef = isViteWeb ? "" : portalsBundleName;
 
 /* ------------------------------- HTML-страницы ------------------------------- */
 
@@ -394,6 +422,7 @@ ${canonical}
   </div>
 </noscript>
 <script src="/config.js?v=${BUILD_ID}"></script>
+${meta.page === "home" && portalsRef ? `<script defer src="${portalsRef}"></script>` : ""}
 <script type="module" src="${appRef}"></script>
 </body>
 </html>

@@ -273,3 +273,78 @@ body[data-page="astrology"]{--pearl:#0c1525;--pearl-deep:#142139;--porcelain:#12
 
 @media(max-width:800px){.start-cards{grid-template-columns:1fr}.start-card{min-height:340px}.start-card p{max-width:52ch}}
 @media(prefers-reduced-motion:reduce){.start-card,.life-block{transition:none;transform:none!important}.start-card__aurora{animation:none}}
+
+/* ——— Стартовый экран: два живых 3D-портала (magazine look) ——— */
+.start-portal{display:grid;grid-template-rows:auto 1fr;min-height:100svh;background:radial-gradient(ellipse at 20% -10%,#131c3d 0%,transparent 50%),radial-gradient(ellipse at 85% 110%,#0e2c44 0%,transparent 55%),linear-gradient(160deg,#070b16,#0b1226 55%,#070d1c)}
+.start-brand{display:flex;align-items:center;justify-content:center;gap:14px;padding:18px 20px 10px}
+.start-brand__name{font:600 1.35rem/1 "Cormorant Garamond",Georgia,serif;letter-spacing:.16em;color:#f4f1e8}
+.start-brand__tag{font-size:.68rem;letter-spacing:.3em;text-transform:uppercase;color:#8fa2bd;border-left:1px solid #ffffff22;padding-left:14px}
+.portal-stage{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:12px 14px 14px;min-height:0}
+.portal-card{position:relative;display:block;min-height:calc(100svh - 110px);border-radius:22px;overflow:hidden;border:1px solid #ffffff1f;text-decoration:none;color:#f4f1e8;isolation:isolate;transform:translateZ(0);transition:border-color .35s,box-shadow .35s,transform .35s}
+.portal-card .portal-card__canvas{position:absolute;inset:0;width:100%!important;height:100%!important;z-index:0;transition:opacity .7s,transform .9s cubic-bezier(.2,.7,.2,1)}
+.portal-card__grain{position:absolute;z-index:1;inset:0;background:linear-gradient(180deg,rgba(4,8,18,.1) 30%,rgba(4,8,18,.82) 100%);pointer-events:none}
+.portal-card__copy{position:absolute;z-index:2;left:0;right:0;bottom:0;display:grid;gap:8px;justify-items:start;padding:26px 28px}
+.portal-card__kicker{font-size:.62rem;font-weight:700;letter-spacing:.32em;text-transform:uppercase;color:#c9d6ea}
+.portal-card__title{margin:0;font:400 clamp(2rem,4.2vw,3.1rem)/1.02 "Cormorant Garamond",Georgia,serif;letter-spacing:.02em}
+.portal-card__title em{display:block;font-style:italic;font-size:.52em;color:#d8c48c}
+.portal-card--matrix .portal-card__title em{color:#a8eaff}
+.portal-card__text{margin:0;max-width:46ch;color:#c3cfdf;font-size:.86rem;line-height:1.6}
+.portal-card__cta{display:inline-flex;align-items:center;gap:8px;margin-top:8px;padding:11px 22px;border-radius:99px;border:1px solid #e2cf9680;background:rgba(10,16,30,.55);backdrop-filter:blur(8px);color:#f2dd9e;font-weight:700;font-size:.88rem;transition:transform .3s,background .3s,box-shadow .3s}
+.portal-card--matrix .portal-card__cta{color:#b5edff;border-color:#6fd8f780}
+.portal-card.is-hot{border-color:#e2cf9699;box-shadow:0 30px 90px rgba(2,6,16,.55),0 0 44px rgba(236,208,148,.14)}
+.portal-card--matrix.is-hot{border-color:#8fe4ff99;box-shadow:0 30px 90px rgba(2,6,16,.55),0 0 44px rgba(111,216,247,.16)}
+.portal-card.is-hot .portal-card__cta{background:#e2cf96;color:#231a08;transform:translateY(-2px);box-shadow:0 14px 34px rgba(236,208,148,.28)}
+.portal-card--matrix.is-hot .portal-card__cta{background:#7fd4f7;color:#04283a;box-shadow:0 14px 34px rgba(111,216,247,.3)}
+.portal-card.is-diving .portal-card__canvas{transform:scale(1.55);opacity:0}
+.portal-card.is-diving .portal-card__copy{opacity:0;transition:opacity .4s}
+.portal-card.is-diving{border-color:transparent}
+/* Статичный постер, если WebGL недоступен */
+.portal-card--astro{background:radial-gradient(circle at 62% 30%,#3a2f63 0%,transparent 46%),radial-gradient(circle at 25% 70%,#51402a 0%,transparent 40%),linear-gradient(165deg,#0a1024,#131a38 60%,#0a0f22)}
+.portal-card--matrix{background:radial-gradient(circle at 60% 24%,#1f5c78 0%,transparent 46%),radial-gradient(circle at 20% 80%,#0f3550 0%,transparent 44%),linear-gradient(200deg,#06121f,#0c2e46 60%,#071523)}
+.portal-card--flat::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 42%,rgba(255,240,200,.16),transparent 42%)}
+
+/* ——— Стеклянная парящая шапка миров ——— */
+.portal-header{position:sticky;top:10px;z-index:50;margin:10px auto 0;max-width:1180px;border-radius:99px;border:1px solid #ffffff26;background:rgba(9,16,30,.62)!important;backdrop-filter:blur(18px) saturate(1.35);-webkit-backdrop-filter:blur(18px) saturate(1.35);box-shadow:0 18px 44px rgba(3,8,18,.45)}
+.portal-header .container.portal-header__inner{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 18px}
+.portal-header .portal-brand strong{color:#f4f1e8}
+.portal-header .portal-nav a{color:#c9d6ea}
+.portal-header .portal-nav a:hover{color:#fff}
+.portal-header .portal-header__cta{padding:8px 16px;border-radius:99px;border:1px solid #e2cf9680;color:#f2dd9e!important;background:rgba(236,208,148,.08)}
+.portal-header .portal-header__cta:hover{background:rgba(236,208,148,.18)}
+.portal-menu-button{display:none}
+@media(max-width:900px){.portal-menu-button{display:inline-flex}}
+@media(max-width:760px){.portal-stage{grid-template-columns:1fr;padding:10px}.portal-card{min-height:60svh}.start-brand__tag{display:none}}
+@media(prefers-reduced-motion:reduce){.portal-card,.portal-card__canvas,.portal-card__cta{transition:none}}
+
+/* ——— Окно «Открыть полный доступ» ——— */
+.paywall-overlay{position:fixed;inset:0;z-index:120;display:grid;place-items:center;padding:20px;background:rgba(4,8,16,.62);backdrop-filter:blur(10px);animation:paywall-in .25s ease}
+@keyframes paywall-in{from{opacity:0}to{opacity:1}}
+.paywall-modal{position:relative;max-width:430px;display:grid;gap:12px;padding:30px 28px;border-radius:22px;border:1px solid #e2cf9666;background:linear-gradient(165deg,#0c1426,#101c34);box-shadow:0 40px 110px rgba(2,6,16,.7);text-align:center;color:#e9eef6}
+.paywall-modal__close{position:absolute;top:12px;right:14px;width:32px;height:32px;border-radius:50%;border:1px solid #ffffff2b;background:transparent;color:#9db0c2;font-size:1.3rem;cursor:pointer}
+.paywall-modal__seal{width:52px;height:52px;margin:0 auto;display:grid;place-items:center;border-radius:50%;background:radial-gradient(circle at 30% 25%,#f4e3b0,#c9a45a);color:#231a08;font:600 1.4rem "Cormorant Garamond",serif}
+.paywall-modal h3{margin:4px 0 0;font:400 1.5rem/1.2 "Cormorant Garamond",Georgia,serif;color:#fff}
+.paywall-modal p{margin:0;color:#b9c6d6;font-size:.88rem;line-height:1.6}
+.paywall-modal__actions{display:grid;gap:10px;margin-top:6px}
+.paywall-modal__btn{display:block;padding:13px 18px;border-radius:14px;border:1px solid #6fd8f766;color:#b5edff;text-decoration:none;font-weight:600}
+.paywall-modal__btn--primary{background:linear-gradient(120deg,#e2cf96,#c9a45a);border-color:transparent;color:#231a08;font-weight:700}
+.paywall-modal__btn:hover{filter:brightness(1.08)}
+.paywall-modal small{color:#8fa2bd;font-size:.72rem}
+
+/* ——— Атмосфера дня ——— */
+.day-atmosphere{display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center;margin:0 0 26px;padding:20px 22px;border-radius:20px;border:1px solid #ffffff1f;background:linear-gradient(150deg,rgba(16,26,48,.85),rgba(10,16,32,.75));backdrop-filter:blur(12px)}
+.day-atmosphere__moon{display:grid;justify-items:center;gap:6px}
+.day-atmosphere__moon svg{width:92px;height:92px}
+.day-atmosphere__disc{fill:#131c34;stroke:#e2cf9680;stroke-width:1}
+.day-atmosphere__lit{fill:#f2dd9e;filter:drop-shadow(0 0 10px rgba(242,221,158,.5))}
+.day-atmosphere__phase{margin:0;text-align:center;font:600 .95rem "Cormorant Garamond",Georgia,serif;color:#f2dd9e}
+.day-atmosphere__phase small{display:block;font:400 .72rem Manrope,sans-serif;color:#9db0c2;margin-top:2px}
+.day-atmosphere__cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.day-atmosphere__cards article{padding:14px 16px;border-radius:14px;border:1px solid #ffffff14;background:rgba(255,255,255,.045)}
+.day-atmosphere__cards h3{margin:0 0 6px;font:600 .8rem Manrope,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#e2cf96}
+.day-atmosphere__cards p{margin:0;color:#d5deea;font-size:.86rem;line-height:1.55}
+@media(max-width:680px){.day-atmosphere{grid-template-columns:1fr;justify-items:center}.day-atmosphere__cards{width:100%}}
+
+/* ——— Кабинет: быстрые ссылки ——— */
+.cabinet-links{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}
+.client-topline__side{display:flex;align-items:center;gap:12px}
+.client-fields__wide{grid-column:1/-1}

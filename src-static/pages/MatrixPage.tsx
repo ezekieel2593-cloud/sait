@@ -259,7 +259,7 @@ export function MatrixPage() {
 
 const MATRIX_BLOCKS: LifeBlock[] = [
   {
-    title: "Твоя главная суперсила и характер",
+    title: "Главная суперсила",
     subtitle: "точка дня и талант от природы — что даётся легко",
     ids: ["point-A", "point-B"],
   },
@@ -269,18 +269,18 @@ const MATRIX_BLOCKS: LifeBlock[] = [
     href: "chakras.html",
   },
   {
-    title: "Денежный канал",
-    subtitle: "что блокирует финансы и как их открыть",
+    title: "Денежный канал: что блокирует доход",
+    subtitle: "ключевые зоны финансов и как их открыть",
     ids: ["point-money-entry", "point-money-middle", "point-family-core"],
   },
   {
-    title: "Канал отношений и идеальный партнёр",
+    title: "Канал любви и кармические уроки в отношениях",
     subtitle: "готовность к близости и сценарии пары",
     ids: ["point-love-entry", "point-shared"],
   },
   {
-    title: "Кармический хвост и родовые программы",
-    subtitle: "что тянется из рода и как это отпустить",
+    title: "Предназначение и родовые программы",
+    subtitle: "что тянется из рода и куда тебе стоит идти",
     ids: ["point-D", "point-C"],
   },
 ];

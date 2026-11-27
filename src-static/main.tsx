@@ -113,7 +113,8 @@ createRoot(root).render(
         </Suspense>
       </main>
       {isStartPortal ? null : <Footer />}
-      <SoftInvite page={page} />
+      {/* Стартовый экран без поп-апов: сначала выбор вселенной. */}
+      {isStartPortal ? null : <SoftInvite page={page} />}
     </AdminProvider>
   </StrictMode>,
 );
