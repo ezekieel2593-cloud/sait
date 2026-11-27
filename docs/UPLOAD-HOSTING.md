@@ -299,8 +299,8 @@ public_html/
 Файл `config.js` лежит рядом с `index.html` и правится прямо в файловом менеджере.
 
 ```js
-siteName: "Жемчужина",
-logoText: "Жемчужина",
+siteName: "COSMOROX",
+logoText: "COSMOROX",
 brandTitle: "Драгоценная жемчужина души",
 brandTagline: "Драгоценная жемчужина души — ценность каждой женщины",
 ```

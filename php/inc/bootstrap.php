@@ -75,7 +75,7 @@ function app_config(bool $reload = false): array
 
     $file = APP_ROOT . '/config.php';
     $defaults = [
-        'siteName' => 'Жемчужина',
+        'siteName' => 'COSMOROX',
         'siteUrl' => '',
         'owner' => ['login' => 'Adelina', 'email' => '', 'passwordHash' => ''],
         'telegram' => ['botToken' => '', 'chatId' => ''],

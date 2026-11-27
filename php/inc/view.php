@@ -87,7 +87,7 @@ function cabinet_head(string $title, bool $withNav = true): void
 <header class="top">
   <div class="wrap">
     <div class="brand">
-      Кабинет · <?= e((string) cfg('siteName', 'Жемчужина')) ?>
+      Кабинет · <?= e((string) cfg('siteName', 'COSMOROX')) ?>
       <?php $ownerName = (string) ($_SESSION['owner'] ?? ''); ?>
       <?php if ($ownerName !== ''): ?>
         <span class="who">вошли как <strong><?= e($ownerName) ?></strong></span>

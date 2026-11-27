@@ -57,7 +57,7 @@ export function Header({ active, world }: { active?: string; world: World }) {
           aria-label={`${config.siteName} — на главную`}
         >
           <span className="brand-seal" aria-hidden="true">
-            <span>Ж</span>
+            <span>C</span>
           </span>
           <span>
             <strong>{config.logoText}</strong>

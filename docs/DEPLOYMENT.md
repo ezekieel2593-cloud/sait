@@ -86,7 +86,7 @@ npm start            # next start -p 3000
 
 ```ini
 [Unit]
-Description=Жемчужина
+Description=COSMOROX
 After=network.target
 
 [Service]

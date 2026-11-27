@@ -1312,7 +1312,7 @@ export function BlogPage() {
   return (
     <div className="portal-page">
       <div className="container portal-container">
-        <p className="portal-kicker">Журнал «Жемчужина»</p>
+        <p className="portal-kicker">COSMOROX · журнал</p>
         <h1 className="portal-heading">Блог</h1>
         <p className="portal-intro">
           Статьи о символических системах, расчётах и практиках самонаблюдения.

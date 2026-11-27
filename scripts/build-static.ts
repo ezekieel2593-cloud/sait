@@ -329,15 +329,15 @@ const pages: PageMeta[] = [
   {
     file: "store.html",
     page: "store",
-    title: "Витрина разборов и консультаций | Жемчужина",
+    title: "Витрина разборов и консультаций | COSMOROX",
     description:
-      "Цифровые PDF-разборы, астрологические материалы и консультации портала «Жемчужина».",
+      "Цифровые PDF-разборы, астрологические материалы и консультации COSMOROX.",
     indexable: true,
   },
   {
     file: "forecast.html",
     page: "forecast",
-    title: "Прогноз на день и лунный ритм | Жемчужина",
+    title: "Прогноз на день и лунный ритм | COSMOROX",
     description:
       "Лунная фаза дня, практики и ориентиры для планирования. Без обещаний точного предсказания.",
     indexable: true,
@@ -345,7 +345,7 @@ const pages: PageMeta[] = [
   {
     file: "blog.html",
     page: "blog",
-    title: "Блог об астрологии и Матрице судьбы | Жемчужина",
+    title: "Блог об астрологии и Матрице судьбы | COSMOROX",
     description:
       "Статьи о натальной астрологии, Матрице судьбы и практиках самонаблюдения.",
     indexable: true,
@@ -353,7 +353,7 @@ const pages: PageMeta[] = [
   {
     file: "cabinet.html",
     page: "cabinet",
-    title: "Личный кабинет | Жемчужина",
+    title: "Личный кабинет | COSMOROX",
     description:
       "Локальный кабинет: сохранённые профили, близкие и расчёты на этом устройстве.",
     indexable: false,

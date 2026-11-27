@@ -9,7 +9,7 @@ export function HeroPearl({ className = "" }: { className?: string }) {
       viewBox="0 0 520 520"
       className={className}
       role="img"
-      aria-label="Жемчужина в перламутровых орбитах и бирюзовом свечении"
+      aria-label="Перламутровые орбиты и бирюзовое свечение"
     >
       <defs>
         <radialGradient id="hp-glow" cx="0.5" cy="0.45" r="0.55">

@@ -87,7 +87,7 @@ async function run() {
   check("config.js включает серверный приём заявок", window.ASTRA_CONFIG?.api?.enabled === true, String(window.ASTRA_CONFIG?.api?.enabled));
 
   const header = doc.querySelector("header");
-  check("название бренда — «Жемчужина»", /Жемчужина/.test(header?.textContent || ""));
+  check("название бренда — COSMOROX", /COSMOROX/.test(header?.textContent || ""));
   check("на главной нет блока о специалисте", !/Фотография специалиста/.test(doc.body.textContent || ""));
 
   const loginLink = doc.querySelector('header a[href="cabinet.html"]');

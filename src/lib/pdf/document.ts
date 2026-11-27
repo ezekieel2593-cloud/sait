@@ -322,7 +322,7 @@ export class PdfDocument {
 
     const infoIndex = objects.length + 1;
     push(
-      `<< /Title (${escapeText(this.title)}) /Producer (Жемчужина — гайд по энергиям) /Creator (Жемчужина) >>`
+      `<< /Title (${escapeText(this.title)}) /Producer (COSMOROX — гайд по энергиям) /Creator (COSMOROX) >>`
     );
 
     const parts: Uint8Array[] = [];

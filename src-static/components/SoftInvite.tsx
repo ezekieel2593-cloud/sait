@@ -142,7 +142,7 @@ export function SoftInvite({ page }: { page: string }) {
           ✕
         </button>
 
-        <p className="eyebrow">Жемчужина · короткий вопрос</p>
+        <p className="eyebrow">COSMOROX · короткий вопрос</p>
         <h2 id="invite-title" className="mt-2 font-[family-name:var(--font-display)] text-[1.55rem] leading-snug text-[var(--ocean)]">
           {copy.question}
         </h2>
