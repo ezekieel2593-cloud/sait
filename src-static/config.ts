@@ -60,7 +60,7 @@ export const DEFAULT_CONFIG: StaticConfig = {
     name: "Ваше имя",
     title: "Астролог и специалист по Матрице судьбы",
     bio: "Здесь будет ваш текст о себе: подход, образование, опыт и то, как проходит консультация. Отредактируйте файл config.js рядом с index.html.",
-    photoUrl: "images/specialist-placeholder.svg",
+    photoUrl: "media/specialist-placeholder.svg",
     note: "Информация о специалисте заполняется владельцем проекта.",
   },
   contacts: { telegram: "", max: "", email: "", phone: "", location: "" },

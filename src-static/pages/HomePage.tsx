@@ -42,7 +42,7 @@ export function HomePage() {
           <span className="portal-card__art" aria-hidden="true">
             <img
               className="portal-card__image"
-              src="images/portal-astro.jpg"
+              src="media/portal-astro.jpg"
               alt=""
               loading="eager"
             />
@@ -70,7 +70,7 @@ export function HomePage() {
           <span className="portal-card__art" aria-hidden="true">
             <img
               className="portal-card__image"
-              src="images/portal-matrix.jpg"
+              src="media/portal-matrix.jpg"
               alt=""
               loading="eager"
             />

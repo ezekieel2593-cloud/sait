@@ -72,7 +72,7 @@ const PAGE_WORLDS: Record<string, World> = {
 const page = document.body.dataset.page ?? "home";
 const world = PAGE_WORLDS[page] ?? "shared";
 const background =
-  getConfig().assets?.background || "images/pearl-background.jpg";
+  getConfig().assets?.background || "media/pearl-background.jpg";
 const backgroundMobile = getConfig().assets?.backgroundMobile || background;
 const Page = PAGES[page] ?? PAGES.home;
 document.title = document.body.dataset.title || document.title;

@@ -192,6 +192,15 @@ for (const file of fs.readdirSync(imageSource)) {
   if (!/\.(svg|png|jpe?g|webp|avif|ico)$/i.test(file)) continue;
   fs.copyFileSync(path.join(imageSource, file), path.join(imageDir, file));
 }
+// Дубль в media/: на хостинге каталог images/ периодически отдаёт HTTP 500
+// (серверная проблема именно этого каталога), поэтому сайт ссылается на
+// media/ — тот же набор файлов, но в рабочем каталоге.
+const mediaDir = path.join(out, "media");
+fs.mkdirSync(mediaDir, { recursive: true });
+for (const file of fs.readdirSync(imageSource)) {
+  if (!/\.(svg|png|jpe?g|webp|avif|ico)$/i.test(file)) continue;
+  fs.copyFileSync(path.join(imageSource, file), path.join(mediaDir, file));
+}
 
 /** Короткий отпечаток файла: меняется вместе с картинкой. */
 const fileHash = (file: string) =>
@@ -208,7 +217,7 @@ const fileHash = (file: string) =>
  */
 const versioned = (file: string, fallback: string) => {
   const full = path.join(imageSource, file);
-  return fs.existsSync(full) ? `images/${file}?v=${fileHash(file)}` : fallback;
+  return fs.existsSync(full) ? `media/${file}?v=${fileHash(file)}` : fallback;
 };
 const backgroundUrl = versioned(
   "pearl-background.jpg",
@@ -404,9 +413,9 @@ ${canonical}
 <meta property="og:site_name" content="${DEFAULT_CONFIG.siteName}">
 <meta property="og:title" content="${meta.title}">
 <meta property="og:description" content="${meta.description}">
-<meta property="og:image" content="${DEFAULT_CONFIG.siteUrl ? `${DEFAULT_CONFIG.siteUrl.replace(/\/$/, "")}/images/og-cover.svg` : "images/og-cover.svg"}">
+<meta property="og:image" content="${DEFAULT_CONFIG.siteUrl ? `${DEFAULT_CONFIG.siteUrl.replace(/\/$/, "")}/media/og-cover.svg` : "media/og-cover.svg"}">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="media/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="fonts/manrope-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/cormorant-cyrillic-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="${stylesRef}">
@@ -443,7 +452,7 @@ fs.writeFileSync(
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Страница не найдена — ${DEFAULT_CONFIG.siteName}</title>
 <meta name="robots" content="noindex">
-<link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="media/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="${stylesRef}">
 </head>
 <body>
@@ -499,7 +508,7 @@ window.ASTRA_CONFIG = {
     name: ${JSON.stringify(DEFAULT_CONFIG.specialist.name)},
     title: ${JSON.stringify(DEFAULT_CONFIG.specialist.title)},
     bio: ${JSON.stringify(DEFAULT_CONFIG.specialist.bio)},
-    photoUrl: "images/specialist-placeholder.svg",
+    photoUrl: "media/specialist-placeholder.svg",
     note: ${JSON.stringify(DEFAULT_CONFIG.specialist.note)},
   },
 
@@ -625,8 +634,8 @@ fs.writeFileSync(
    - contacts.email — почта для заявок
    - brandTitle — полное название, brandTagline — короткий девиз в подвале
    - manifesto — тексты блока «Драгоценная жемчужина души» на главной
-   - фон сайта: положите свою картинку в images/pearl-background.jpg (и
-     images/pearl-background-mobile.jpg для телефона) с тем же именем
+   - фон сайта: положите свою картинку в media/pearl-background.jpg (и
+     media/pearl-background-mobile.jpg для телефона) с тем же именем
    - invite.delayMs — как часто показывать окно с формой (180000 = каждые 3 минуты)
    - services.priceNote — стоимость, если хотите её показать
 3. Обновите страницу в браузере с очисткой кэша (Ctrl+F5).
