@@ -139,6 +139,32 @@ $rows[] = array(
     'info',
     $leadCount > 0 ? 'последние заявки видны в кабинете' : 'пока ни одной — отправьте тестовую с сайта',
 );
+
+/* --- Временная диагностика раздачи картинок (api/image.php) --- */
+$imageSelfCode = 0;
+$imageSelfBytes = 0;
+$imageSelfError = '';
+try {
+    $_GET['name'] = 'favicon.svg';
+    $imageCode = http_response_code();
+    ob_start();
+    include __DIR__ . '/api/image.php';
+    $imageSelfBytes = strlen((string) ob_get_clean());
+    $imageSelfCode = (int) (http_response_code() ?: 0);
+    http_response_code($imageCode);
+} catch (Throwable $imageError) {
+    $imageSelfError = $imageError->getMessage();
+}
+$rows[] = array(
+    'Картинки (api/image.php)',
+    $imageSelfError !== ''
+        ? 'ошибка: ' . $imageSelfError
+        : 'внутренний вызов: HTTP ' . $imageSelfCode . ', ' . $imageSelfBytes . ' Б',
+    $imageSelfError === '' && $imageSelfCode === 200 && $imageSelfBytes > 100 ? 'ок' : 'внимание',
+    $imageSelfError === '' && $imageSelfCode === 200 && $imageSelfBytes > 100
+        ? 'скрипт работает на PHP; если прямые адреса картинок дают 500 — проблема в настройках веб-сервера'
+        : 'см. сообщение выше',
+);
 ?>
 <!doctype html>
 <html lang="ru">
