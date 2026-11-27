@@ -42,6 +42,7 @@
  */
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
+import { Writable } from "node:stream";
 import path from "node:path";
 
 import { Client } from "basic-ftp";
@@ -292,14 +293,9 @@ async function main() {
       skipped.push(file);
       continue;
     }
-    const localSize = fs.statSync(path.join(releaseDir, file)).size;
-    const forceRefresh =
-      file.endsWith(".html") ||
-      ["app.js", "styles.css", "config.js"].includes(file);
-    if (remoteSizes.get(file) === localSize && !forceRefresh) {
-      skipped.push(file);
-      continue;
-    }
+    // Заливаем всегда, без пропуска «совпадающих по размеру»: если
+    // синхронизация хостинга исказила файл (размер при этом сохранила),
+    // пропуск навсегда оставил бы битую копию на сервере.
     await client.uploadFrom(path.join(releaseDir, file), remotePath);
     uploaded.push(file);
   }
@@ -316,6 +312,49 @@ async function main() {
       toRemote(dataHtaccess),
     );
     uploaded.push(dataHtaccess);
+  }
+
+  /* Контроль целостности PHP: скачиваем загруженные файлы обратно и
+     сверяем байт-в-байт. Известная проблема хостинга — часть «синхронизаций»
+     искажает свежезагруженные файлы, сайт тогда молча получает битый PHP
+     (HTTP 500). Здесь это станет ошибкой деплоя, а не сюрпризом. */
+  const phpFiles = uploaded.filter((file) => file.endsWith(".php"));
+  if (phpFiles.length) {
+    const verifyOnce = async (file: string): Promise<boolean> => {
+      const chunks: Buffer[] = [];
+      const sink = new Writable({
+        write(chunk, _encoding, callback) {
+          chunks.push(Buffer.from(chunk));
+          callback();
+        },
+      });
+      await client.downloadTo(sink, toRemote(file));
+      return Buffer.concat(chunks).equals(
+        fs.readFileSync(path.join(releaseDir, file)),
+      );
+    };
+    let broken: string[] = [];
+    for (const file of phpFiles) {
+      if (!(await verifyOnce(file))) broken.push(file);
+    }
+    if (broken.length) {
+      console.log(`  ! искажены при загрузке, перезаливаю: ${broken.join(", ")}`);
+      for (const file of broken) {
+        await client.uploadFrom(path.join(releaseDir, file), toRemote(file));
+      }
+      const stillBroken: string[] = [];
+      for (const file of broken) {
+        if (!(await verifyOnce(file))) stillBroken.push(file);
+      }
+      if (stillBroken.length) {
+        throw new Error(
+          `Файлы искажаются на стороне хостинга (${stillBroken.join(", ")}): нужен тикет в поддержку, деплой не может гарантировать целостность.`,
+        );
+      }
+    }
+    console.log(
+      `  · целостность PHP подтверждена (${phpFiles.length} файлов, байт-в-байт)`,
+    );
   }
 
   /* Зонд: маленький файл с номером коммита. Workflow после загрузки открывает
@@ -422,6 +461,12 @@ if (cleaned.length > 0) {
 }
 if (uploaded.length > 0 && uploaded.length <= 40) {
   for (const file of uploaded) console.log(`  ↑ ${file}`);
+} else if (uploaded.length > 40) {
+  // Полный список длинный: показываем PHP-файлы (их целостность важнее
+  // всего) и итоговое число.
+  const phpList = uploaded.filter((file) => file.endsWith(".php"));
+  for (const file of phpList) console.log(`  ↑ ${file}`);
+  console.log(`  … и ещё ${uploaded.length - phpList.length} не-PHP файлов`);
 }
 if (guarded.length > 0) {
   log(`не тронуты файлы сервера: ${guarded.join(", ")}`);
